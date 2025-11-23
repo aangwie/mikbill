@@ -35,6 +35,10 @@ Manajemen Laporan Pendapatan dan Cetak Tagihan Pelanggan.
 ### 7. Akuntansi
 Manajemen Aknuntansi, mencatat Pendapatan dan Pengeluaran.
 ![Accounting Page](raw/Accounting.png)
+
+### 8. Koneksi Mikrotik
+Halaman untuk mengonfigurasi API mikrotik untuk tujuan Monitoring user PPPoE.
+![Mikrotik Page](raw/Mikrotik-Config.png)
 ---
 
 ## 🚀 Fitur Unggulan
@@ -80,6 +84,16 @@ Manajemen Aknuntansi, mencatat Pendapatan dan Pengeluaran.
 
 ### 1. Clone & Install
 ```bash
-git clone [https://github.com/username/mikbill.git](https://github.com/username/mikbill.git)
+git clone [https://github.com/username/mikbill.git](https://github.com/aangwie/mikbill.git)
 cd mikbill
-composer install
+```
+### 2. Buat Database Pada PHPMyAdmin
+- **Buat Database:** Buat database baru bernama `db_mikbill`
+- **Import SQL:** Import database `db_mikbill.sql` dari folder `dbschema`
+
+### 3. Konfigurasi Database
+- **Setting .env:** Buka `.env` pada root folder kemudian konfigurasi seperti pada gambar lalu sesuaikan nama database, user database, password, serta hostnya sesaui yang anda buat sebelumnya.
+![ENV-Config Page](raw/env-db.png)
+
+### 4. Jalankan Aplikasi
+- **Jalankan Aplikasi Mikbill:** Buka cmd lalu ketik `php spark serve`, akan terlihat host bisa di akses melalui port 8000 Misal `http://127.0.0.1:8000` atau `http://localhost:8000`
