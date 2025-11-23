@@ -24,6 +24,17 @@ Monitoring realtime user online/offline, status router, dan statistik jaringan.
 Manajemen invoice, status lunas/belum lunas, tombol bayar/batal, dan integrasi WhatsApp Gateway.
 ![Billing Page](raw/Billing.png)
 
+### 5. Whatsapp Gateway
+Manajemen WhatsApp Gateway dan Pengiriman Pesan Kepada Pelanggan.
+![WA Gateway Page](raw/gateway.png)
+
+### 6. Laporan Pendapatan dan Cetak Invoice
+Manajemen Laporan Pendapatan dan Cetak Tagihan Pelanggan.
+![Report Page](raw/Report.png)
+
+### 7. Akuntansi
+Manajemen Aknuntansi, mencatat Pendapatan dan Pengeluaran.
+![Accounting Page](raw/Accounting.png)
 ---
 
 ## 🚀 Fitur Unggulan
