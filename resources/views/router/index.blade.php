@@ -29,7 +29,7 @@
                     @csrf
                     
                     <div class="mb-3">
-                        <label class="form-label fw-bold">IP Address (Host)</label>
+                        <label class="form-label fw-bold">URL / IP Address (Host)</label>
                         <input type="text" name="host" class="form-control" value="{{ $setting->host ?? '' }}" placeholder="192.168.88.1" required>
                     </div>
 

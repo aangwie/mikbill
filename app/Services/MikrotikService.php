@@ -158,4 +158,36 @@ class MikrotikService
         }
         return false;
     }
+
+    // Ambil Daftar Interface (Ethernet/VLAN/Bridge/dll)
+    public function getInterfaces()
+    {
+        if (!$this->isConnected()) return [];
+        // Ambil hanya yang tipe ethernet atau bridge (opsional filter)
+        // Disini kita ambil semua agar fleksibel
+        $query = new Query('/interface/print');
+        return $this->client->query($query)->read();
+    }
+
+    // Ambil Traffic Realtime (Monitor Traffic)
+    public function getTraffic($interfaceName)
+    {
+        if (!$this->isConnected()) return ['rx' => 0, 'tx' => 0];
+
+        // Perintah monitor-traffic dengan argumen 'once' agar tidak streaming
+        $query = (new Query('/interface/monitor-traffic'))
+            ->equal('interface', $interfaceName)
+            ->equal('once');
+
+        $result = $this->client->query($query)->read();
+
+        if (!empty($result)) {
+            return [
+                'rx' => isset($result[0]['rx-bits-per-second']) ? $result[0]['rx-bits-per-second'] : 0,
+                'tx' => isset($result[0]['tx-bits-per-second']) ? $result[0]['tx-bits-per-second'] : 0,
+            ];
+        }
+
+        return ['rx' => 0, 'tx' => 0];
+    }
 }

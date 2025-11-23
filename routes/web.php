@@ -12,6 +12,7 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\FrontendController;
 use App\Http\Controllers\AccountingController;
 use App\Http\Controllers\RouterSettingController; 
+use App\Http\Controllers\TrafficController; 
 
 /*
 |--------------------------------------------------------------------------
@@ -43,6 +44,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', function () {
         return redirect()->route('billing.index');
     });
+    
+    //Dashboard bisa di akses Admin dan Operator
+    Route::get('/admin/dashboard', [PppoeController::class, 'index'])->name('pppoe.dashboard');
 
     // ... (SISA SEMUA ROUTE LAMA ANDA : BILLING, ADMIN, OPERATOR TETAP DISINI) ...
 
@@ -59,7 +63,6 @@ Route::middleware(['auth'])->group(function () {
 
     // Admin Only
     Route::middleware(['role:admin'])->group(function () {
-        Route::get('/admin/dashboard', [PppoeController::class, 'index'])->name('pppoe.dashboard');
         // ... dst ...
         Route::resource('users', UserController::class);
         Route::resource('customers', CustomerController::class);
@@ -84,6 +87,10 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/accounting/expense', [AccountingController::class, 'storeExpense'])->name('accounting.store');
         Route::delete('/accounting/expense/{id}', [AccountingController::class, 'destroyExpense'])->name('accounting.destroy');
         Route::get('/accounting/print', [AccountingController::class, 'print'])->name('accounting.print');
+
+        // TRAFFIC MONITOR
+        Route::get('/traffic', [TrafficController::class, 'index'])->name('traffic.index');
+        Route::post('/traffic/data', [TrafficController::class, 'data'])->name('traffic.data');
 
         // Konfigurasi Mikrotik
         Route::get('/router-setting', [RouterSettingController::class, 'index'])->name('router.index');
