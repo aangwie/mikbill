@@ -38,6 +38,13 @@
                     </a>
                 </li>
 
+                {{-- Menu Laporan (Baru) --}}
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->routeIs('accounting.*') ? 'active' : '' }}" href="{{ route('accounting.index') }}">
+                        <i class="fas fa-wallet me-1"></i> Keuangan
+                    </a>
+                </li>
+
                 @if(auth()->user()->role == 'admin')
                 {{-- Menu whatsapp --}}
                 <li class="nav-item">

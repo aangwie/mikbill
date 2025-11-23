@@ -9,7 +9,8 @@ use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\WhatsappController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\CustomerController;
-use App\Http\Controllers\FrontendController; // Import Controller Baru
+use App\Http\Controllers\FrontendController;
+use App\Http\Controllers\AccountingController; // Import Controller Baru
 
 /*
 |--------------------------------------------------------------------------
@@ -23,7 +24,7 @@ Route::post('/check-bill', [FrontendController::class, 'check'])->name('frontend
 Route::get('/invoice/{id}/download', [FrontendController::class, 'downloadInvoice'])->name('frontend.invoice');
 
 // Login & Logout
-Route::middleware('guest')->group(function() {
+Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [AuthController::class, 'login'])->name('login.post');
 });
@@ -36,14 +37,14 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth'])->group(function () {
-    
+
     // Redirect /dashboard ke billing index (atau dashboard admin jika mau)
-    Route::get('/dashboard', function() {
+    Route::get('/dashboard', function () {
         return redirect()->route('billing.index');
     });
 
     // ... (SISA SEMUA ROUTE LAMA ANDA : BILLING, ADMIN, OPERATOR TETAP DISINI) ...
-    
+
     // Billing
     Route::get('/billing', [BillingController::class, 'index'])->name('billing.index');
     Route::post('/billing/{id}/pay', [BillingController::class, 'processPayment'])->name('billing.pay');
@@ -76,5 +77,11 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/whatsapp/broadcast', [WhatsappController::class, 'broadcast'])->name('whatsapp.broadcast');
         Route::post('/whatsapp/send-customer', [WhatsappController::class, 'sendToCustomer'])->name('whatsapp.send.customer');
         Route::delete('/customers/{id}', [CustomerController::class, 'destroy'])->name('customers.destroy');
+
+        // AKUNTANSI & KEUANGAN
+        Route::get('/accounting', [AccountingController::class, 'index'])->name('accounting.index');
+        Route::post('/accounting/expense', [AccountingController::class, 'storeExpense'])->name('accounting.store');
+        Route::delete('/accounting/expense/{id}', [AccountingController::class, 'destroyExpense'])->name('accounting.destroy');
+        Route::get('/accounting/print', [AccountingController::class, 'print'])->name('accounting.print');
     });
 });
