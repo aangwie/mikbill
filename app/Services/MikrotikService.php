@@ -6,6 +6,7 @@ use RouterOS\Client;
 use RouterOS\Query;
 use RouterOS\Exceptions\ConnectException;
 use RouterOS\Exceptions\ClientException;
+use App\Models\RouterSetting;
 
 class MikrotikService
 {
@@ -14,16 +15,24 @@ class MikrotikService
     public function __construct()
     {
         try {
-            // Inisialisasi client dengan config dari .env
+            // 1. Ambil Setting dari Database
+            $config = RouterSetting::first();
+
+            // Jika belum disetting di DB, stop (biarkan null)
+            if (!$config) {
+                $this->client = null;
+                return;
+            }
+
+            // 2. Inisialisasi client dengan data DB
             $this->client = new Client([
-                'host' => env('MIKROTIK_HOST'),
-                'user' => env('MIKROTIK_USER'),
-                'pass' => env('MIKROTIK_PASS'),
-                'port' => (int) env('MIKROTIK_PORT'),
-                'timeout' => 10, // Detik
+                'host' => $config->host,
+                'user' => $config->username,
+                'pass' => $config->password,
+                'port' => (int) $config->port,
+                'timeout' => 10,
             ]);
         } catch (ConnectException | ClientException $e) {
-            // Kita biarkan null jika gagal, nanti dicek di Controller
             $this->client = null;
         }
     }

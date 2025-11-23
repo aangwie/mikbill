@@ -10,7 +10,8 @@ use App\Http\Controllers\WhatsappController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\FrontendController;
-use App\Http\Controllers\AccountingController; // Import Controller Baru
+use App\Http\Controllers\AccountingController;
+use App\Http\Controllers\RouterSettingController; 
 
 /*
 |--------------------------------------------------------------------------
@@ -83,5 +84,9 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/accounting/expense', [AccountingController::class, 'storeExpense'])->name('accounting.store');
         Route::delete('/accounting/expense/{id}', [AccountingController::class, 'destroyExpense'])->name('accounting.destroy');
         Route::get('/accounting/print', [AccountingController::class, 'print'])->name('accounting.print');
+
+        // Konfigurasi Mikrotik
+        Route::get('/router-setting', [RouterSettingController::class, 'index'])->name('router.index');
+        Route::post('/router-setting', [RouterSettingController::class, 'update'])->name('router.update');
     });
 });

@@ -59,10 +59,25 @@
                         <i class="fas fa-building me-1"></i> Perusahaan
                     </a>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('users.*') ? 'active' : '' }}" href="{{ route('users.index') }}">
-                        <i class="fas fa-users-cog me-1"></i> Users
+                {{-- MENU PENGATURAN (Dropdown Baru) --}}
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle {{ request()->routeIs('users.*') || request()->routeIs('router.*') ? 'active' : '' }}" href="#" id="navbarSettings" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-cogs me-1"></i> Pengaturan
                     </a>
+                    <ul class="dropdown-menu" aria-labelledby="navbarSettings">
+                        {{-- Submenu 1: Manajemen User --}}
+                        <li>
+                            <a class="dropdown-item" href="{{ route('users.index') }}">
+                                <i class="fas fa-users-cog me-2 text-secondary"></i> Manajemen User
+                            </a>
+                        </li>
+                        {{-- Submenu 2: Konfigurasi Mikrotik --}}
+                        <li>
+                            <a class="dropdown-item" href="{{ route('router.index') }}">
+                                <i class="fas fa-server me-2 text-secondary"></i> Konfigurasi Mikrotik
+                            </a>
+                        </li>
+                    </ul>
                 </li>
                 @endif
                 {{-- Tombol Logout --}}

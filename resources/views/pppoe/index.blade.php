@@ -50,12 +50,84 @@
 
         {{-- Info Header --}}
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h3><i class="fas fa-network-wired text-primary"></i> Monitor User Online</h3>
             <div>
-                <span class="badge bg-secondary">Host: {{ env('MIKROTIK_HOST') }}</span>
-                <span class="badge bg-success">Connected</span>
+                <h3><i class="fas fa-network-wired text-primary"></i> Monitor User Online</h3>
+                <small class="text-muted">Pantau status koneksi pelanggan secara realtime</small>
+            </div>
+
+            <div class="text-end">
+                {{-- Tampilkan Host / IP --}}
+                <h5 class="mb-1">
+                    Host: <strong>{{ $routerInfo->host ?? 'Belum Disetting' }}</strong>
+                    <span class="text-muted small">({{ $routerInfo->username ?? '-' }})</span>
+                </h5>
+
+                {{-- Indikator Status Koneksi --}}
+                @if(isset($isConnected) && $isConnected)
+                <span class="badge bg-success shadow-sm">
+                    <i class="fas fa-link me-1"></i> TERHUBUNG
+                </span>
+                <span class="badge bg-secondary ms-1">Port: {{ $routerInfo->port }}</span>
+                @else
+                <span class="badge bg-danger shadow-sm">
+                    <i class="fas fa-unlink me-1"></i> TERPUTUS
+                </span>
+                @if($routerInfo)
+                <a href="{{ route('router.index') }}" class="btn btn-sm btn-outline-danger ms-2 py-0" style="font-size: 0.7rem;">
+                    <i class="fas fa-cog"></i> Cek Config
+                </a>
+                @endif
+                @endif
             </div>
         </div>
+
+        {{-- BAGIAN BARU: KARTU MONITORING --}}
+        @if(isset($secrets) && isset($actives))
+            @php
+                $totalUser = count($secrets);
+                $onlineUser = $actives->count();
+                $offlineUser = $totalUser - $onlineUser;
+            @endphp
+
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <div class="card bg-primary text-white shadow-sm h-100 border-0">
+                        <div class="card-body d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-uppercase mb-1 opacity-75">Total Pelanggan</h6>
+                                <h2 class="mb-0 fw-bold">{{ $totalUser }}</h2>
+                            </div>
+                            <i class="fas fa-users fa-3x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="card bg-success text-white shadow-sm h-100 border-0">
+                        <div class="card-body d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-uppercase mb-1 opacity-75">Pelanggan Online</h6>
+                                <h2 class="mb-0 fw-bold">{{ $onlineUser }}</h2>
+                            </div>
+                            <i class="fas fa-wifi fa-3x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="card bg-danger text-white shadow-sm h-100 border-0">
+                        <div class="card-body d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-uppercase mb-1 opacity-75">Pelanggan Offline</h6>
+                                <h2 class="mb-0 fw-bold">{{ $offlineUser }}</h2>
+                            </div>
+                            <i class="fas fa-power-off fa-3x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endif
+        {{-- AKHIR BAGIAN KARTU --}}
 
         {{-- Alerts --}}
         @if(isset($error) && $error)
