@@ -1,54 +1,74 @@
-# MIKBILL - Mikrotik Billing & PPPoE Management
+# MIKBILL - Mikrotik Billing & PPPoE Management System
 
-![MIKBILL Logo](https://via.placeholder.com/800x200?text=MIKBILL+System)
+**MIKBILL** adalah aplikasi manajemen ISP berbasis web yang dibangun dengan **Laravel**. Aplikasi ini dirancang untuk memudahkan pengelolaan pelanggan PPPoE, monitoring koneksi, penagihan (billing) otomatis, akuntansi sederhana, hingga notifikasi WhatsApp.
 
-**MIKBILL** adalah aplikasi berbasis web yang dibangun menggunakan **Laravel** untuk membantu pengusaha ISP / RT RW Net dalam mengelola pelanggan PPPoE, tagihan bulanan, serta otomatisasi isolir (pemutusan koneksi) bagi pelanggan yang menunggak.
-
-Aplikasi ini terintegrasi langsung dengan Mikrotik melalui API dan dilengkapi dengan fitur WhatsApp Gateway untuk notifikasi otomatis.
+Aplikasi ini mendukung **Multi-Role** (Admin & Operator) dengan sistem *Data Scoping*, serta fitur **Frontend Publik** untuk pengecekan tagihan mandiri oleh pelanggan.
 
 ---
 
-## 🚀 Fitur Utama
+## 📸 Screenshots
 
-### 📡 Manajemen & Monitoring
-- **Real-time Monitoring:** Melihat status online/offline pelanggan PPPoE.
-- **Sinkronisasi Mikrotik:** Import/Sync data Secret dari Mikrotik ke Database.
-- **CRUD Pelanggan:** Tambah, Edit, Hapus user PPPoE langsung dari web.
-- **Kick & Disable:** Memutus koneksi user secara paksa atau menonaktifkan akun.
+### 1. Frontend Pelanggan (Cek Tagihan)
+Halaman publik dimana pelanggan dapat memeriksa status tagihan dan mengunduh invoice tanpa perlu login.
+![Frontend Page](raw/frontend.png)
 
-### 💰 Billing & Keuangan
-- **Generate Tagihan Massal:** Membuat invoice bulanan untuk semua pelanggan aktif.
-- **Tagihan Manual:** Membuat invoice perorangan (pro-rata/pemasangan baru).
-- **Cetak Invoice:** Invoice profesional (PDF Ready) dengan Logo & Tanda Tangan perusahaan.
-- **Laporan Keuangan:** Rekapitulasi omset, uang masuk, dan piutang.
+### 2. Login Page
+Halaman autentikasi untuk Admin dan Operator.
+![Login Page](raw/login.png)
 
-### 🤖 Otomatisasi (Scheduler)
-- **Auto Isolir:** Otomatis men-disable user PPPoE yang melewati jatuh tempo.
-- **Auto Aktif:** Otomatis mengaktifkan user (Enable Secret) setelah status tagihan lunas.
+### 3. Dashboard Monitoring (Admin)
+Monitoring realtime user online/offline, status router, dan statistik jaringan.
+![Dashboard Admin](raw/dashboard.png)
 
-### 📱 Notifikasi & Frontend
-- **WhatsApp Gateway:** Kirim notifikasi tagihan, pembayaran diterima, dan broadcast info.
-- **Halaman Cek Tagihan:** Pelanggan bisa cek tagihan & download invoice tanpa login.
-- **Multi-Role:** Hak akses Admin (Full) dan Operator (Terbatas pada wilayah/tanggung jawab).
+### 4. Billing & Penagihan
+Manajemen invoice, status lunas/belum lunas, tombol bayar/batal, dan integrasi WhatsApp Gateway.
+![Billing Page](raw/Billing.png)
 
 ---
 
-## 🛠️ Persyaratan Sistem
+## 🚀 Fitur Unggulan
 
-- PHP >= 8.1
-- Composer
-- MySQL / MariaDB
-- Mikrotik RouterOS (API Port Enabled)
-- Koneksi Internet (Untuk WhatsApp API)
+### 📡 Monitoring & Mikrotik
+- **Real-time Monitoring:** Status user Online/Offline langsung dari Router.
+- **Sync Database:** Sinkronisasi 2 arah (Ambil user dari Mikrotik / Kirim user ke Mikrotik).
+- **Auto ID:** Generate Nomor Internet (8 digit) otomatis.
+- **Remote Action:** Kick user & Disable secret langsung dari web.
+- **Dynamic Config:** Pengaturan koneksi Router disimpan di database (bisa ganti router tanpa edit koding).
+
+### 💰 Billing & Finance
+- **Auto Invoice:** Generate tagihan massal setiap bulan.
+- **Manual Invoice:** Tagihan susulan untuk pelanggan baru.
+- **Sistem Isolir:** - Jika jatuh tempo & belum bayar -> Otomatis Disable & Kick (Cron Job).
+  - Jika klik "Bayar" -> Otomatis Enable & Kirim WA Lunas.
+  - Jika klik "Batal" -> Otomatis Disable kembali & Kirim WA Batal.
+- **Akuntansi (Laba Rugi):** Laporan Omset vs Pengeluaran Operasional secara otomatis.
+- **Cetak Laporan:** Laporan keuangan PDF dengan opsi Rincian atau Rekapitulasi.
+
+### 🔔 Notifikasi & Integrasi
+- **WhatsApp Gateway:** Kirim tagihan, bukti bayar, dan broadcast info massal.
+- **Cetak Invoice A4:** Invoice profesional dengan Logo Perusahaan, Tanda Tangan, dan Stempel Status.
+
+### 👥 Manajemen User
+- **Multi-Role:**
+  - **Admin:** Akses Penuh.
+  - **Operator:** Hanya akses Billing & Laporan (Hanya data pelanggan miliknya).
+- **Data Scoping:** Admin dapat menunjuk Operator penanggung jawab untuk setiap pelanggan.
 
 ---
 
-## 📦 Instalasi
+## 🛠️ Teknologi
 
-Ikuti langkah-langkah berikut untuk menjalankan MIKBILL di komputer lokal atau server:
+- **Backend:** Laravel Framework (PHP 8.x)
+- **Frontend:** Bootstrap 5, DataTables, jQuery
+- **Database:** MySQL
+- **Mikrotik API:** `evilfreelancer/routeros-api-php`
 
-### 1. Clone Repositori
+---
+
+## 📥 Instalasi
+
+### 1. Clone & Install
 ```bash
 git clone [https://github.com/username/mikbill.git](https://github.com/username/mikbill.git)
 cd mikbill
-
+composer install
