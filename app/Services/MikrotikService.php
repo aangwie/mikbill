@@ -190,4 +190,29 @@ class MikrotikService
 
         return ['rx' => 0, 'tx' => 0];
     }
+
+    // Update Data Secret (Misal ganti Profile atau Password)
+    public function updateSecret($username, $data)
+    {
+        if (!$this->isConnected()) return false;
+
+        // 1. Cari ID Secret berdasarkan Username
+        $queryFind = (new Query('/ppp/secret/print'))->where('name', $username);
+        $user = $this->client->query($queryFind)->read();
+
+        if (empty($user)) return false;
+
+        $id = $user[0]['.id'];
+
+        // 2. Lakukan Update (Set)
+        // $data adalah array, misal: ['profile' => 'up-10mbps', 'password' => '123']
+        $queryUpdate = (new Query('/ppp/secret/set'))->equal('.id', $id);
+        
+        foreach ($data as $key => $value) {
+            $queryUpdate->equal($key, $value);
+        }
+
+        $this->client->query($queryUpdate)->read();
+        return true;
+    }
 }

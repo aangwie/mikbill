@@ -1,29 +1,43 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manajemen Pelanggan</title>
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    
+
     {{-- CSS Libraries --}}
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
+
     {{-- Favicon --}}
     <link rel="icon" href="{{ $global_favicon ?? asset('favicon.ico') }}">
 </head>
+
 <body class="bg-light">
 
     @include('layouts.navbar_partial')
 
     <div class="container pb-5">
-        
+
         {{-- Header Page --}}
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h3><i class="fas fa-users text-primary"></i> Manajemen Pelanggan</h3>
             <div>
+                {{-- TOMBOL EXPORT --}}
+                <a href="{{ route('customers.export') }}" class="btn btn-success me-1">
+                    <i class="fas fa-file-excel"></i> Ekspor
+                </a>
+                {{-- TOMBOL IMPOR --}}
+                <button class="btn btn-danger text-white me-1" data-bs-toggle="modal" data-bs-target="#modalImport">
+                    <i class="fas fa-file-upload"></i> Impor
+                </button>
+                {{-- TOMBOL DOWNLOAD TEMPLATE --}}
+                <a href="{{ route('customers.template') }}" class="btn btn-warning me-1">
+                    <i class="fas fa-download me-1"></i> Download Template Excel
+                </a>
                 <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#modalSync">
                     <i class="fas fa-sync"></i> Sinkron Mikrotik
                 </button>
@@ -37,13 +51,13 @@
         @if(session('success')) <div class="alert alert-success border-0 shadow-sm">{{ session('success') }}</div> @endif
         @if(session('error')) <div class="alert alert-danger border-0 shadow-sm">{{ session('error') }}</div> @endif
         @if ($errors->any())
-            <div class="alert alert-danger border-0 shadow-sm">
-                <ul class="mb-0">
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
+        <div class="alert alert-danger border-0 shadow-sm">
+            <ul class="mb-0">
+                @foreach ($errors->all() as $error)
+                <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
         @endif
 
         {{-- Tabel Data --}}
@@ -67,40 +81,41 @@
                                 <td class="fw-bold text-primary">{{ $c->internet_number ?? '-' }}</td>
                                 <td>
                                     {{ $c->name }}
-                                    <div class="small text-muted" style="font-size: 0.75rem;">User: {{ $c->pppoe_username }}</div> 
+                                    <div class="small text-muted" style="font-size: 0.75rem;">User: {{ $c->pppoe_username }}</div>
                                 </td>
                                 <td>
                                     @if($c->operator)
-                                        <span class="badge bg-secondary">{{ $c->operator->name }}</span>
+                                    <span class="badge bg-secondary">{{ $c->operator->name }}</span>
                                     @else
-                                        <span class="text-muted">-</span>
+                                    <span class="text-muted">-</span>
                                     @endif
                                 </td>
                                 <td>
                                     @if($c->phone)
-                                        <a href="https://wa.me/{{ $c->phone }}" target="_blank" class="text-decoration-none text-success">
-                                            <i class="fab fa-whatsapp"></i> {{ $c->phone }}
-                                        </a>
+                                    <a href="https://wa.me/{{ $c->phone }}" target="_blank" class="text-decoration-none text-success">
+                                        <i class="fab fa-whatsapp"></i> {{ $c->phone }}
+                                    </a>
                                     @else
-                                        <span class="text-muted">-</span>
+                                    <span class="text-muted">-</span>
                                     @endif
                                 </td>
                                 <td>Rp {{ number_format($c->monthly_price, 0, ',','.') }}</td>
                                 <td class="text-end">
                                     {{-- Tombol Edit: Data Attribute Ditambahkan (Address, Lat, Lng) --}}
-                                    <button class="btn btn-sm btn-warning btn-edit" 
-                                        data-id="{{ $c->id }}" 
-                                        data-internet="{{ $c->internet_number }}" 
-                                        data-name="{{ $c->name }}" 
-                                        data-phone="{{ $c->phone }}" 
+                                    <button class="btn btn-sm btn-warning btn-edit"
+                                        data-id="{{ $c->id }}"
+                                        data-internet="{{ $c->internet_number }}"
+                                        data-name="{{ $c->name }}"
+                                        data-phone="{{ $c->phone }}"
                                         data-price="{{ $c->monthly_price }}"
                                         data-operator="{{ $c->operator_id }}"
-                                        
-                                        {{-- DATA BARU UNTUK MAPS --}}
                                         data-address="{{ $c->address }}"
                                         data-lat="{{ $c->latitude }}"
-                                        data-lng="{{ $c->longitude }}">
-                                        
+                                        data-lng="{{ $c->longitude }}"
+
+                                        {{-- TAMBAHKAN INI --}}
+                                        data-profile="{{ $c->profile }}">
+
                                         <i class="fas fa-edit"></i>
                                     </button>
 
@@ -123,9 +138,11 @@
             <div class="modal-content">
                 <form action="{{ route('customers.store') }}" method="POST">
                     @csrf
-                    <div class="modal-header bg-primary text-white"><h5 class="modal-title">Tambah Pelanggan</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title">Tambah Pelanggan</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
                     <div class="modal-body">
-                        
+
                         <div class="row">
                             <div class="col-md-6 border-end">
                                 <h6 class="text-primary border-bottom pb-2">Data Administratif</h6>
@@ -153,9 +170,9 @@
                                     <select name="operator_id" class="form-select">
                                         <option value="">-- Admin Langsung --</option>
                                         @if(isset($operators))
-                                            @foreach($operators as $op)
-                                                <option value="{{ $op->id }}">{{ $op->name }}</option>
-                                            @endforeach
+                                        @foreach($operators as $op)
+                                        <option value="{{ $op->id }}">{{ $op->name }}</option>
+                                        @endforeach
                                         @endif
                                     </select>
                                 </div>
@@ -176,11 +193,11 @@
                                 <div class="mb-3"><label>Profile Mikrotik</label>
                                     <select name="profile" class="form-select">
                                         @if(isset($profiles))
-                                            @foreach($profiles as $p)
-                                                <option value="{{ $p['name'] }}">{{ $p['name'] }}</option>
-                                            @endforeach
+                                        @foreach($profiles as $p)
+                                        <option value="{{ $p['name'] }}">{{ $p['name'] }}</option>
+                                        @endforeach
                                         @else
-                                            <option value="default">Default</option>
+                                        <option value="default">Default</option>
                                         @endif
                                     </select>
                                 </div>
@@ -219,9 +236,11 @@
             <form id="formEdit" method="POST">
                 @csrf @method('PUT')
                 <div class="modal-content">
-                    <div class="modal-header bg-warning"><h5 class="modal-title">Edit Data Pelanggan</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                    <div class="modal-header bg-warning">
+                        <h5 class="modal-title">Edit Data Pelanggan</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
                     <div class="modal-body">
-                        
+
                         <div class="row">
                             {{-- KIRI: ADMINISTRATIF --}}
                             <div class="col-md-6 border-end">
@@ -241,9 +260,9 @@
                                     <select name="operator_id" id="editOperator" class="form-select">
                                         <option value="">-- Admin Langsung --</option>
                                         @if(isset($operators))
-                                            @foreach($operators as $op)
-                                                <option value="{{ $op->id }}">{{ $op->name }}</option>
-                                            @endforeach
+                                        @foreach($operators as $op)
+                                        <option value="{{ $op->id }}">{{ $op->name }}</option>
+                                        @endforeach
                                         @endif
                                     </select>
                                 </div>
@@ -266,24 +285,44 @@
                                         <input type="text" name="longitude" id="editLng" class="form-control">
                                     </div>
                                 </div>
-                                
+
                                 <div class="alert alert-secondary text-small mt-3">
                                     <i class="fas fa-lock me-1"></i> Username & Password PPPoE diedit via Winbox.
+                                </div>
+                            </div>
+                            <div class="mt-3 pt-3 border-top">
+                                <h6 class="text-danger">Paket Internet (Mikrotik)</h6>
+                                <div class="mb-3">
+                                    <label class="fw-bold">Ganti Profile</label>
+                                    <select name="profile" id="editProfile" class="form-select" required>
+                                        @if(isset($profiles))
+                                        @foreach($profiles as $p)
+                                        <option value="{{ $p['name'] }}">{{ $p['name'] }}</option>
+                                        @endforeach
+                                        @else
+                                        <option value="default">Default</option>
+                                        @endif
+                                    </select>
+                                    <div class="form-text text-muted small">
+                                        <i class="fas fa-exclamation-triangle"></i> Perubahan ini akan langsung diterapkan di Router Mikrotik.
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
                     </div>
                     <div class="modal-footer"><button type="submit" class="btn btn-primary">Update Data</button></div>
-                </form>
-            </div>
+            </form>
         </div>
+    </div>
     </div>
 
     <div class="modal fade" id="modalSync" data-bs-backdrop="static" tabindex="-1">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
-                <div class="modal-header"><h5 class="modal-title">Sinkronisasi Database</h5></div>
+                <div class="modal-header">
+                    <h5 class="modal-title">Sinkronisasi Database</h5>
+                </div>
                 <div class="modal-body text-center">
                     <div id="syncInitial">
                         <i class="fas fa-database fa-4x text-secondary mb-3"></i>
@@ -307,6 +346,41 @@
             </div>
         </div>
     </div>
+    <div class="modal fade" id="modalImport" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form action="{{ route('customers.import') }}" method="POST" enctype="multipart/form-data">
+                    @csrf
+                    <div class="modal-header bg-info text-white">
+                        <h5 class="modal-title"><i class="fas fa-file-excel me-2"></i>Impor Data Pelanggan</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="alert alert-warning small">
+                            <i class="fas fa-exclamation-triangle me-1"></i>
+                            <b>PENTING:</b><br>
+                            1. Gunakan file <b>.xlsx</b> atau <b>.csv</b>.<br>
+                            2. Pastikan header kolom sesuai format (nomor_internet, nama_pelanggan, username_pppoe, dll).<br>
+                            3. Data yang diimpor <b>hanya masuk ke Database</b>, tidak otomatis masuk ke Mikrotik. Silakan lakukan sinkronisasi manual jika perlu.
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Pilih File Excel</label>
+                            <input type="file" name="file" class="form-control" required accept=".xlsx, .xls, .csv">
+                        </div>
+
+                        <div class="mt-3">
+                            <small class="text-muted">Bingung formatnya? <a href="{{ route('customers.export') }}" class="text-decoration-none">Download template data saat ini</a> sebagai contoh.</small>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-info text-white">Upload & Proses</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 
     {{-- JS Libraries --}}
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
@@ -319,21 +393,26 @@
             $('#tableCust').DataTable();
 
             // EVENT DELEGATION UNTUK TOMBOL EDIT
+            // EVENT DELEGATION UNTUK TOMBOL EDIT
             $('#tableCust tbody').on('click', '.btn-edit', function() {
                 let id = $(this).data('id');
-                
+
                 // Isi Form Edit
                 $('#editInet').val($(this).data('internet'));
                 $('#editName').val($(this).data('name'));
                 $('#editPhone').val($(this).data('phone'));
                 $('#editPrice').val($(this).data('price'));
                 $('#editOperator').val($(this).data('operator'));
-                
-                // Isi Data Lokasi (BARU)
+
+                // Isi Data Lokasi
                 $('#editAddress').val($(this).data('address'));
                 $('#editLat').val($(this).data('lat'));
                 $('#editLng').val($(this).data('lng'));
-                
+
+                // ISI PROFILE (BARU)
+                let profile = $(this).data('profile');
+                $('#editProfile').val(profile); // Select option sesuai data
+
                 $('#formEdit').attr('action', '/customers/' + id);
                 new bootstrap.Modal(document.getElementById('modalEdit')).show();
             });
@@ -353,19 +432,30 @@
 
         // LOGIKA SINKRONISASI
         function startSync() {
-            $('#syncInitial').hide(); $('#syncProgress').show();
+            $('#syncInitial').hide();
+            $('#syncProgress').show();
             $.ajax({
-                url: "{{ route('sync.list') }}", type: "GET",
+                url: "{{ route('sync.list') }}",
+                type: "GET",
                 success: function(res) {
-                    if(res.status === 'success') processQueue(res.data, res.total, 0);
-                    else { alert(res.message); location.reload(); }
-                }, error: function() { alert("Koneksi Error"); }
+                    if (res.status === 'success') processQueue(res.data, res.total, 0);
+                    else {
+                        alert(res.message);
+                        location.reload();
+                    }
+                },
+                error: function() {
+                    alert("Koneksi Error");
+                }
             });
         }
+
         function processQueue(secrets, total, index) {
             if (index >= total) {
                 $('#progressBar').css('width', '100%').text('100%');
-                $('#syncProgress').hide(); $('#syncDone').show(); return;
+                $('#syncProgress').hide();
+                $('#syncDone').show();
+                return;
             }
             let item = secrets[index];
             let percent = Math.round(((index + 1) / total) * 100);
@@ -373,15 +463,23 @@
             $('#syncStatusText').text("Memproses: " + item.name);
 
             $.ajax({
-                url: "{{ route('sync.process') }}", type: "POST",
-                data: { _token: $('meta[name="csrf-token"]').attr('content'), secret: item },
+                url: "{{ route('sync.process') }}",
+                type: "POST",
+                data: {
+                    _token: $('meta[name="csrf-token"]').attr('content'),
+                    secret: item
+                },
                 success: function(res) {
                     let badge = res.status === 'created' ? '<span class="badge bg-success">New</span>' : '<span class="badge bg-info">Upd</span>';
                     $('#syncLog').prepend('<li class="list-group-item py-1">' + badge + ' ' + res.name + '</li>');
                     processQueue(secrets, total, index + 1);
-                }, error: function() { processQueue(secrets, total, index + 1); }
+                },
+                error: function() {
+                    processQueue(secrets, total, index + 1);
+                }
             });
         }
     </script>
 </body>
+
 </html>

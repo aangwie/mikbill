@@ -6,6 +6,10 @@ use App\Models\Customer;
 use App\Models\User;
 use App\Services\MikrotikService;
 use Illuminate\Http\Request;
+use App\Exports\CustomersExport;
+use App\Imports\CustomersImport;
+use App\Exports\CustomerTemplateExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class CustomerController extends Controller
 {
@@ -84,23 +88,38 @@ class CustomerController extends Controller
         $customer = Customer::findOrFail($id);
 
         $request->validate([
-            'internet_number' => 'required|unique:customers,internet_number,' . $id, // Ignore ID sendiri saat cek unik
+            'internet_number' => 'required|unique:customers,internet_number,' . $id,
             'name' => 'required',
             'monthly_price' => 'required|numeric',
+            'profile' => 'required', // Validasi Profile Baru
         ]);
 
-        $customer->update([
-            'internet_number' => $request->internet_number, // Update No Internet
-            'name' => $request->name,
-            'phone' => $request->phone,
-            'monthly_price' => $request->monthly_price,
-            'operator_id' => $request->operator_id,
-            'address' => $request->address,
-            'latitude' => $request->latitude,
-            'longitude' => $request->longitude,
-        ]);
+        try {
+            // 1. Update ke Mikrotik (Sinkronisasi Profile)
+            // Kita hanya update profile, username/password biarkan tetap (kecuali mau fitur ganti pass juga)
+            $this->mikrotik->updateSecret($customer->pppoe_username, [
+                'profile' => $request->profile
+            ]);
 
-        return back()->with('success', 'Data pelanggan diperbarui.');
+            // 2. Update Database Lokal
+            $customer->update([
+                'internet_number' => $request->internet_number,
+                'name' => $request->name,
+                'phone' => $request->phone,
+                'monthly_price' => $request->monthly_price,
+                'operator_id' => $request->operator_id,
+                'address' => $request->address,
+                'latitude' => $request->latitude,
+                'longitude' => $request->longitude,
+                'profile' => $request->profile, // Simpan profile baru ke DB
+            ]);
+
+            return back()->with('success', 'Data pelanggan & Paket Internet (Profile) berhasil diperbarui.');
+        } catch (\Exception $e) {
+            // Jika mikrotik mati, update DB saja tapi beri peringatan, atau gagalkan keduanya.
+            // Disini kita gagalkan agar data tetap sinkron.
+            return back()->with('error', 'Gagal update ke Mikrotik: ' . $e->getMessage());
+        }
     }
 
     // 4. Hapus User (Dari DB & Mikrotik)
@@ -174,5 +193,30 @@ class CustomerController extends Controller
 
             return response()->json(['status' => 'created', 'name' => $secret['name']]);
         }
+    }
+
+    public function export() 
+    {
+        return Excel::download(new CustomersExport, 'data_pelanggan.xlsx');
+    }
+
+    // 2. Import Data dari Excel
+    public function import(Request $request) 
+    {
+        $request->validate([
+            'file' => 'required|mimes:xlsx,xls,csv'
+        ]);
+
+        try {
+            Excel::import(new CustomersImport, $request->file('file'));
+            return back()->with('success', 'Data pelanggan berhasil diimpor ke Database!');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Gagal impor: ' . $e->getMessage());
+        }
+    }
+
+    public function downloadTemplate() 
+    {
+        return Excel::download(new CustomerTemplateExport, 'template_import_pelanggan.xlsx');
     }
 }
