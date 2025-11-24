@@ -101,7 +101,8 @@ cd mikbill
 - **Import SQL:** Import database `db_mikbill.sql` dari folder `dbschema`
 
 ### 3. Konfigurasi Database
-- **Setting .env:** Buka `edit.env` pada root folder kemudian copy menjadi `.env` dengan perintah `cp edit.env .env` lalu konfigurasi seperti pada gambar dan sesuaikan nama database, user database, password, serta hostnya sesaui yang anda buat sebelumnya.
+- **Setting .env:** Buka `edit.env` pada root folder kemudian copy menjadi `.env` dengan perintah `cp edit.env .env` lalu konfigurasi seperti pada gambar dan sesuaikan nama database, user database, password, serta hostnya sesuai yang anda buat sebelumnya.
+
 ![ENV-Config Page](raw/env-db.png)
 
 ### 4. Jalankan Composer
