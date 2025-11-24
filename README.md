@@ -88,12 +88,15 @@ git clone [https://github.com/username/mikbill.git](https://github.com/aangwie/m
 cd mikbill
 ```
 ### 2. Buat Database Pada PHPMyAdmin
-- **Buat Database:** Buat database baru bernama `db_mikbill`
+- **Buat Database:** Buat database baru bernama `db_mikbill` pada phpmyadmin
 - **Import SQL:** Import database `db_mikbill.sql` dari folder `dbschema`
 
 ### 3. Konfigurasi Database
-- **Setting .env:** Buka `.env` pada root folder kemudian konfigurasi seperti pada gambar lalu sesuaikan nama database, user database, password, serta hostnya sesaui yang anda buat sebelumnya.
+- **Setting .env:** Buka `edit.env` pada root folder kemudian copy menjadi `.env` dengan perintah `cp edit.env .env` lalu konfigurasi seperti pada gambar dan sesuaikan nama database, user database, password, serta hostnya sesaui yang anda buat sebelumnya.
 ![ENV-Config Page](raw/env-db.png)
 
+### 4. Jalankan Composer
+- **Jalankan Composer:** Jalankan Composer dengan perintah `composer install` dan tunggu hingga proses selesai.
+
 ### 4. Jalankan Aplikasi
-- **Jalankan Aplikasi Mikbill:** Buka cmd lalu ketik `php spark serve`, akan terlihat host bisa di akses melalui port 8000 Misal `http://127.0.0.1:8000` atau `http://localhost:8000`
+- **Jalankan Aplikasi Mikbill:** Buka cmd lalu ketik `php artisan serve`, akan terlihat host bisa di akses melalui port 8000 Misal `http://127.0.0.1:8000` atau `http://localhost:8000`
