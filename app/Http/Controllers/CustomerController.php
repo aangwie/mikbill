@@ -67,6 +67,9 @@ class CustomerController extends Controller
                 'monthly_price' => $request->monthly_price,
                 'is_active' => true,
                 'operator_id' => $request->operator_id,
+                'address' => $request->address,
+                'latitude' => $request->latitude,
+                'longitude' => $request->longitude,
             ]);
 
             return back()->with('success', 'Pelanggan berhasil ditambahkan.');
@@ -92,6 +95,9 @@ class CustomerController extends Controller
             'phone' => $request->phone,
             'monthly_price' => $request->monthly_price,
             'operator_id' => $request->operator_id,
+            'address' => $request->address,
+            'latitude' => $request->latitude,
+            'longitude' => $request->longitude,
         ]);
 
         return back()->with('success', 'Data pelanggan diperbarui.');
@@ -149,7 +155,7 @@ class CustomerController extends Controller
             return response()->json(['status' => 'updated', 'name' => $secret['name']]);
         } else {
             // Logic Insert Baru (DIPERBARUI)
-            
+
             // Generate 8 Digit Angka Acak untuk Nomor Internet
             // Loop while sederhana untuk memastikan benar-benar unik (opsional tapi disarankan)
             do {
@@ -158,14 +164,14 @@ class CustomerController extends Controller
 
             Customer::create([
                 'internet_number' => $randomInet, // <-- Pakai angka acak 8 digit
-                'name' => $secret['comment'] ?? $secret['name'], 
+                'name' => $secret['comment'] ?? $secret['name'],
                 'pppoe_username' => $secret['name'],
                 'pppoe_password' => $secret['password'] ?? '',
                 'profile' => $secret['profile'] ?? 'default',
                 'monthly_price' => 0,
                 'is_active' => ($secret['disabled'] ?? 'false') == 'false'
             ]);
-            
+
             return response()->json(['status' => 'created', 'name' => $secret['name']]);
         }
     }

@@ -47,6 +47,8 @@ Route::middleware(['auth'])->group(function () {
     
     //Dashboard bisa di akses Admin dan Operator
     Route::get('/admin/dashboard', [PppoeController::class, 'index'])->name('pppoe.dashboard');
+    //Route Maps Pelanggan
+    Route::get('/maps', [App\Http\Controllers\MapController::class, 'index'])->name('maps.index');
 
     // ... (SISA SEMUA ROUTE LAMA ANDA : BILLING, ADMIN, OPERATOR TETAP DISINI) ...
 
