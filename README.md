@@ -39,6 +39,12 @@ Manajemen Aknuntansi, mencatat Pendapatan dan Pengeluaran.
 ### 8. Koneksi Mikrotik
 Halaman untuk mengonfigurasi API mikrotik untuk tujuan Monitoring user PPPoE.
 ![Mikrotik Page](raw/Mikrotik-Config.png)
+
+### 9. Peta Pelanggan
+Menampilkan Peta Pelanggan dengan memasukkan latitude dan longitude pelanggan pada aplikasi, maka akan tampil lokasi
+Pelanggan, jika pelanggan tersambung maka warna logo rumah menjadi hijau, jika diskonek maka akan berwarna merah
+![Maps Page](raw/maps.png)
+
 ---
 
 ## 🚀 Fitur Unggulan
@@ -49,6 +55,9 @@ Halaman untuk mengonfigurasi API mikrotik untuk tujuan Monitoring user PPPoE.
 - **Auto ID:** Generate Nomor Internet (8 digit) otomatis.
 - **Remote Action:** Kick user & Disable secret langsung dari web.
 - **Dynamic Config:** Pengaturan koneksi Router disimpan di database (bisa ganti router tanpa edit koding).
+
+### 📡 Peta Pelanggan
+- **Real-time Maps:** Status user Online / Offline berdasarkan Maps (Lokasi Pelanggan)
 
 ### 💰 Billing & Finance
 - **Auto Invoice:** Generate tagihan massal setiap bulan.
