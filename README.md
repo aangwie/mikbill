@@ -110,3 +110,6 @@ cd mikbill
 
 ### 4. Jalankan Aplikasi
 - **Jalankan Aplikasi Mikbill:** Buka cmd lalu ketik `php artisan serve`, akan terlihat host bisa di akses melalui port 8000 Misal `http://127.0.0.1:8000` atau `http://localhost:8000`
+
+---
+Developed By : **Aang Wie**
