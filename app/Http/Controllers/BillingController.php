@@ -157,12 +157,13 @@ class BillingController extends Controller
 
             $text = "*PEMBAYARAN DITERIMA*\n\n";
             $text .= "Halo {$customer->name},\n";
-            $text .= "Terima kasih, pembayaran tagihan internet Anda telah kami terima.\n\n";
+            $text .= "Terima kasih, pembayaran tagihan internet Anda dengan *Nomor Internet:* {$customer->internet_number} telah kami terima.\n\n";
             $text .= "📅 Tanggal Bayar: $tglBayar\n";
             $text .= "💰 Nominal: Rp $nominal\n";
             $text .= "🗓️ Periode Tagihan: $periode\n";
             $text .= "✅ Status: LUNAS\n\n";
             $text .= "Internet Anda sudah aktif kembali. Terima kasih atas kepercayaan Anda.";
+            $text .= "Untuk Mengunduh Invoice Anda, Silahkan Kunjungi Alamat Berikut dengan memasukkan Nomor Internet Anda : *https://netbill.my.id*";
 
             $waResult = $this->wa->send($customer->phone, $text);
             $pesanWA = $waResult['status'] ? "WA Terkirim." : "WA Gagal.";

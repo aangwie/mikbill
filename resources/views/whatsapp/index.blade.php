@@ -8,6 +8,20 @@
     <link rel="icon" href="{{ $global_favicon ?? asset('favicon.ico') }}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <style>
+        /* Style agar Select2 Multiple terlihat rapi di Bootstrap 5 */
+        .select2-container--default .select2-selection--multiple {
+            border: 1px solid #ced4da;
+            border-radius: 0.375rem;
+            padding-bottom: 5px;
+        }
+
+        .select2-container--default.select2-container--focus .select2-selection--multiple {
+            border-color: #86b7fe;
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+        }
+    </style>
 </head>
 
 <body class="bg-light">
@@ -68,22 +82,24 @@
             <div class="col-md-7">
                 <div class="card shadow-sm mb-4">
                     <div class="card-header bg-info text-white">
-                        <i class="fas fa-user-comment me-2"></i>Kirim Pesan Personal
+                        <i class="fas fa-user-comment me-2"></i>Kirim Pesan Personal (Multi)
                     </div>
                     <div class="card-body">
                         <form action="{{ route('whatsapp.send.customer') }}" method="POST">
                             @csrf
                             <div class="mb-3">
-                                <label class="form-label fw-bold">Pilih Pelanggan</label>
-                                <select name="customer_id" class="form-select" required>
-                                    <option value="">-- Cari Nama Pelanggan --</option>
+                                <label class="form-label fw-bold">Pilih Pelanggan (Bisa Banyak)</label>
+                                {{-- NAME MENGGUNAKAN ARRAY [] --}}
+                                <select name="customer_ids[]" id="multiUserSelect" class="form-select" multiple="multiple" required>
                                     @foreach($customers as $c)
                                     <option value="{{ $c->id }}">
                                         {{ $c->name }} ({{ $c->phone }})
                                     </option>
                                     @endforeach
                                 </select>
+                                <div class="form-text text-muted small">Klik kolom untuk memilih pelanggan.</div>
                             </div>
+
                             <div class="mb-3">
                                 <label class="form-label fw-bold">Isi Pesan</label>
                                 <div class="form-text mb-1">
@@ -93,7 +109,7 @@
                             </div>
                             <div class="text-end">
                                 <button type="submit" class="btn btn-info text-white">
-                                    <i class="fas fa-paper-plane"></i> Kirim Personal
+                                    <i class="fas fa-paper-plane me-1"></i> Kirim ke Terpilih
                                 </button>
                             </div>
                         </form>
@@ -136,8 +152,9 @@ Terima kasih.</textarea>
                                         <label>Pesan Informasi / Promo</label>
                                         <textarea name="message" class="form-control" rows="5" required>Halo {name},
 
-Akan ada pemeliharaan jaringan pada hari Minggu jam 12:00 - 13:00 WIB.
-Mohon maaf atas ketidaknyamanannya.</textarea>
+                                            Akan ada pemeliharaan jaringan pada hari Minggu jam 12:00 - 13:00 WIB.
+                                            Mohon maaf atas ketidaknyamanannya.
+                                        </textarea>
                                     </div>
                                     <button type="submit" class="btn btn-primary w-100"><i class="fas fa-bullhorn"></i> Kirim Info ke Semua</button>
                                 </form>
@@ -150,6 +167,22 @@ Mohon maaf atas ketidaknyamanannya.</textarea>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    {{-- JS Select2 --}}
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            // Inisialisasi Select2 pada ID multiUserSelect
+            $('#multiUserSelect').select2({
+                placeholder: "Cari dan Pilih Pelanggan...",
+                allowClear: true,
+                width: '100%' // Agar responsif mengikuti lebar card
+            });
+        });
+    </script>
 </body>
 
 </html>

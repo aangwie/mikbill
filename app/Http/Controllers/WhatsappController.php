@@ -104,29 +104,44 @@ class WhatsappController extends Controller
     }
 
     // Kirim ke Satu Pelanggan (Dipilih dari Dropdown)
+    // Kirim ke BANYAK Pelanggan (Multi Select)
     public function sendToCustomer(Request $request)
     {
+        // Validasi: customer_ids sekarang harus berupa ARRAY
         $request->validate([
-            'customer_id' => 'required|exists:customers,id',
+            'customer_ids' => 'required|array',
+            'customer_ids.*' => 'exists:customers,id', // Pastikan setiap ID valid
             'message' => 'required',
         ]);
 
-        $customer = Customer::findOrFail($request->customer_id);
+        $successCount = 0;
+        $failCount = 0;
 
-        if (empty($customer->phone)) {
-            return back()->with('error', 'Pelanggan ini tidak memiliki nomor HP.');
+        // Loop setiap customer yang dipilih
+        foreach ($request->customer_ids as $id) {
+            $customer = Customer::find($id);
+
+            if ($customer && !empty($customer->phone)) {
+                // Replace variable {name} & {tagihan} unik per customer
+                $msg = str_replace('{name}', $customer->name, $request->message);
+                $msg = str_replace('{tagihan}', number_format($customer->monthly_price, 0, ',', '.'), $msg);
+
+                // Kirim Pesan
+                $result = $this->waService->send($customer->phone, $msg);
+
+                if ($result['status']) {
+                    $successCount++;
+                } else {
+                    $failCount++;
+                }
+            }
         }
 
-        // Replace variable {name} jika ada
-        $msg = str_replace('{name}', $customer->name, $request->message);
-        $msg = str_replace('{tagihan}', number_format($customer->monthly_price), $msg);
-
-        $result = $this->waService->send($customer->phone, $msg);
-
-        if ($result['status']) {
-            return back()->with('success', "Pesan terkirim ke {$customer->name} ({$customer->phone})");
+        // Berikan feedback hasil pengiriman
+        if ($successCount > 0) {
+            return back()->with('success', "Pesan berhasil dikirim ke $successCount pelanggan." . ($failCount > 0 ? " ($failCount gagal)" : ""));
         } else {
-            return back()->with('error', 'Gagal kirim: ' . $result['message']);
+            return back()->with('error', "Gagal mengirim pesan. Periksa nomor tujuan.");
         }
     }
 }

@@ -113,7 +113,7 @@
                                 <th>Username</th>
                                 <th>Profile</th>
                                 <th>IP Address</th>
-                                <th>Mulai Tersambung</th>
+                                <th>Status</th>
                                 <th>Terakhir Terputus</th>
                                 <th>Durasi (Uptime)</th>
                                 
@@ -142,8 +142,8 @@
                                     <td><span class="badge bg-info text-dark">{{ $secret['profile'] ?? 'default' }}</span></td>
                                     <td>{{ $activeData['address'] ?? '-' }}</td>
                                     <td>
-                                        @if($isActive) <span class="text-success small fw-bold"><i class="fas fa-plug me-1"></i> Sedang Konek</span>
-                                        @else <span class="text-muted small">-</span> @endif
+                                        @if($isActive) <span class="text-success small fw-bold"><i class="fas fa-plug me-1"></i>Connected</span>
+                                        @else <span class="text-danger small fw-bold"><i class="fas fa-chain-broken me-1"></i>Disconnected</span> @endif
                                     </td>
                                     <td>
                                         @if($isActive) <span class="text-muted small">-</span>
