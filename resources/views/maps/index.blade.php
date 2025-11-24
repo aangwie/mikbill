@@ -11,13 +11,13 @@
     
     <link rel="icon" href="{{ $global_favicon ?? asset('favicon.ico') }}">
     <style>
-        #map { height: 85vh; width: 100%; border-radius: 10px; }
+        #map { height: 80vh; width: 100%; border-radius: 10px; }
         
         /* Custom Icon Style untuk Rumah */
         .house-icon {
             font-size: 24px;
             text-align: center;
-            text-shadow: 2px 2px 2px rgba(0,0,0,0.5); /* Shadow agar terlihat di peta terang */
+            text-shadow: 2px 2px 2px rgba(0,0,0,0.5);
         }
         .house-online { color: #00ff2a; } /* Hijau Terang */
         .house-offline { color: #ff0000; } /* Merah Terang */
@@ -28,11 +28,25 @@
     @include('layouts.navbar_partial')
 
     <div class="container-fluid px-4 pb-4">
+        
+        {{-- HEADER & STATISTIK --}}
         <div class="d-flex justify-content-between align-items-center mb-3">
-            <h3><i class="fas fa-map-marked-alt text-primary"></i> Peta Sebaran Pelanggan</h3>
             <div>
-                <span class="badge bg-success me-2"><i class="fas fa-home"></i> Online</span>
-                <span class="badge bg-danger"><i class="fas fa-home"></i> Offline / Terputus</span>
+                <h3 class="mb-0"><i class="fas fa-map-marked-alt text-primary"></i> Peta Sebaran Pelanggan</h3>
+                
+                {{-- INDIKATOR AUTO REFRESH --}}
+                <div class="d-flex align-items-center gap-2 mt-1">
+                    <span class="badge bg-white text-secondary border shadow-sm">
+                        <i class="fas fa-clock text-warning me-1"></i>
+                        Refresh: <b id="timer" class="text-dark">30</b>s
+                    </span>
+                    <small class="text-muted fst-italic">Peta akan memuat ulang data otomatis.</small>
+                </div>
+            </div>
+
+            <div>
+                <span class="badge bg-success me-2 p-2 shadow-sm"><i class="fas fa-home"></i> Online</span>
+                <span class="badge bg-danger p-2 shadow-sm"><i class="fas fa-home"></i> Offline / Terputus</span>
             </div>
         </div>
 
@@ -49,11 +63,11 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <script>
-        // 1. Inisialisasi Map (Default view: Indonesia)
-        // Nanti akan otomatis zoom ke titik pelanggan
+        // 1. Inisialisasi Map
+        // Default view Indonesia, tapi nanti akan di-override oleh fitBounds
         var map = L.map('map').setView([-2.5489, 118.0149], 5); 
 
-        // 2. Tambahkan Tile Layer (Peta Jalanan OpenStreetMap)
+        // 2. Tambahkan Tile Layer (Peta Jalanan)
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; OpenStreetMap contributors'
         }).addTo(map);
@@ -71,19 +85,19 @@
                 ? '<span class="badge bg-success">ONLINE</span>' 
                 : '<span class="badge bg-danger">OFFLINE</span>';
 
-            // Buat Custom Icon menggunakan FontAwesome
+            // Buat Custom Icon
             var houseIcon = L.divIcon({
                 html: '<i class="fas fa-home ' + colorClass + '"></i>',
                 className: 'house-icon',
                 iconSize: [30, 30],
-                iconAnchor: [15, 30], // Agar ujung bawah icon pas di titik koordinat
+                iconAnchor: [15, 30],
                 popupAnchor: [0, -30]
             });
 
             // Tambahkan Marker ke Peta
             var marker = L.marker([loc.lat, loc.lng], {icon: houseIcon}).addTo(map);
 
-            // Isi Popup (Info saat diklik)
+            // Isi Popup Info
             var popupContent = `
                 <div class="text-center">
                     <h6 class="fw-bold mb-1">${loc.name}</h6>
@@ -105,8 +119,25 @@
         // 5. Auto Zoom agar semua marker terlihat
         if (markers.length > 0) {
             var group = new L.featureGroup(markers);
-            map.fitBounds(group.getBounds().pad(0.1)); // pad 0.1 agar tidak terlalu mepet pinggir
+            map.fitBounds(group.getBounds().pad(0.1));
         }
+
+        // --- SCRIPT AUTO REFRESH (30 DETIK) ---
+        var timeLeft = 30;
+        var elem = document.getElementById('timer');
+        
+        setInterval(function() {
+            // Kita hentikan hitungan jika user sedang menahan klik (dragging map) agar tidak ganggu
+            // Tapi untuk simplifikasi, kita refresh saja paksa.
+            
+            if (timeLeft <= 0) {
+                window.location.reload();
+            } else {
+                elem.innerHTML = timeLeft;
+                timeLeft--;
+            }
+        }, 1000);
+
     </script>
 </body>
 </html>
