@@ -6,6 +6,7 @@ use App\Models\Invoice;
 use App\Models\Customer;
 use App\Models\Company;
 use Illuminate\Http\Request;
+use Barryvdh\DomPDF\Facade\Pdf; // Tambahkan ini
 
 class FrontendController extends Controller
 {
@@ -48,13 +49,23 @@ class FrontendController extends Controller
     // 3. Cetak Invoice (Versi Publik Tanpa Login)
     public function downloadInvoice($id)
     {
-        // Ambil invoice
         $invoice = Invoice::with('customer')->findOrFail($id);
-        
-        // Ambil data perusahaan untuk kop surat
         $company = Company::first();
 
-        // Gunakan view yang sama dengan admin, tapi lewat jalur publik
-        return view('billing.invoice', compact('invoice', 'company'));
+        // Tambahkan variable 'isPdf' => true
+        $data = [
+            'invoice' => $invoice,
+            'company' => $company,
+            'isPdf'   => true  // <--- INI KUNCINYA
+        ];
+
+        $pdf = Pdf::loadView('billing.invoice', $data);
+
+        $pdf->setOptions(['isRemoteEnabled' => true]);
+        $pdf->setPaper('a4', 'portrait');
+
+        $fileName = 'Invoice-' . $invoice->customer->internet_number . '-' . $invoice->id . '.pdf';
+
+        return $pdf->download($fileName);
     }
 }

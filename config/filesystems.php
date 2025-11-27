@@ -41,10 +41,21 @@ return [
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),
-            'url' => env('APP_URL').'/storage',
+            'url' => env('APP_URL') . '/storage',
             'visibility' => 'public',
             'throw' => false,
             'report' => false,
+        ],
+
+        // TAMBAHKAN DISK BARU INI:
+        'hosting' => [
+            'driver' => 'local',
+            'root' => isset($_SERVER['DOCUMENT_ROOT']) && !empty($_SERVER['DOCUMENT_ROOT'])
+                ? $_SERVER['DOCUMENT_ROOT'] . '/uploads'
+                : public_path('uploads'), // Simpan langsung ke folder public/uploads
+            'url' => env('APP_URL') . '/uploads',
+            'visibility' => 'public',
+            'throw' => false,
         ],
 
         's3' => [

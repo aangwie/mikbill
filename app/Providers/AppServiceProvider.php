@@ -23,7 +23,7 @@ class AppServiceProvider extends ServiceProvider
             
             // Jika ada logo di database, pakai itu. Jika tidak, pakai default laravel (favicon.ico)
             $faviconUrl = ($company && $company->logo_path) 
-                ? asset('storage/' . $company->logo_path) 
+                ? asset('uploads/' . $company->logo_path)  // <-- Perhatikan 'uploads/'
                 : asset('favicon.ico');
 
             // Bagikan variable $global_favicon ke semua view

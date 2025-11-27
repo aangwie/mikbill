@@ -26,18 +26,18 @@ class BillingController extends Controller
     public function index()
     {
         $user = Auth::user();
-        
+
         // Query Tagihan: Tampilkan SEMUA (Paid & Unpaid)
         $invoiceQuery = Invoice::with('customer')
             ->orderByRaw("FIELD(status, 'unpaid', 'paid')")
             ->orderBy('due_date', 'asc');
 
         if ($user->role == 'operator') {
-            $invoiceQuery->whereHas('customer', function($q) use ($user) {
+            $invoiceQuery->whereHas('customer', function ($q) use ($user) {
                 $q->where('operator_id', $user->id);
             });
         }
-        
+
         $invoices = $invoiceQuery->get();
 
         $customerQuery = Customer::orderBy('name', 'asc');
@@ -73,10 +73,10 @@ class BillingController extends Controller
         $count = 0;
         foreach ($activeCustomers as $customer) {
             $exists = Invoice::where('customer_id', $customer->id)
-                        ->where('status', 'unpaid')
-                        ->whereMonth('due_date', $request->month)
-                        ->whereYear('due_date', $request->year)
-                        ->exists();
+                ->where('status', 'unpaid')
+                ->whereMonth('due_date', $request->month)
+                ->whereYear('due_date', $request->year)
+                ->exists();
 
             if (!$exists) {
                 Invoice::create([
@@ -155,15 +155,23 @@ class BillingController extends Controller
             $nominal = number_format($customer->monthly_price, 0, ',', '.');
             $periode = Carbon::parse($invoice->due_date)->locale('id')->isoFormat('MMMM Y');
 
+            // 1. GENERATE LINK DOWNLOAD INVOICE
+            // Kita gunakan route frontend yang sudah ada
+            $linkDownload = route('frontend.invoice', $invoice->id);
+
             $text = "*PEMBAYARAN DITERIMA*\n\n";
             $text .= "Halo {$customer->name},\n";
-            $text .= "Terima kasih, pembayaran tagihan internet Anda dengan *Nomor Internet:* {$customer->internet_number} telah kami terima.\n\n";
+            $text .= "Terima kasih, pembayaran tagihan internet Anda telah kami terima.\n\n";
             $text .= "📅 Tanggal Bayar: $tglBayar\n";
             $text .= "💰 Nominal: Rp $nominal\n";
             $text .= "🗓️ Periode Tagihan: $periode\n";
             $text .= "✅ Status: LUNAS\n\n";
+
+            // 2. MASUKKAN LINK KE PESAN
+            $text .= "📄 *Unduh Invoice (PDF):*\n";
+            $text .= "$linkDownload\n\n";
+
             $text .= "Internet Anda sudah aktif kembali. Terima kasih atas kepercayaan Anda.";
-            $text .= "Untuk Mengunduh Invoice Anda, Silahkan Kunjungi Alamat Berikut dengan memasukkan Nomor Internet Anda : *https://netbill.my.id*";
 
             $waResult = $this->wa->send($customer->phone, $text);
             $pesanWA = $waResult['status'] ? "WA Terkirim." : "WA Gagal.";

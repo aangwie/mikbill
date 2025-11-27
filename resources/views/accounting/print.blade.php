@@ -3,8 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <title>Laporan Keuangan - {{ $month }}/{{ $year }}</title>
-    <link rel="icon" href="{{ $global_favicon ?? asset('favicon.ico') }}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    {{-- Favicon --}}
+    <link rel="icon" href="{{ $global_favicon ?? asset('favicon.ico') }}">
+
     <style>
         body { font-family: sans-serif; }
         .header { border-bottom: 2px solid #000; padding-bottom: 20px; margin-bottom: 20px; }
@@ -27,29 +30,20 @@
     {{-- LOGIKA JUDUL DINAMIS --}}
     @php
         switch ($reportType) {
-            case 1:
-                $judulLaporan = "LAPORAN RINCIAN PENDAPATAN & PENGELUARAN";
-                break;
-            case 2:
-                $judulLaporan = "LAPORAN REKAP PENDAPATAN & RINCIAN PENGELUARAN";
-                break;
-            case 3:
-                $judulLaporan = "LAPORAN RINCIAN PENDAPATAN & REKAP PENGELUARAN";
-                break;
-            case 4:
-                $judulLaporan = "LAPORAN REKAPITULASI KEUANGAN";
-                break;
-            default:
-                $judulLaporan = "LAPORAN LABA RUGI";
-                break;
+            case 1: $judulLaporan = "LAPORAN RINCIAN PENDAPATAN & PENGELUARAN"; break;
+            case 2: $judulLaporan = "LAPORAN REKAP PENDAPATAN & RINCIAN PENGELUARAN"; break;
+            case 3: $judulLaporan = "LAPORAN RINCIAN PENDAPATAN & REKAP PENGELUARAN"; break;
+            case 4: $judulLaporan = "LAPORAN REKAPITULASI KEUANGAN"; break;
+            default: $judulLaporan = "LAPORAN LABA RUGI"; break;
         }
     @endphp
 
     {{-- KOP SURAT --}}
     <div class="header row">
         <div class="col-8">
+            {{-- Logo (UPLOADS) --}}
             @if($company && $company->logo_path)
-                <img src="{{ asset('storage/' . $company->logo_path) }}" class="logo mb-2">
+                <img src="{{ asset('uploads/' . $company->logo_path) }}" class="logo mb-2">
             @else
                 <h2>{{ $company->company_name ?? 'MIKBILL ISP' }}</h2>
             @endif
@@ -166,9 +160,12 @@
         <div class="col-8"></div>
         <div class="col-4 text-center">
             <div class="mb-5">Mengetahui,</div>
+            
+            {{-- Tanda Tangan (UPLOADS) --}}
             @if($company && $company->signature_path)
-                <img src="{{ asset('storage/' . $company->signature_path) }}" style="max-height: 80px;">
+                <img src="{{ asset('uploads/' . $company->signature_path) }}" style="max-height: 80px;">
             @endif
+            
             <div class="fw-bold mt-2">{{ $company->owner_name ?? 'Admin' }}</div>
         </div>
     </div>
