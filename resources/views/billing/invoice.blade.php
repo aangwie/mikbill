@@ -114,7 +114,7 @@
             <div class="col-8">
                 {{-- Logo Perusahaan --}}
                 @if($company && $company->logo_path)
-                <img src="{{ asset('storage/' . $company->logo_path) }}" class="company-logo mb-2">
+                <img src="{{ asset('uploads/' . $company->logo_path) }}" class="company-logo mb-2">
                 @else
                 <h2>{{ $company->company_name ?? 'NAMA PERUSAHAAN' }}</h2>
                 @endif
@@ -198,7 +198,7 @@
                 <div class="mb-5">Hormat Kami,</div>
 
                 @if($company && $company->signature_path)
-                <img src="{{ asset('storage/' . $company->signature_path) }}" class="signature-img">
+                <img src="{{ asset('uploads/' . $company->signature_path) }}" class="signature-img">
                 @endif
 
                 <div class="fw-bold mt-2">{{ $company->owner_name ?? 'Administrator' }}</div>

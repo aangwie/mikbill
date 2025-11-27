@@ -47,6 +47,15 @@ return [
             'report' => false,
         ],
 
+        // TAMBAHKAN DISK BARU INI:
+        'hosting' => [
+            'driver' => 'local',
+            'root' => public_path('uploads'), // Simpan langsung ke folder public/uploads
+            'url' => env('APP_URL').'/uploads',
+            'visibility' => 'public',
+            'throw' => false,
+        ],
+
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),
