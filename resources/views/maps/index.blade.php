@@ -19,7 +19,7 @@
             text-align: center;
             text-shadow: 2px 2px 2px rgba(0,0,0,0.5);
         }
-        .house-online { color: #00ff2a; } /* Hijau Terang */
+        .house-online { color: #158828ff; } /* Hijau Terang */
         .house-offline { color: #ff0000; } /* Merah Terang */
     </style>
 </head>
@@ -105,7 +105,7 @@
                     <small class="d-block text-muted text-start mb-1"><i class="fas fa-user-tag me-1"></i> ${loc.username}</small>
                     <small class="d-block text-muted text-start mb-1"><i class="fas fa-map-marker-alt me-1"></i> ${loc.address}</small>
                     <div class="mt-2 d-grid">
-                        <a href="https://wa.me/${loc.phone}" target="_blank" class="btn btn-sm btn-success">
+                        <a href="https://wa.me/${loc.phone}" style="color:white;" target="_blank" class="btn btn-sm btn-success">
                             <i class="fab fa-whatsapp"></i> Chat WA
                         </a>
                     </div>
@@ -123,7 +123,7 @@
         }
 
         // --- SCRIPT AUTO REFRESH (30 DETIK) ---
-        var timeLeft = 30;
+        var timeLeft = 45;
         var elem = document.getElementById('timer');
         
         setInterval(function() {
