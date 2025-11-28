@@ -74,6 +74,7 @@ class CustomerController extends Controller
                 'address' => $request->address,
                 'latitude' => $request->latitude,
                 'longitude' => $request->longitude,
+                'notes' => $request->notes,
             ]);
 
             return back()->with('success', 'Pelanggan berhasil ditambahkan.');
@@ -111,7 +112,8 @@ class CustomerController extends Controller
                 'address' => $request->address,
                 'latitude' => $request->latitude,
                 'longitude' => $request->longitude,
-                'profile' => $request->profile, // Simpan profile baru ke DB
+                'profile' => $request->profile,
+                'notes' => $request->notes,
             ]);
 
             return back()->with('success', 'Data pelanggan & Paket Internet (Profile) berhasil diperbarui.');

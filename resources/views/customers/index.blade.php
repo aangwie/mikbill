@@ -18,7 +18,6 @@
     <link rel="icon" href="{{ $global_favicon ?? asset('favicon.ico') }}">
 
     <style>
-        /* Agar peta di dalam modal punya tinggi & border rapi */
         .map-picker {
             height: 300px;
             width: 100%;
@@ -26,6 +25,16 @@
             border: 2px solid #ddd;
             margin-bottom: 15px;
             z-index: 1; 
+        }
+        /* Style untuk Tooltip Catatan */
+        .note-icon {
+            cursor: pointer;
+            font-size: 0.9rem;
+            margin-left: 5px;
+            transition: transform 0.2s;
+        }
+        .note-icon:hover {
+            transform: scale(1.2);
         }
     </style>
 </head>
@@ -78,6 +87,16 @@
                                 <td class="fw-bold text-primary">{{ $c->internet_number ?? '-' }}</td>
                                 <td>
                                     {{ $c->name }}
+                                    
+                                    {{-- FITUR CATATAN (ICON) --}}
+                                    @if(!empty($c->notes))
+                                        <i class="fas fa-circle-info text-danger info-icon" 
+                                           data-bs-toggle="tooltip" 
+                                           data-bs-placement="top" 
+                                           title="Catatan: {{ $c->notes }}">
+                                        </i>
+                                    @endif
+
                                     <div class="small text-muted" style="font-size: 0.75rem;">User: {{ $c->pppoe_username }}</div> 
                                 </td>
                                 <td>
@@ -100,7 +119,11 @@
                                         data-address="{{ $c->address }}"
                                         data-lat="{{ $c->latitude }}"
                                         data-lng="{{ $c->longitude }}"
-                                        data-profile="{{ $c->profile }}">
+                                        data-profile="{{ $c->profile }}"
+                                        
+                                        {{-- TAMBAHKAN DATA NOTES KE TOMBOL EDIT --}}
+                                        data-notes="{{ $c->notes }}">
+                                        
                                         <i class="fas fa-edit"></i>
                                     </button>
                                     <form action="{{ route('customers.destroy', $c->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Hapus permanen pelanggan ini? Data di Mikrotik juga akan dihapus.');">
@@ -144,6 +167,13 @@
                                         @if(isset($operators)) @foreach($operators as $op) <option value="{{ $op->id }}">{{ $op->name }}</option> @endforeach @endif
                                     </select>
                                 </div>
+
+                                {{-- INPUT CATATAN (TAMBAH) --}}
+                                <div class="mb-3">
+                                    <label class="fw-bold text-warning"><i class="fas fa-sticky-note me-1"></i> Catatan Khusus</label>
+                                    <textarea name="notes" class="form-control bg-light" rows="2" placeholder="Cth: Rumah pagar hitam, sering telat bayar, dll..."></textarea>
+                                </div>
+
                             </div>
                             <div class="col-md-6">
                                 <h6 class="text-danger border-bottom pb-2">Data Teknis (Mikrotik)</h6>
@@ -157,7 +187,6 @@
                                     </select>
                                 </div>
 
-                                {{-- PETA PICKER (TAMBAH) --}}
                                 <h6 class="text-success border-bottom pb-2 mt-3">Lokasi (Pinpoint)</h6>
                                 <div id="mapAdd" class="map-picker"></div>
                                 <div class="row">
@@ -202,6 +231,13 @@
                                         @if(isset($operators)) @foreach($operators as $op) <option value="{{ $op->id }}">{{ $op->name }}</option> @endforeach @endif
                                     </select>
                                 </div>
+
+                                {{-- INPUT CATATAN (EDIT) --}}
+                                <div class="mb-3">
+                                    <label class="fw-bold text-warning"><i class="fas fa-sticky-note me-1"></i> Catatan Khusus</label>
+                                    <textarea name="notes" id="editNotes" class="form-control bg-light" rows="2"></textarea>
+                                </div>
+
                                 <div class="mt-3 pt-3 border-top">
                                     <h6 class="text-danger">Paket Internet (Mikrotik)</h6>
                                     <div class="mb-3">
@@ -217,19 +253,14 @@
                             {{-- KANAN: MAP EDIT --}}
                             <div class="col-md-6">
                                 <h6 class="text-success border-bottom pb-2">Lokasi (Pinpoint)</h6>
-                                
-                                {{-- CONTAINER MAP EDIT --}}
                                 <div id="mapEdit" class="map-picker"></div>
-
                                 <div class="row">
                                     <div class="col-6 mb-3">
                                         <label class="small fw-bold">Latitude</label>
-                                        {{-- PERBAIKAN: Hapus readonly agar bisa diketik manual --}}
                                         <input type="text" name="latitude" id="editLat" class="form-control">
                                     </div>
                                     <div class="col-6 mb-3">
                                         <label class="small fw-bold">Longitude</label>
-                                        {{-- PERBAIKAN: Hapus readonly agar bisa diketik manual --}}
                                         <input type="text" name="longitude" id="editLng" class="form-control">
                                     </div>
                                 </div>
@@ -278,9 +309,24 @@
         var defaultLng = 106.816666;
 
         $(document).ready(function() {
-            $('#tableCust').DataTable();
+            // Inisialisasi DataTables
+            var table = $('#tableCust').DataTable();
 
-            // === 1. LOGIKA MAP ADD (TAMBAH) ===
+            // --- AKTIFKAN TOOLTIP BOOTSTRAP (PENTING!) ---
+            // Setiap kali tabel dirender ulang (paging/search), tooltip harus di-init ulang
+            table.on('draw', function () {
+                var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+                var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                    return new bootstrap.Tooltip(tooltipTriggerEl)
+                })
+            });
+            // Init awal
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl)
+            })
+
+            // === 1. LOGIKA MAP ADD ===
             $('#modalAdd').on('shown.bs.modal', function () {
                 if (!mapAdd) {
                     mapAdd = L.map('mapAdd').setView([defaultLat, defaultLng], 13);
@@ -302,17 +348,14 @@
             });
 
 
-            // === 2. LOGIKA MAP EDIT (DIPERBAIKI) ===
+            // === 2. LOGIKA EDIT ===
             $('#tableCust tbody').on('click', '.btn-edit', function() {
                 let id = $(this).data('id');
-                
-                // Ambil data Lat/Lng dari tombol
                 let rawLat = $(this).data('lat');
                 let rawLng = $(this).data('lng');
                 let lat = rawLat ? rawLat : defaultLat;
                 let lng = rawLng ? rawLng : defaultLng;
 
-                // Isi Form Text
                 $('#editInet').val($(this).data('internet'));
                 $('#editName').val($(this).data('name'));
                 $('#editPhone').val($(this).data('phone'));
@@ -321,57 +364,33 @@
                 $('#editProfile').val($(this).data('profile'));
                 $('#editAddress').val($(this).data('address'));
                 
-                // Isi Input Lat/Lng
+                // ISI CATATAN (NOTES)
+                $('#editNotes').val($(this).data('notes'));
+                
                 $('#editLat').val(rawLat);
                 $('#editLng').val(rawLng);
                 
                 $('#formEdit').attr('action', '/customers/' + id);
                 new bootstrap.Modal(document.getElementById('modalEdit')).show();
 
-                // --- RESET & INIT MAP EDIT (DELAYED) ---
                 setTimeout(function() {
-                    // PENTING: Hancurkan map lama jika ada agar tidak error "Map container already initialized"
-                    if (mapEdit) {
-                        mapEdit.remove();
-                        mapEdit = null;
-                    }
-
-                    // Buat Map Baru dengan Koordinat Pelanggan
+                    if (mapEdit) { mapEdit.remove(); mapEdit = null; }
                     mapEdit = L.map('mapEdit').setView([lat, lng], 13);
                     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap' }).addTo(mapEdit);
-                    
-                    // Buat Marker Baru
                     markerEdit = L.marker([lat, lng], {draggable: true}).addTo(mapEdit);
-
-                    // Event Drag Marker -> Update Input
-                    markerEdit.on('dragend', function (e) {
-                        var latlng = markerEdit.getLatLng();
-                        $('#editLat').val(latlng.lat);
-                        $('#editLng').val(latlng.lng);
-                    });
-
-                    // Event Click Map -> Pindah Marker & Update Input
-                    mapEdit.on('click', function(e) {
-                        markerEdit.setLatLng(e.latlng);
-                        $('#editLat').val(e.latlng.lat);
-                        $('#editLng').val(e.latlng.lng);
-                    });
-
-                    // Render Ulang Ukuran
+                    markerEdit.on('dragend', function (e) { var latlng = markerEdit.getLatLng(); $('#editLat').val(latlng.lat); $('#editLng').val(latlng.lng); });
+                    mapEdit.on('click', function(e) { markerEdit.setLatLng(e.latlng); $('#editLat').val(e.latlng.lat); $('#editLng').val(e.latlng.lng); });
                     mapEdit.invalidateSize();
-                }, 500); // Delay agar modal benar-benar tampil dulu
+                }, 500);
             });
 
-            // === 3. LISTENER INPUT MANUAL (Agar Marker pindah saat diketik) ===
             $('#editLat, #editLng').on('change', function() {
                 let inputLat = $('#editLat').val();
                 let inputLng = $('#editLng').val();
-                
-                // Cek jika kedua input valid dan mapEdit sudah ada
                 if(inputLat && inputLng && mapEdit && markerEdit) {
                     let newLatLng = new L.LatLng(inputLat, inputLng);
-                    markerEdit.setLatLng(newLatLng); // Pindahkan marker
-                    mapEdit.panTo(newLatLng); // Geser peta ke marker
+                    markerEdit.setLatLng(newLatLng);
+                    mapEdit.panTo(newLatLng);
                 }
             });
         });
