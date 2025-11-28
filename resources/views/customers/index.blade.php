@@ -170,7 +170,7 @@
 
                                 {{-- INPUT CATATAN (TAMBAH) --}}
                                 <div class="mb-3">
-                                    <label class="fw-bold text-warning"><i class="fas fa-sticky-note me-1"></i> Catatan Khusus</label>
+                                    <label class="fw-bold text-success"><i class="fas fa-circle-info me-1"></i> Catatan Khusus</label>
                                     <textarea name="notes" class="form-control bg-light" rows="2" placeholder="Cth: Rumah pagar hitam, sering telat bayar, dll..."></textarea>
                                 </div>
 
@@ -234,7 +234,7 @@
 
                                 {{-- INPUT CATATAN (EDIT) --}}
                                 <div class="mb-3">
-                                    <label class="fw-bold text-warning"><i class="fas fa-sticky-note me-1"></i> Catatan Khusus</label>
+                                    <label class="fw-bold text-success"><i class="fas fa-circle-info me-1"></i> Catatan Khusus</label>
                                     <textarea name="notes" id="editNotes" class="form-control bg-light" rows="2"></textarea>
                                 </div>
 
