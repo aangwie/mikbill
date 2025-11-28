@@ -84,6 +84,15 @@
                         </li>
                         <li><a class="dropdown-item" href="{{ route('company.index') }}"><i class="fas fa-building me-2"></i> Perusahaan</a></li>
                         <li><a class="dropdown-item" href="{{ route('whatsapp.index') }}"><i class="fab fa-whatsapp me-2"></i> WhatsApp API</a></li>
+                        {{-- MENU UPDATE SYSTEM (BARU) --}}
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li>
+                            <a class="dropdown-item text-primary" href="{{ route('system.index') }}">
+                                <i class="fas fa-sync me-2"></i> Update Aplikasi
+                            </a>
+                        </li>
                     </ul>
                 </li>
                 @endif

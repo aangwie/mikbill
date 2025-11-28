@@ -11,8 +11,9 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\FrontendController;
 use App\Http\Controllers\AccountingController;
-use App\Http\Controllers\RouterSettingController; 
-use App\Http\Controllers\TrafficController; 
+use App\Http\Controllers\RouterSettingController;
+use App\Http\Controllers\TrafficController;
+use App\Http\Controllers\SystemController;
 
 /*
 |--------------------------------------------------------------------------
@@ -44,7 +45,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', function () {
         return redirect()->route('billing.index');
     });
-    
+
     //Dashboard bisa di akses Admin dan Operator
     Route::get('/admin/dashboard', [PppoeController::class, 'index'])->name('pppoe.dashboard');
     //Route Maps Pelanggan
@@ -65,7 +66,7 @@ Route::middleware(['auth'])->group(function () {
 
     // Admin Only
     Route::middleware(['role:admin'])->group(function () {
-                // EXPORT & IMPORT
+        // EXPORT & IMPORT
         Route::get('/customers/export', [CustomerController::class, 'export'])->name('customers.export');
         Route::post('/customers/import', [CustomerController::class, 'import'])->name('customers.import');
         Route::get('/customers/template', [CustomerController::class, 'downloadTemplate'])->name('customers.template');
@@ -99,8 +100,11 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/router-setting', [RouterSettingController::class, 'index'])->name('router.index');
         Route::post('/router-setting', [RouterSettingController::class, 'update'])->name('router.update');
 
+        // SYSTEM UPDATE
+        Route::get('/system/update', [SystemController::class, 'index'])->name('system.index');
+        Route::post('/system/update', [SystemController::class, 'update'])->name('system.update');
+
         Route::resource('users', UserController::class);
         Route::resource('customers', CustomerController::class);
-
     });
 });

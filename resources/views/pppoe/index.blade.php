@@ -29,11 +29,29 @@
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
                 <h3><i class="fas fa-network-wired text-primary"></i> Monitor User Online</h3>
-                <div class="d-flex align-items-center gap-2 mt-1">
-                    <small class="text-muted">Pantau status koneksi pelanggan secara realtime</small>
-                    <span class="badge bg-white text-secondary border shadow-sm">
-                        <i class="fas fa-clock text-warning me-1"></i>
-                        Refresh: <b id="timer" class="text-dark">30</b>s
+                
+                {{-- CONTROL PANEL AUTO REFRESH --}}
+                <div class="d-flex align-items-center gap-3 mt-2 p-2 bg-white rounded shadow-sm border" style="width: fit-content;">
+                    
+                    {{-- 1. Switch ON/OFF --}}
+                    <div class="form-check form-switch mb-0">
+                        <input class="form-check-input" type="checkbox" id="switchAutoRefresh" checked>
+                        <label class="form-check-label small fw-bold" for="switchAutoRefresh">Auto Refresh</label>
+                    </div>
+
+                    {{-- 2. Pilihan Waktu --}}
+                    <select id="selectInterval" class="form-select form-select-sm border-secondary" style="width: auto; cursor: pointer;">
+                        <option value="5">5 Detik</option>
+                        <option value="15">15 Detik</option>
+                        <option value="30">30 Detik</option>
+                        <option value="60">60 Detik</option>
+                        <option value="180">3 Menit</option>
+                        <option value="360">6 Menit</option>
+                    </select>
+
+                    {{-- 3. Indikator Countdown --}}
+                    <span class="badge bg-light text-dark border">
+                        <i class="fas fa-clock text-warning me-1"></i> <b id="timerDisplay">--</b>s
                     </span>
                 </div>
             </div>
@@ -197,14 +215,78 @@
                 "language": { "url": "//cdn.datatables.net/plug-ins/1.10.24/i18n/Indonesian.json" }
             });
 
-            var timeLeft = 30;
-            var elem = document.getElementById('timer');
-            setInterval(function() {
-                var isModalOpen = $('.modal.show').length > 0;
-                if (isModalOpen) { timeLeft = 30; elem.innerHTML = "Paused"; return; }
-                if (timeLeft <= 0) window.location.reload();
-                else { elem.innerHTML = timeLeft; timeLeft--; }
-            }, 1000);
+            // --- LOGIKA AUTO REFRESH CANGGIH ---
+            
+            // 1. Ambil Settingan Terakhir dari LocalStorage (Agar browser ingat pilihan user)
+            let savedInterval = localStorage.getItem('dashboard_refresh_interval') || 30;
+            let savedStatus = localStorage.getItem('dashboard_refresh_active'); 
+            
+            // Konversi string 'false' menjadi boolean false, default true
+            let isRefreshOn = (savedStatus === 'false') ? false : true; 
+
+            // 2. Set Nilai Awal ke Elemen HTML
+            $('#selectInterval').val(savedInterval);
+            $('#switchAutoRefresh').prop('checked', isRefreshOn);
+
+            // Variable Timer
+            let timeLeft = parseInt(savedInterval);
+            let timerElement = document.getElementById('timerDisplay');
+            let intervalId;
+
+            // 3. Fungsi Menjalankan Timer
+            function startTimer() {
+                if (intervalId) clearInterval(intervalId); // Reset jika ada interval lama
+
+                // Update tampilan awal
+                if (!isRefreshOn) {
+                    timerElement.innerHTML = "OFF";
+                    return;
+                }
+                timerElement.innerHTML = timeLeft;
+
+                intervalId = setInterval(function() {
+                    // PENGAMAN: Cek Modal (Jangan refresh jika admin lagi buka modal)
+                    if ($('.modal.show').length > 0) {
+                        timerElement.innerHTML = "Paused";
+                        return;
+                    }
+
+                    if (timeLeft <= 0) {
+                        window.location.reload();
+                    } else {
+                        timeLeft--;
+                        timerElement.innerHTML = timeLeft;
+                    }
+                }, 1000);
+            }
+
+            // 4. Event Listener: Saat Switch ON/OFF Diubah
+            $('#switchAutoRefresh').change(function() {
+                isRefreshOn = $(this).is(':checked');
+                localStorage.setItem('dashboard_refresh_active', isRefreshOn); // Simpan ke browser
+                
+                if (isRefreshOn) {
+                    timeLeft = parseInt($('#selectInterval').val()); // Reset waktu
+                    startTimer();
+                } else {
+                    clearInterval(intervalId);
+                    timerElement.innerHTML = "OFF";
+                }
+            });
+
+            // 5. Event Listener: Saat Durasi Waktu Diubah
+            $('#selectInterval').change(function() {
+                let newVal = $(this).val();
+                localStorage.setItem('dashboard_refresh_interval', newVal); // Simpan ke browser
+                
+                timeLeft = parseInt(newVal); // Reset waktu hitung mundur
+                if (isRefreshOn) {
+                    timerElement.innerHTML = timeLeft;
+                }
+            });
+
+            // Jalankan Timer Pertama Kali
+            startTimer();
         });
     </script>
 </body>
