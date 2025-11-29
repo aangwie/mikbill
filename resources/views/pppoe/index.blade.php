@@ -105,7 +105,7 @@
                     </div>
                 </div>
                 <div class="col-md-4">
-                    <div class="card bg-secondary text-white shadow-sm h-100 border-0">
+                    <div class="card bg-danger text-white shadow-sm h-100 border-0">
                         <div class="card-body d-flex justify-content-between align-items-center">
                             <div><h6 class="text-uppercase mb-1 opacity-75">Sedang Offline</h6><h2 class="mb-0 fw-bold">{{ $offlineUser }}</h2></div>
                             <i class="fas fa-power-off fa-3x opacity-50"></i>
