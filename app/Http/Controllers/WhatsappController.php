@@ -144,4 +144,85 @@ class WhatsappController extends Controller
             return back()->with('error', "Gagal mengirim pesan. Periksa nomor tujuan.");
         }
     }
+
+    // HALAMAN UTAMA BROADCAST
+    public function broadcastIndex()
+    {
+        // Ambil ID, Nama, dan No HP semua pelanggan yang punya nomor HP
+        $targets = Customer::whereNotNull('phone')
+            ->where('phone', '!=', '')
+            ->select('id', 'name', 'phone')
+            ->get();
+
+        return view('whatsapp.broadcast', compact('targets'));
+    }
+
+    // PROSES KIRIM PER ITEM (Dipanggil AJAX)
+    public function broadcastProcess(Request $request)
+    {
+        $request->validate([
+            'id' => 'required',
+            'message' => 'required',
+        ]);
+
+        $customer = Customer::find($request->id);
+
+        if (!$customer) {
+            return response()->json(['status' => false, 'message' => 'Data tidak ditemukan']);
+        }
+
+        // Replace variable dinamis
+        $msg = str_replace('{name}', $customer->name, $request->message);
+        $msg = str_replace('{tagihan}', number_format($customer->monthly_price, 0, ',', '.'), $msg);
+
+        // Kirim WA
+        try {
+            $result = $this->waService->send($customer->phone, $msg);
+            
+            if ($result['status']) {
+                return response()->json([
+                    'status' => true, 
+                    'target' => $customer->name,
+                    'phone' => $customer->phone
+                ]);
+            } else {
+                return response()->json([
+                    'status' => false, 
+                    'target' => $customer->name,
+                    'message' => 'Gagal koneksi WA'
+                ]);
+            }
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false, 
+                'target' => $customer->name,
+                'message' => $e->getMessage()
+            ]);
+        }
+    }
+
+    // API: Ambil Daftar Target untuk Broadcast (Dipanggil AJAX)
+    public function getBroadcastTargets(Request $request)
+    {
+        $type = $request->type; // 'unpaid' atau 'all'
+        
+        if ($type == 'unpaid') {
+            // Cari pelanggan yang punya invoice status != paid
+            // Asumsi: Relasi customer -> invoices sudah ada
+            // Atau query manual sederhana:
+            $targets = Customer::whereHas('invoices', function($q) {
+                    $q->where('status', '!=', 'paid');
+                })
+                ->whereNotNull('phone')
+                ->get(['id', 'name', 'phone', 'monthly_price']); // Ambil monthly_price untuk variabel {tagihan}
+                
+        } else {
+            // Semua Pelanggan
+            $targets = Customer::whereNotNull('phone')
+                ->where('phone', '!=', '')
+                ->get(['id', 'name', 'phone', 'monthly_price']);
+        }
+
+        return response()->json($targets);
+    }
 }

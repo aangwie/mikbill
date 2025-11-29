@@ -84,6 +84,12 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/whatsapp/test', [WhatsappController::class, 'sendTest'])->name('whatsapp.test');
         Route::post('/whatsapp/broadcast', [WhatsappController::class, 'broadcast'])->name('whatsapp.broadcast');
         Route::post('/whatsapp/send-customer', [WhatsappController::class, 'sendToCustomer'])->name('whatsapp.send.customer');
+        Route::get('/whatsapp/broadcast', [WhatsappController::class, 'broadcastIndex'])->name('whatsapp.broadcast.index');
+        Route::post('/whatsapp/broadcast/process', [WhatsappController::class, 'broadcastProcess'])->name('whatsapp.broadcast.process');
+        // API Helper untuk Broadcast
+        Route::get('/whatsapp/broadcast/targets', [WhatsappController::class, 'getBroadcastTargets'])->name('whatsapp.broadcast.targets');
+        // Route Proses Kirim (yang sudah dibuat sebelumnya)
+        Route::post('/whatsapp/broadcast/process', [WhatsappController::class, 'broadcastProcess'])->name('whatsapp.broadcast.process');
         Route::delete('/customers/{id}', [CustomerController::class, 'destroy'])->name('customers.destroy');
 
         // AKUNTANSI & KEUANGAN
