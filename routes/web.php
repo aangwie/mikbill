@@ -103,9 +103,14 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/traffic/data', [TrafficController::class, 'data'])->name('traffic.data');
 
         // Konfigurasi Mikrotik
+        //Route::get('/router-setting', [RouterSettingController::class, 'index'])->name('router.index');
+        //Route::post('/router-setting', [RouterSettingController::class, 'update'])->name('router.update');
+        // ROUTER SETTINGS (CRUD & SWITCH)
         Route::get('/router-setting', [RouterSettingController::class, 'index'])->name('router.index');
-        Route::post('/router-setting', [RouterSettingController::class, 'update'])->name('router.update');
-
+        Route::post('/router-setting', [RouterSettingController::class, 'store'])->name('router.store'); // Create & Update
+        Route::post('/router-setting/activate/{id}', [RouterSettingController::class, 'activate'])->name('router.activate');
+        Route::delete('/router-setting/{id}', [RouterSettingController::class, 'destroy'])->name('router.destroy');
+        
         // SYSTEM UPDATE
         Route::get('/system/update', [SystemController::class, 'index'])->name('system.index');
         Route::post('/system/update', [SystemController::class, 'update'])->name('system.update');

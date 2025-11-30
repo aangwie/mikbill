@@ -18,7 +18,11 @@ class PppoeController extends Controller
     public function index()
     {
         // 2. Ambil Info Router dari Database
-        $routerInfo = RouterSetting::first();
+        $routerInfo = RouterSetting::where('is_active', true)->first();
+        // Fallback: Jika tidak ada yang aktif (misal baru install), ambil yang pertama
+        if (!$routerInfo) {
+            $routerInfo = RouterSetting::first();
+        }
         
         // 3. Cek Status Koneksi
         $isConnected = $this->mikrotik->isConnected();

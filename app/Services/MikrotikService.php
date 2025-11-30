@@ -15,16 +15,19 @@ class MikrotikService
     public function __construct()
     {
         try {
-            // 1. Ambil Setting dari Database
-            $config = RouterSetting::first();
+            // AMBIL YANG STATUSNYA AKTIF
+            $config = RouterSetting::where('is_active', true)->first();
 
-            // Jika belum disetting di DB, stop (biarkan null)
+            // Jika tidak ada yang aktif, ambil yang pertama saja (fallback)
+            if (!$config) {
+                $config = RouterSetting::first();
+            }
+
             if (!$config) {
                 $this->client = null;
                 return;
             }
 
-            // 2. Inisialisasi client dengan data DB
             $this->client = new Client([
                 'host' => $config->host,
                 'user' => $config->username,
