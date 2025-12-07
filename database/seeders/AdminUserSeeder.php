@@ -12,6 +12,7 @@ class AdminUserSeeder extends Seeder
     {
         User::create([
             'name' => 'Administrator',
+            'role' => 'admin',
             'email' => 'admin@mikrotik.com',
             'password' => Hash::make('admin123'), // Password login nanti
         ]);
