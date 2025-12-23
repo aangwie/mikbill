@@ -178,23 +178,23 @@ class WhatsappController extends Controller
         // Kirim WA
         try {
             $result = $this->waService->send($customer->phone, $msg);
-            
+
             if ($result['status']) {
                 return response()->json([
-                    'status' => true, 
+                    'status' => true,
                     'target' => $customer->name,
                     'phone' => $customer->phone
                 ]);
             } else {
                 return response()->json([
-                    'status' => false, 
+                    'status' => false,
                     'target' => $customer->name,
                     'message' => 'Gagal koneksi WA'
                 ]);
             }
         } catch (\Exception $e) {
             return response()->json([
-                'status' => false, 
+                'status' => false,
                 'target' => $customer->name,
                 'message' => $e->getMessage()
             ]);
@@ -205,17 +205,17 @@ class WhatsappController extends Controller
     public function getBroadcastTargets(Request $request)
     {
         $type = $request->type; // 'unpaid' atau 'all'
-        
+
         if ($type == 'unpaid') {
             // Cari pelanggan yang punya invoice status != paid
             // Asumsi: Relasi customer -> invoices sudah ada
             // Atau query manual sederhana:
-            $targets = Customer::whereHas('invoices', function($q) {
-                    $q->where('status', '!=', 'paid');
-                })
+            $targets = Customer::whereHas('invoices', function ($q) {
+                $q->where('status', '!=', 'paid');
+            })
                 ->whereNotNull('phone')
                 ->get(['id', 'name', 'phone', 'monthly_price']); // Ambil monthly_price untuk variabel {tagihan}
-                
+
         } else {
             // Semua Pelanggan
             $targets = Customer::whereNotNull('phone')
@@ -224,5 +224,27 @@ class WhatsappController extends Controller
         }
 
         return response()->json($targets);
+    }
+    // --- GATEWAY PROXY ---
+    public function getStatus()
+    {
+        try {
+            $client = new \GuzzleHttp\Client();
+            $response = $client->get('http://localhost:3000/status', ['http_errors' => false]);
+            return $response->getBody();
+        } catch (\Exception $e) {
+            return response()->json(['status' => 'ERROR', 'message' => 'Gateway Backend is OFF']);
+        }
+    }
+
+    public function getQr()
+    {
+        try {
+            $client = new \GuzzleHttp\Client();
+            $response = $client->get('http://localhost:3000/qr', ['http_errors' => false]);
+            return $response->getBody();
+        } catch (\Exception $e) {
+            return response()->json(['status' => 'ERROR']);
+        }
     }
 }

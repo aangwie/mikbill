@@ -15,6 +15,7 @@ use App\Http\Controllers\RouterSettingController;
 use App\Http\Controllers\TrafficController;
 use App\Http\Controllers\SystemController;
 
+
 /*
 |--------------------------------------------------------------------------
 | PUBLIC ROUTES (Bisa diakses siapa saja)
@@ -88,6 +89,10 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/whatsapp/broadcast/process', [WhatsappController::class, 'broadcastProcess'])->name('whatsapp.broadcast.process');
         // API Helper untuk Broadcast
         Route::get('/whatsapp/broadcast/targets', [WhatsappController::class, 'getBroadcastTargets'])->name('whatsapp.broadcast.targets');
+        // Route Helper Gateway
+        Route::get('/whatsapp/gateway/status', [WhatsappController::class, 'getStatus'])->name('whatsapp.gateway.status');
+        Route::get('/whatsapp/gateway/qr', [WhatsappController::class, 'getQr'])->name('whatsapp.gateway.qr');
+
         // Route Proses Kirim (yang sudah dibuat sebelumnya)
         Route::post('/whatsapp/broadcast/process', [WhatsappController::class, 'broadcastProcess'])->name('whatsapp.broadcast.process');
         Route::delete('/customers/{id}', [CustomerController::class, 'destroy'])->name('customers.destroy');
@@ -102,15 +107,14 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/traffic', [TrafficController::class, 'index'])->name('traffic.index');
         Route::post('/traffic/data', [TrafficController::class, 'data'])->name('traffic.data');
 
-        // Konfigurasi Mikrotik
-        //Route::get('/router-setting', [RouterSettingController::class, 'index'])->name('router.index');
-        //Route::post('/router-setting', [RouterSettingController::class, 'update'])->name('router.update');
         // ROUTER SETTINGS (CRUD & SWITCH)
         Route::get('/router-setting', [RouterSettingController::class, 'index'])->name('router.index');
         Route::post('/router-setting', [RouterSettingController::class, 'store'])->name('router.store'); // Create & Update
         Route::post('/router-setting/activate/{id}', [RouterSettingController::class, 'activate'])->name('router.activate');
         Route::delete('/router-setting/{id}', [RouterSettingController::class, 'destroy'])->name('router.destroy');
-        
+
+
+
         // SYSTEM UPDATE
         Route::get('/system/update', [SystemController::class, 'index'])->name('system.index');
         Route::post('/system/update', [SystemController::class, 'update'])->name('system.update');
