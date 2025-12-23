@@ -18,49 +18,86 @@ const pool = mysql.createPool({
     database: process.env.DB_NAME || 'mikbill'
 });
 
-let sock;
-let qrCodeData = null;
-let status = 'DISCONNECTED';
+let isConnecting = false;
 
 async function connectToWhatsApp() {
-    const { state, saveCreds } = await useMySQLAuthState(pool, 'admin');
+    if (isConnecting) return;
+    isConnecting = true;
 
-    sock = makeWASocket({
-        auth: state,
-        printQRInTerminal: true,
-        logger: pino({ level: 'silent' }),
-        browser: ['MikBill Gateway', 'Chrome', '1.0.0']
-    });
+    try {
+        console.log('Initializing connection...');
+        const { state, saveCreds } = await useMySQLAuthState(pool, 'admin');
 
-    sock.ev.on('connection.update', (update) => {
-        const { connection, lastDisconnect, qr } = update;
+        sock = makeWASocket({
+            auth: state,
+            printQRInTerminal: true,
+            logger: pino({ level: 'silent' }),
+            browser: ['MikBill Gateway', 'Chrome', '1.0.0'],
+            connectTimeoutMs: 60000,
+            defaultQueryTimeoutMs: 60000,
+            retryRequestDelayMs: 250
+        });
 
-        if (qr) {
-            qrCodeData = qr;
-            status = 'QR_READY';
-            console.log('QR Code generated');
-        }
+        sock.ev.on('connection.update', async (update) => {
+            const { connection, lastDisconnect, qr } = update;
 
-        if (connection === 'close') {
-            const shouldReconnect = (lastDisconnect.error)?.output?.statusCode !== DisconnectReason.loggedOut;
-            console.log('Connection closed due to ', lastDisconnect.error, ', reconnecting ', shouldReconnect);
-            status = 'DISCONNECTED';
-            qrCodeData = null;
-            if (shouldReconnect) {
-                setTimeout(connectToWhatsApp, 3000); // Retry logic
+            if (qr) {
+                qrCodeData = qr;
+                status = 'QR_READY';
+                console.log('QR Code generated');
             }
-        } else if (connection === 'open') {
-            console.log('Opened connection');
-            status = 'CONNECTED';
-            qrCodeData = null;
-        }
-    });
 
-    sock.ev.on('creds.update', saveCreds);
+            if (connection === 'close') {
+                const shouldReconnect = (lastDisconnect.error)?.output?.statusCode !== DisconnectReason.loggedOut;
+                console.log('Connection closed due to ', lastDisconnect.error, ', reconnecting ', shouldReconnect);
+                status = 'DISCONNECTED';
+                qrCodeData = null;
+
+                if (shouldReconnect) {
+                    setTimeout(() => { isConnecting = false; connectToWhatsApp(); }, 3000);
+                } else {
+                    console.log('Logged out. Clearing session...');
+                    await pool.query("DELETE FROM whatsapp_sessions WHERE session_id = 'admin'");
+                    status = 'DISCONNECTED';
+                    setTimeout(() => { isConnecting = false; connectToWhatsApp(); }, 1000);
+                }
+            } else if (connection === 'open') {
+                console.log('Opened connection');
+                status = 'CONNECTED';
+                qrCodeData = null;
+                isConnecting = false;
+            }
+        });
+
+        sock.ev.on('creds.update', saveCreds);
+
+    } catch (error) {
+        console.error('Error connecting:', error);
+        isConnecting = false;
+        setTimeout(() => { isConnecting = false; connectToWhatsApp(); }, 5000);
+    }
 }
+
 
 // Start connection
 connectToWhatsApp();
+
+app.post('/logout', async (req, res) => {
+    try {
+        if (sock) {
+            await sock.logout(); // Will trigger connection.update 'close' with loggedOut reason
+        }
+        // Force clear DB just in case
+        await pool.query("DELETE FROM whatsapp_sessions WHERE session_id = 'admin'");
+        res.json({ status: true, message: 'Logged out' });
+    } catch (e) {
+        // If sock.logout fails (e.g. not connected), just clear DB
+        await pool.query("DELETE FROM whatsapp_sessions WHERE session_id = 'admin'");
+        // Re-init to get QR
+        connectToWhatsApp();
+        res.json({ status: true, message: 'Forced logout. QR will be generated.' });
+    }
+});
 
 app.get('/qr', async (req, res) => {
     if (status === 'CONNECTED') {
@@ -103,10 +140,20 @@ app.post('/send', async (req, res) => {
 });
 
 app.post('/restart', (req, res) => {
-    process.exit(0); // Simple restart mechanism if using PM2, otherwise just stops. 
-    // In dev environment this stops the script.
+    process.exit(0);
+});
+
+app.post('/shutdown', (req, res) => {
+    res.json({ status: true, message: 'Shutting down...' });
+    console.log('Received shutdown signal via HTTP.');
+    setTimeout(() => {
+        process.exit(0);
+    }, 500);
 });
 
 app.listen(3000, () => {
-    console.log('WhatsApp Gateway running on port 3000');
+    // Write PID file
+    const fs = require('fs');
+    fs.writeFileSync('gateway.pid', process.pid.toString());
+    console.log('WhatsApp Gateway running on port 3000. PID:', process.pid);
 });
