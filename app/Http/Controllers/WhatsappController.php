@@ -416,8 +416,8 @@ class WhatsappController extends Controller
             $gatewayRunning = false;
         }
 
-        // Check if node_modules exists
-        $nodeModulesExists = is_dir(base_path('node_modules'));
+        // Check if node_modules exists (look in root or gateway folder)
+        $nodeModulesExists = is_dir(base_path('node_modules')) || is_dir(base_path('whatsapp-gateway/node_modules'));
 
         // Determine if Node.js is available
         // On cPanel: we can't detect via exec, but if gateway runs then Node.js works
@@ -434,7 +434,7 @@ class WhatsappController extends Controller
             'gateway_url' => env('WHATSAPP_GATEWAY_URL', 'http://localhost:3000'),
             'gateway_path' => base_path(),
             'dependencies_installed' => $nodeModulesExists,
-            'message' => $isCpanel && !$nodePath ? 'cPanel detected. PHP cannot detect Node.js directly. Check if gateway is running via cPanel.' : null,
+            'message' => $isCpanel && !$nodePath ? 'cPanel detected. PHP cannot detect Node.js directly. Please ensure WHATSAPP_GATEWAY_URL in .env matches your cPanel Application URL (e.g., https://billnesia.com).' : null,
         ]);
     }
 

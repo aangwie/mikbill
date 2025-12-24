@@ -376,10 +376,19 @@
                     $('#checkResult').html(`
                         <div class="check-error">
                             <h6 class="text-danger fw-bold mb-2"><i class="fas fa-times-circle me-1"></i>Node.js Not Detected</h6>
-                            <p class="small mb-0">${data.is_cpanel ?
-                            'On cPanel hosting, start the app via Node.js Selector then check again.' :
-                            'Node.js is not installed. Please install it using the guide on the right.'}</p>
-                            ${gatewayInfo}
+                            <p class="small mb-0">${data.is_cpanel ? 
+                                'On cPanel hosting, start the app via the Node.js Selector in your cPanel dashboard.' : 
+                                'Node.js is not installed. Please install it using the guide on the right.'}</p>
+                            
+                            <div class="mt-3 p-2 bg-light rounded border border-danger">
+                                <p class="small fw-bold mb-1">Check your .env Configuration:</p>
+                                <ul class="small mb-0 ps-3">
+                                    <li>Current URL: <code class="text-danger">${data.gateway_url}</code></li>
+                                    ${data.is_cpanel && !data.gateway_url.includes('.com') ? '<li class="text-danger"><b>Warning:</b> Domain seems incomplete (missing .com?)</li>' : ''}
+                                    ${data.is_cpanel && data.gateway_url.includes(':3000') ? '<li class="text-warning"><b>Note:</b> On cPanel, usually you should use the Domain URL <i>without</i> port :3000</li>' : ''}
+                                </ul>
+                            </div>
+
                             ${cpanelMsg}
                         </div>
                     `);
