@@ -215,14 +215,14 @@
 
                         <div class="alert alert-info py-2 small mb-3">
                             <i class="fas fa-info-circle me-1"></i>Most shared hosting uses <b>CloudLinux NodeJS
-                                Selector</b>.
+                                Selector</b>. package.json is now in project root.
                         </div>
 
                         <div class="mb-3">
                             <div class="d-flex align-items-start mb-2">
                                 <span class="step-number">1</span>
                                 <div>
-                                    <strong>Upload whatsapp-gateway folder</strong>
+                                    <strong>Upload entire project</strong>
                                     <p class="small text-danger mb-0"><i
                                             class="fas fa-exclamation-triangle me-1"></i><b>Important:</b> Do NOT upload
                                         the <code>node_modules</code> folder! Delete it first before uploading.</p>
@@ -240,8 +240,9 @@
                                     <ul class="small mb-0">
                                         <li>Node.js version: <b>18.x+</b></li>
                                         <li>Application mode: <b>Production</b></li>
-                                        <li>Application root: <b>path/to/whatsapp-gateway</b></li>
-                                        <li>Startup file: <b>index.js</b></li>
+                                        <li>Application root: <b>your_laravel_folder</b> (project root with
+                                            package.json)</li>
+                                        <li>Startup file: <b>whatsapp-gateway/index.js</b></li>
                                     </ul>
                                 </div>
                             </div>
@@ -287,7 +288,8 @@
                                 <div>
                                     <strong>Configure Laravel .env</strong>
                                     <p class="small text-muted mb-1">Add Gateway URL to your Laravel project's
-                                        <code>.env</code>:</p>
+                                        <code>.env</code>:
+                                    </p>
                                     <div class="code-block">WHATSAPP_GATEWAY_URL=https://your-app-url.yourdomain.com
                                     </div>
                                     <p class="small text-info mt-1 mb-0"><i class="fas fa-info-circle me-1"></i>Get this

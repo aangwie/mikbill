@@ -393,9 +393,8 @@ class WhatsappController extends Controller
             $npmVersion = isset($npmOutput[0]) ? trim($npmOutput[0]) : null;
         }
 
-        // Check if gateway dependencies installed
-        $gatewayPath = base_path('whatsapp-gateway');
-        $nodeModulesExists = is_dir($gatewayPath . '/node_modules');
+        // Check if gateway dependencies installed (node_modules in project root)
+        $nodeModulesExists = is_dir(base_path('node_modules'));
 
         return response()->json([
             'installed' => $nodePath !== null,
@@ -403,7 +402,7 @@ class WhatsappController extends Controller
             'node_version' => $nodeVersion,
             'npm_version' => $npmVersion,
             'os' => $isWindows ? 'Windows' : 'Linux/Unix',
-            'gateway_path' => $gatewayPath,
+            'gateway_path' => base_path(),
             'dependencies_installed' => $nodeModulesExists,
         ]);
     }
@@ -413,14 +412,14 @@ class WhatsappController extends Controller
      */
     public function installDependencies()
     {
-        $gatewayPath = base_path('whatsapp-gateway');
+        $rootPath = base_path(); // npm install from project root
         $isWindows = strtoupper(substr(PHP_OS, 0, 3)) === 'WIN';
 
-        // Run npm install
+        // Run npm install from project root (where package.json is)
         if ($isWindows) {
-            $command = "cd /d \"$gatewayPath\" && npm install 2>&1";
+            $command = "cd /d \"$rootPath\" && npm install 2>&1";
         } else {
-            $command = "cd \"$gatewayPath\" && npm install 2>&1";
+            $command = "cd \"$rootPath\" && npm install 2>&1";
         }
 
         exec($command, $output, $return);

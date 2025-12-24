@@ -1,10 +1,21 @@
-require('dotenv').config();
+const path = require('path');
+const fs = require('fs');
+
+// Load .env from Laravel root (parent directory)
+const envPath = path.resolve(__dirname, '..', '.env');
+if (fs.existsSync(envPath)) {
+    require('dotenv').config({ path: envPath });
+} else {
+    // Fallback: try current directory or default
+    require('dotenv').config();
+}
+
 const express = require('express');
 const { default: makeWASocket, DisconnectReason } = require('@whiskeysockets/baileys');
 const QRCode = require('qrcode');
 const mysql = require('mysql2/promise');
 const cors = require('cors');
-const useMySQLAuthState = require('./db_auth');
+const useMySQLAuthState = require('./db_auth'); // Same folder
 const pino = require('pino');
 
 const app = express();
@@ -152,8 +163,8 @@ app.post('/shutdown', (req, res) => {
 });
 
 app.listen(3000, () => {
-    // Write PID file
-    const fs = require('fs');
-    fs.writeFileSync('gateway.pid', process.pid.toString());
+    // Write PID file to gateway folder
+    const pidPath = path.join(__dirname, 'gateway.pid');
+    fs.writeFileSync(pidPath, process.pid.toString());
     console.log('WhatsApp Gateway running on port 3000. PID:', process.pid);
 });

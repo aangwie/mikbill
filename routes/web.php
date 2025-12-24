@@ -125,6 +125,7 @@ Route::middleware(['auth'])->group(function () {
         // SYSTEM UPDATE
         Route::get('/system/update', [SystemController::class, 'index'])->name('system.index');
         Route::post('/system/update', [SystemController::class, 'update'])->name('system.update');
+        Route::post('/system/clear-cache', [SystemController::class, 'clearCache'])->name('system.clear-cache');
 
         Route::resource('users', UserController::class);
         Route::resource('customers', CustomerController::class);

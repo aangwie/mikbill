@@ -10,34 +10,54 @@ class SystemController extends Controller
 {
     public function index()
     {
-        // Ambil info versi terakhir (Hash Commit & Pesan)
-        $currentVersion = $this->runCommand('git log -1 --format="%h - %s (%cd)" --date=short');
-        
+        // Check if git is available
+        $currentVersion = $this->getVersion();
+
         return view('system.update', compact('currentVersion'));
+    }
+
+    private function getVersion()
+    {
+        try {
+            // Check if .git folder exists
+            if (!is_dir(base_path('.git'))) {
+                return 'Manual Upload (No Git)';
+            }
+            return $this->runCommand('git log -1 --format="%h - %s (%cd)" --date=short');
+        } catch (\Exception $e) {
+            return 'Version Unknown';
+        }
     }
 
     public function update(Request $request)
     {
         $log = [];
 
+        // Check if git is available first
+        if (!is_dir(base_path('.git'))) {
+            return back()->with([
+                'status' => 'warning',
+                'message' => 'Git tidak tersedia. Project ini di-upload manual. Silakan upload ulang file secara manual untuk update.',
+                'log' => 'Project tidak menggunakan Git repository. Untuk update:\n1. Download versi terbaru dari GitHub\n2. Upload/replace file via File Manager atau FTP\n3. Jalankan: php artisan migrate --force\n4. Jalankan: php artisan optimize:clear'
+            ]);
+        }
+
         try {
             // 1. GIT PULL (Tarik Data dari GitHub)
-            // 2>&1 berguna untuk menangkap pesan error juga
             $gitOutput = $this->runCommand('git pull origin main 2>&1');
             $log[] = ">>> GIT PULL:\n" . $gitOutput;
 
             // Jika ada perubahan (bukan Already up to date), jalankan perintah lain
             if (!str_contains($gitOutput, 'Already up to date')) {
-                
-                // 2. MIGRATE DATABASE (Jika ada perubahan struktur tabel)
-                // --force diperlukan karena di production
+
+                // 2. MIGRATE DATABASE
                 $migrateOutput = $this->runCommand('php artisan migrate --force 2>&1');
                 $log[] = ">>> MIGRATION:\n" . $migrateOutput;
 
                 // 3. OPTIMIZE (Bersihkan Cache)
                 $optimizeOutput = $this->runCommand('php artisan optimize:clear 2>&1');
                 $log[] = ">>> OPTIMIZE:\n" . $optimizeOutput;
-                
+
                 $status = 'success';
                 $message = 'Sistem berhasil diperbarui ke versi terbaru!';
             } else {
@@ -54,7 +74,7 @@ class SystemController extends Controller
         return back()->with([
             'status' => $status,
             'message' => $message,
-            'log' => implode("\n\n", $log) // Kirim log ke view untuk ditampilkan
+            'log' => implode("\n\n", $log)
         ]);
     }
 
@@ -70,5 +90,53 @@ class SystemController extends Controller
         }
 
         return trim($process->getOutput());
+    }
+
+    /**
+     * Clear all Laravel caches
+     */
+    public function clearCache()
+    {
+        $log = [];
+
+        try {
+            // Config clear
+            $configOutput = $this->runCommandSafe('php artisan config:clear 2>&1');
+            $log[] = ">>> CONFIG CLEAR:\n" . $configOutput;
+
+            // Cache clear
+            $cacheOutput = $this->runCommandSafe('php artisan cache:clear 2>&1');
+            $log[] = ">>> CACHE CLEAR:\n" . $cacheOutput;
+
+            // View clear
+            $viewOutput = $this->runCommandSafe('php artisan view:clear 2>&1');
+            $log[] = ">>> VIEW CLEAR:\n" . $viewOutput;
+
+            // Route clear
+            $routeOutput = $this->runCommandSafe('php artisan route:clear 2>&1');
+            $log[] = ">>> ROUTE CLEAR:\n" . $routeOutput;
+
+            return back()->with([
+                'status' => 'success',
+                'message' => 'Cache berhasil dibersihkan!',
+                'log' => implode("\n\n", $log)
+            ]);
+        } catch (\Exception $e) {
+            return back()->with([
+                'status' => 'error',
+                'message' => 'Gagal membersihkan cache.',
+                'log' => $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * Run command without throwing exception
+     */
+    private function runCommandSafe($command)
+    {
+        $process = Process::fromShellCommandline($command, base_path());
+        $process->run();
+        return trim($process->getOutput() ?: $process->getErrorOutput());
     }
 }
