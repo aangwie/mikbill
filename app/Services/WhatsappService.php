@@ -7,15 +7,16 @@ use Illuminate\Support\Facades\Log;
 
 class WhatsappService
 {
-    public function send($targetNumber, $message)
+    public static function send($targetNumber, $message)
     {
         // 1. Format Nomor (Pastikan 628...)
         if (substr($targetNumber, 0, 1) == '0') {
             $targetNumber = '62' . substr($targetNumber, 1);
         }
 
-        // 2. Kirim ke Node.js Gateway Local
-        $url = 'http://localhost:3000/send';
+        // 2. Kirim ke Node.js Gateway (configurable via .env)
+        $baseUrl = rtrim(env('WHATSAPP_GATEWAY_URL', 'http://localhost:3000'), '/');
+        $url = $baseUrl . '/send';
 
         $data = [
             'number' => $targetNumber,

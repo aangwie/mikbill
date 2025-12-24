@@ -92,6 +92,13 @@ Route::middleware(['auth'])->group(function () {
         // Route Helper Gateway
         Route::get('/whatsapp/gateway/status', [WhatsappController::class, 'getStatus'])->name('whatsapp.gateway.status');
         Route::get('/whatsapp/gateway/qr', [WhatsappController::class, 'getQr'])->name('whatsapp.gateway.qr');
+        Route::post('/whatsapp/logout', [WhatsappController::class, 'logout'])->name('whatsapp.logout');
+        Route::post('/whatsapp/start', [WhatsappController::class, 'startGateway'])->name('whatsapp.start');
+        Route::post('/whatsapp/stop', [WhatsappController::class, 'stopGateway'])->name('whatsapp.stop');
+        Route::post('/whatsapp/api-key', [WhatsappController::class, 'regenerateApiKey'])->name('whatsapp.apikey');
+        Route::get('/whatsapp/setup', [WhatsappController::class, 'setup'])->name('whatsapp.setup');
+        Route::get('/whatsapp/check-nodejs', [WhatsappController::class, 'checkNodejs'])->name('whatsapp.check-nodejs');
+        Route::post('/whatsapp/install-dependencies', [WhatsappController::class, 'installDependencies'])->name('whatsapp.install-deps');
 
         // Route Proses Kirim (yang sudah dibuat sebelumnya)
         Route::post('/whatsapp/broadcast/process', [WhatsappController::class, 'broadcastProcess'])->name('whatsapp.broadcast.process');

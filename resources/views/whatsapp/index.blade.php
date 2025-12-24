@@ -8,195 +8,419 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <link rel="icon" href="{{ $global_favicon ?? asset('favicon.ico') }}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        .select2-container--default .select2-selection--multiple {
-            border: 1px solid #ced4da;
-            border-radius: 0.375rem;
-            padding-bottom: 5px;
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Inter', sans-serif;
         }
 
-        .select2-container--default.select2-container--focus .select2-selection--multiple {
-            border-color: #86b7fe;
-            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+        .main-container {
+            background: #f8fafc;
+            min-height: calc(100vh - 56px);
+            padding: 20px;
         }
 
-        /* Style untuk Log Area Broadcast */
+        .card {
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            height: 100%;
+        }
+
+        .card-header {
+            background: transparent;
+            border-bottom: 1px solid #eee;
+            font-weight: 600;
+            padding: 12px 16px;
+            font-size: 0.9rem;
+        }
+
+        .card-body {
+            padding: 16px;
+        }
+
+        .form-control,
+        .form-select {
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+            font-size: 0.875rem;
+        }
+
+        .btn {
+            border-radius: 10px;
+            font-weight: 500;
+            font-size: 0.875rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            border: none;
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            border: none;
+            color: white;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+            border: none;
+        }
+
+        .btn-info {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            border: none;
+            color: white;
+        }
+
+        .select2-container .select2-selection--multiple {
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            min-height: 38px;
+        }
+
         .log-area {
-            height: 250px;
+            height: 200px;
             overflow-y: auto;
-            background: #f8f9fa;
-            border: 1px solid #dee2e6;
-            border-radius: 5px;
-            padding: 10px;
-            font-size: 0.85rem;
-            font-family: monospace;
+            background: #1a1a2e;
+            border-radius: 10px;
+            padding: 12px;
+            font-size: 0.8rem;
+            font-family: 'Courier New', monospace;
+            color: #eee;
         }
 
         .log-item {
-            border-bottom: 1px solid #eee;
-            padding: 2px 0;
+            padding: 3px 0;
+            border-bottom: 1px solid #333;
         }
 
         .log-success {
-            color: #198754;
+            color: #38ef7d;
         }
 
         .log-error {
-            color: #dc3545;
+            color: #f5576c;
+        }
+
+        .nav-pills .nav-link {
+            border-radius: 10px;
+            font-size: 0.8rem;
+            padding: 8px 14px;
+            color: #666;
+        }
+
+        .nav-pills .nav-link.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .status-box {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .status-connected {
+            background: linear-gradient(135deg, #d4fc79 0%, #96e6a1 100%);
+        }
+
+        .status-offline {
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+        }
+
+        .form-control-sm,
+        .btn-sm {
+            font-size: 0.8rem;
+        }
+
+        label {
+            font-size: 0.8rem;
+            color: #666;
+            margin-bottom: 4px;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.02);
+            }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
         }
     </style>
 </head>
 
-<body class="bg-light">
-
+<body>
     @include('layouts.navbar_partial')
 
-    <div class="container pb-5">
-        <h3><i class="fab fa-whatsapp text-success"></i> WhatsApp Gateway</h3>
-        <hr>
+    <div class="main-container">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <h4 class="fw-bold mb-0"><i class="fab fa-whatsapp text-success me-2"></i>WhatsApp Gateway</h4>
+                <small class="text-muted">Manage connections and broadcast messages</small>
+            </div>
+            <a href="{{ route('whatsapp.setup') }}" class="btn btn-outline-primary btn-sm"><i
+                    class="fas fa-cog me-1"></i>Setup & Docs</a>
+        </div>
 
         @if(session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div> @endif
+            <div class="alert alert-success alert-dismissible fade show py-2 small" role="alert">
+                <i class="fas fa-check-circle me-1"></i>{{ session('success') }}
+                <button type="button" class="btn-close btn-close-sm" data-bs-dismiss="alert"></button>
+            </div>
+        @endif
         @if(session('error'))
-        <div class="alert alert-danger">{{ session('error') }}</div> @endif
+            <div class="alert alert-danger alert-dismissible fade show py-2 small" role="alert">
+                <i class="fas fa-times-circle me-1"></i>{{ session('error') }}
+                <button type="button" class="btn-close btn-close-sm" data-bs-dismiss="alert"></button>
+            </div>
+        @endif
 
-        <div class="row">
-            <div class="col-md-5">
-                <div class="card shadow-sm mb-4">
-                    <div class="card-header bg-success text-white">Status Gateway</div>
-                    <div class="card-body text-center" id="gatewayCardBody">
-                        <h5 id="ws-status" class="fw-bold">Checking Status...</h5>
-                        <div id="ws-qr-area" class="mt-3 py-4">
-                            <div class="spinner-border text-primary" role="status"></div>
-                            <p class="text-muted mt-2">Menghubungkan ke Node.js Service...</p>
-                        </div>
-                        <div class="mt-2">
-                            <button onclick="checkStatus()" class="btn btn-sm btn-outline-secondary"><i
-                                    class="fas fa-sync"></i> Refresh Status</button>
-                        </div>
-                    </div>
-                </div>
+        <div class="row g-3">
 
-                <div class="card shadow-sm mb-4">
-                    <div class="card-header bg-warning text-dark">Test Kirim Pesan</div>
-                    <div class="card-body">
-                        <form action="{{ route('whatsapp.test') }}" method="POST">
-                            @csrf
-                            <div class="mb-3">
-                                <label>Nomor Tujuan</label>
-                                <input type="text" name="target" class="form-control" placeholder="0812xxxxx" required>
-                            </div>
-                            <div class="mb-3">
-                                <label>Pesan</label>
-                                <textarea name="message" class="form-control" rows="2"
-                                    required>Halo, ini pesan test dari Billing System.</textarea>
-                            </div>
-                            <button type="submit" class="btn btn-warning w-100"><i class="fas fa-paper-plane"></i> Kirim
-                                Test</button>
-                        </form>
+            <!-- COL 1: Gateway Status Only -->
+            <div class="col-lg-3 col-md-4">
+                <div class="card">
+                    <div class="card-header"><i class="fas fa-server text-primary me-2"></i>Gateway Status</div>
+                    <div class="card-body text-center p-3">
+                        <span id="ws-status" class="badge bg-secondary rounded-pill px-3 py-2 mb-2">Checking...</span>
+
+                        <div id="ws-qr-area" class="status-box my-2" style="min-height: 140px;">
+                            <div class="spinner-border spinner-border-sm text-primary"></div>
+                            <p class="small text-muted mt-2 mb-0">Connecting...</p>
+                        </div>
+
+                        <div id="disconnectArea" class="d-grid gap-2 mt-2" style="display: none;">
+                            <form action="{{ route('whatsapp.logout') }}" method="POST"
+                                onsubmit="return confirm('Disconnect?');">
+                                @csrf
+                                <button type="submit" class="btn btn-warning btn-sm w-100"><i
+                                        class="fas fa-sign-out-alt me-1"></i>Logout</button>
+                            </form>
+                            <form action="{{ route('whatsapp.stop') }}" method="POST"
+                                onsubmit="return confirm('Stop Service?');">
+                                @csrf
+                                <button type="submit" class="btn btn-danger btn-sm w-100"><i
+                                        class="fas fa-power-off me-1"></i>Stop</button>
+                            </form>
+                        </div>
+
+                        <div id="startArea" class="mt-2" style="display: none;">
+                            <form action="{{ route('whatsapp.start') }}" method="POST">
+                                @csrf
+                                <button type="submit" class="btn btn-success btn-sm w-100 pulse"><i
+                                        class="fas fa-play me-1"></i>Start Service</button>
+                            </form>
+                        </div>
+
+                        <button onclick="checkStatus()" class="btn btn-link btn-sm text-muted mt-1"><i
+                                class="fas fa-sync-alt me-1"></i>Refresh</button>
                     </div>
                 </div>
             </div>
 
-            <div class="col-md-7">
-
-                <div class="card shadow-sm mb-4">
-                    <div class="card-header bg-info text-white">
-                        <i class="fas fa-user-comment me-2"></i>Kirim Pesan Personal (Multi)
+            <!-- COL 2: Message Center (with all tabs) -->
+            <div class="col-lg-9 col-md-8">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <i class="fas fa-broadcast-tower text-primary me-2"></i>Message Center
                     </div>
                     <div class="card-body">
-                        <form action="{{ route('whatsapp.send.customer') }}" method="POST">
-                            @csrf
-                            <div class="mb-3">
-                                <label class="form-label fw-bold">Pilih Pelanggan</label>
-                                <select name="customer_ids[]" id="multiUserSelect" class="form-select"
-                                    multiple="multiple" required>
-                                    @foreach($customers as $c)
-                                        <option value="{{ $c->id }}">{{ $c->name }} ({{ $c->phone }})</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label fw-bold">Isi Pesan</label>
-                                <div class="form-text mb-1">Gunakan <b>{name}</b> untuk panggil nama otomatis.</div>
-                                <textarea name="message" class="form-control" rows="3" required
-                                    placeholder="Halo {name}, koneksi internet aman?"></textarea>
-                            </div>
-                            <div class="text-end">
-                                <button type="submit" class="btn btn-info text-white"><i
-                                        class="fas fa-paper-plane me-1"></i> Kirim ke Terpilih</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
 
-                <div class="card shadow-sm">
-                    <div class="card-header bg-primary text-white">Broadcast Pesan Massal</div>
-                    <div class="card-body">
-
-                        <ul class="nav nav-tabs mb-3" id="broadcastTab" role="tablist">
-                            <li class="nav-item">
-                                <button class="nav-link active" id="unpaid-tab" data-bs-toggle="tab"
-                                    data-bs-target="#unpaid-content" type="button">Tagihan (Belum Bayar)</button>
+                        <ul class="nav nav-pills flex-wrap mb-3" id="msgTabs">
+                            <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab"
+                                    data-bs-target="#tab-multi"><i class="fas fa-users me-1"></i>Multi-Send</button>
                             </li>
-                            <li class="nav-item">
-                                <button class="nav-link" id="all-tab" data-bs-toggle="tab" data-bs-target="#all-content"
-                                    type="button">Semua Pelanggan</button>
+                            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab"
+                                    data-bs-target="#tab-unpaid"><i
+                                        class="fas fa-file-invoice-dollar me-1"></i>Unpaid</button></li>
+                            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab"
+                                    data-bs-target="#tab-all"><i class="fas fa-bullhorn me-1"></i>Broadcast All</button>
                             </li>
+                            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab"
+                                    data-bs-target="#tab-test"><i class="fas fa-paper-plane me-1"></i>Quick
+                                    Test</button></li>
+                            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab"
+                                    data-bs-target="#tab-api"><i class="fas fa-code me-1"></i>API Key</button></li>
                         </ul>
 
-                        <div class="tab-content" id="broadcastTabContent">
-
-                            <div class="tab-pane fade show active" id="unpaid-content">
-                                <div class="alert alert-info py-2"><small>Kirim ke pelanggan dengan status Invoice
-                                        <b>BELUM LUNAS</b>.</small></div>
-                                <div class="mb-3">
-                                    <label>Template Pesan</label>
-                                    <textarea id="msgUnpaid" class="form-control"
-                                        rows="4">Halo {name}, tagihan internet Anda sebesar Rp {tagihan} belum terbayar. Mohon segera lunasi.</textarea>
-                                </div>
-                                <button onclick="prepareBroadcast('unpaid')" class="btn btn-danger w-100"><i
-                                        class="fab fa-whatsapp"></i> Mulai Broadcast (Unpaid)</button>
+                        <div class="tab-content">
+                            <!-- MULTI SEND -->
+                            <div class="tab-pane fade show active" id="tab-multi">
+                                <form action="{{ route('whatsapp.send.customer') }}" method="POST">
+                                    @csrf
+                                    <div class="row g-3">
+                                        <div class="col-md-5">
+                                            <label class="fw-bold">Select Recipients</label>
+                                            <select name="customer_ids[]" id="multiUserSelect" class="form-select"
+                                                multiple required style="width:100%">
+                                                @foreach($customers as $c)
+                                                    <option value="{{ $c->id }}">{{ $c->name }} ({{ $c->phone }})</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <div class="col-md-7">
+                                            <label class="fw-bold">Message <small class="text-muted">(use
+                                                    {name})</small></label>
+                                            <textarea name="message" class="form-control" rows="4" required
+                                                placeholder="Hello {name}, ..."></textarea>
+                                        </div>
+                                    </div>
+                                    <div class="text-end mt-3">
+                                        <button type="submit" class="btn btn-primary"><i
+                                                class="fas fa-paper-plane me-1"></i>Send to Selected</button>
+                                    </div>
+                                </form>
                             </div>
 
-                            <div class="tab-pane fade" id="all-content">
-                                <div class="alert alert-primary py-2"><small>Kirim ke <b>SEMUA</b> pelanggan aktif yang
-                                        memiliki nomor WA.</small></div>
-                                <div class="mb-3">
-                                    <label>Isi Pesan Informasi / Promo</label>
-                                    <textarea id="msgAll" class="form-control"
-                                        rows="4">Halo {name}, akan ada maintenance jaringan besok jam 12.00. Mohon maaf atas ketidaknyamanannya.</textarea>
+                            <!-- UNPAID -->
+                            <div class="tab-pane fade" id="tab-unpaid">
+                                <div class="alert alert-warning py-2 small mb-3"><i class="fas fa-bell me-1"></i>Send
+                                    reminders to customers with <b>UNPAID</b> invoices.</div>
+                                <div class="row g-3">
+                                    <div class="col-md-8">
+                                        <label class="fw-bold">Reminder Template</label>
+                                        <textarea id="msgUnpaid" class="form-control"
+                                            rows="4">Halo {name}, tagihan internet Anda sebesar Rp {tagihan} belum terbayar. Mohon segera lunasi.</textarea>
+                                    </div>
+                                    <div class="col-md-4 d-flex align-items-end">
+                                        <button onclick="prepareBroadcast('unpaid')"
+                                            class="btn btn-warning w-100 py-3"><i class="fab fa-whatsapp me-1"></i>Start
+                                            Reminder</button>
+                                    </div>
                                 </div>
-                                <button onclick="prepareBroadcast('all')" class="btn btn-primary w-100"><i
-                                        class="fas fa-bullhorn"></i> Mulai Broadcast (Semua)</button>
+                            </div>
+
+                            <!-- ALL BROADCAST -->
+                            <div class="tab-pane fade" id="tab-all">
+                                <div class="alert alert-info py-2 small mb-3"><i class="fas fa-rss me-1"></i>Broadcast
+                                    to <b>ALL ACTIVE</b> customers.</div>
+                                <div class="row g-3">
+                                    <div class="col-md-8">
+                                        <label class="fw-bold">Announcement</label>
+                                        <textarea id="msgAll" class="form-control"
+                                            rows="4">Halo {name}, akan ada maintenance jaringan pada tanggal XX jam XX.</textarea>
+                                    </div>
+                                    <div class="col-md-4 d-flex align-items-end">
+                                        <button onclick="prepareBroadcast('all')" class="btn btn-info w-100 py-3"><i
+                                                class="fas fa-bullhorn me-1"></i>Broadcast Now</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- QUICK TEST -->
+                            <div class="tab-pane fade" id="tab-test">
+                                <div class="row justify-content-center">
+                                    <div class="col-md-6">
+                                        <div class="alert alert-secondary py-2 small mb-3"><i
+                                                class="fas fa-vial me-1"></i>Send a quick test message to verify
+                                            connection.</div>
+                                        <form action="{{ route('whatsapp.test') }}" method="POST">
+                                            @csrf
+                                            <div class="mb-3">
+                                                <label class="fw-bold">Target Number</label>
+                                                <input type="text" name="target" class="form-control"
+                                                    placeholder="e.g 081234567890" required>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="fw-bold">Message</label>
+                                                <textarea name="message" class="form-control" rows="3" required
+                                                    placeholder="Hello, this is a test message..."></textarea>
+                                            </div>
+                                            <button type="submit" class="btn btn-warning w-100"><i
+                                                    class="fas fa-paper-plane me-1"></i>Send Test Message</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- API KEY -->
+                            <div class="tab-pane fade" id="tab-api">
+                                <div class="row justify-content-center">
+                                    <div class="col-md-8">
+                                        <div class="alert alert-dark py-2 small mb-3"><i
+                                                class="fas fa-plug me-1"></i>Use this API Key to integrate WhatsApp
+                                            messaging with external applications.</div>
+
+                                        <label class="fw-bold mb-2">Your API Key</label>
+                                        <div class="input-group mb-3">
+                                            <input type="text" class="form-control font-monospace bg-light"
+                                                value="{{ auth()->user()->api_token ?? 'Not Generated Yet' }}"
+                                                id="apiKeyField" readonly>
+                                            <button class="btn btn-outline-secondary" type="button"
+                                                onclick="copyApiKey()"><i class="fas fa-copy"></i> Copy</button>
+                                        </div>
+
+                                        <div class="row g-2">
+                                            <div class="col-sm-6">
+                                                <form action="{{ route('whatsapp.apikey') }}" method="POST"
+                                                    onsubmit="return confirm('Generate new key? Old key will be invalid.');">
+                                                    @csrf
+                                                    <button type="submit" class="btn btn-primary w-100"><i
+                                                            class="fas fa-key me-1"></i>Generate New Key</button>
+                                                </form>
+                                            </div>
+                                            <div class="col-sm-6">
+                                                <a href="{{ asset('docs/api.html') }}" target="_blank"
+                                                    class="btn btn-info w-100"><i class="fas fa-book me-1"></i>View
+                                                    Documentation</a>
+                                            </div>
+                                        </div>
+
+                                        <hr class="my-4">
+                                        <h6 class="fw-bold mb-2"><i class="fas fa-code me-2"></i>Example Usage (cURL)
+                                        </h6>
+                                        <div class="bg-dark text-light p-3 rounded small font-monospace"
+                                            style="white-space: pre-wrap;">curl -X POST {{ url('/api/send-message') }} \
+                                            -H "Content-Type: application/json" \
+                                            -d '{
+                                            "api_key": "YOUR_API_KEY",
+                                            "number": "08123456789",
+                                            "message": "Hello World"
+                                            }'</div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
+                        <!-- MONITOR -->
                         <div id="monitorArea" class="mt-4" style="display: none;">
                             <hr>
-                            <h6 class="fw-bold"><i class="fas fa-desktop text-success"></i> Status Pengiriman</h6>
-
-                            <div class="progress mb-2" style="height: 20px;">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="fw-bold small"><i
+                                        class="fas fa-desktop text-success me-1"></i>Progress</span>
+                                <span class="small"><span id="statSuccess" class="text-success fw-bold">0</span> OK /
+                                    <span id="statFail" class="text-danger fw-bold">0</span> Fail</span>
+                            </div>
+                            <div class="progress mb-2" style="height: 8px;">
                                 <div id="progressBar"
-                                    class="progress-bar progress-bar-striped progress-bar-animated bg-success"
-                                    style="width: 0%">0%</div>
+                                    class="progress-bar bg-success progress-bar-striped progress-bar-animated"
+                                    style="width: 0%"></div>
                             </div>
-
-                            <div class="d-flex justify-content-between text-muted small mb-2">
-                                <span>Total: <b id="statTotal">0</b></span>
-                                <span>Sukses: <b id="statSuccess" class="text-success">0</b></span>
-                                <span>Gagal: <b id="statFail" class="text-danger">0</b></span>
-                            </div>
-
-                            <div class="log-area" id="logList">
-                            </div>
+                            <div class="log-area" id="logList"></div>
                         </div>
 
                     </div>
                 </div>
-
             </div>
         </div>
     </div>
@@ -207,175 +431,106 @@
 
     <script>
         $(document).ready(function () {
-            $('#multiUserSelect').select2({ placeholder: "Cari dan Pilih Pelanggan...", allowClear: true, width: '100%' });
+            $('#multiUserSelect').select2({ placeholder: "Search customers...", allowClear: true, width: '100%' });
+            checkStatus();
         });
 
-        // --- LOGIKA BROADCAST AJAX ---
-        var queue = [];
-        var total = 0;
-        var current = 0;
-        var successCount = 0;
-        var failCount = 0;
-        var messageToSend = "";
+        var queue = [], total = 0, current = 0, successCount = 0, failCount = 0, messageToSend = "";
 
         function prepareBroadcast(type) {
-            // Ambil pesan sesuai tab
-            if (type === 'unpaid') {
-                messageToSend = $('#msgUnpaid').val();
-            } else {
-                messageToSend = $('#msgAll').val();
-            }
+            messageToSend = type === 'unpaid' ? $('#msgUnpaid').val() : $('#msgAll').val();
+            if (!messageToSend.trim()) { alert("Message empty!"); return; }
+            if (!confirm("Start " + type.toUpperCase() + " broadcast?")) return;
 
-            if (!messageToSend.trim()) {
-                alert("Isi pesan tidak boleh kosong!");
-                return;
-            }
+            $('#monitorArea').slideDown();
+            $('#logList').html('<div class="text-center text-muted py-2">Loading targets...</div>');
+            $('#progressBar').css('width', '0%');
+            $('#statSuccess').text('0'); $('#statFail').text('0');
 
-            if (!confirm("Yakin ingin memulai broadcast " + type.toUpperCase() + "? Proses ini tidak bisa dibatalkan.")) {
-                return;
-            }
-
-            // UI Reset
-            $('#monitorArea').show();
-            $('#logList').html('<div class="text-center text-muted">Mengambil daftar target...</div>');
-            $('#progressBar').css('width', '0%').text('0%');
-            $('#statTotal').text('0'); $('#statSuccess').text('0'); $('#statFail').text('0');
-
-            // 1. Ambil Daftar Target dari Server
-            $.ajax({
-                url: "{{ route('whatsapp.broadcast.targets') }}",
-                type: "GET",
-                data: { type: type },
-                success: function (response) {
-                    queue = response;
-                    total = queue.length;
-
-                    if (total === 0) {
-                        $('#logList').html('<div class="text-center text-danger">Tidak ada target pelanggan ditemukan untuk kategori ini.</div>');
-                        return;
-                    }
-
-                    // Setup UI Start
-                    $('#logList').html('');
-                    $('#statTotal').text(total);
-                    current = 0; successCount = 0; failCount = 0;
-
-                    // Kunci Tombol
-                    $('button').prop('disabled', true);
-
-                    // Mulai Proses
-                    processQueue();
-                },
-                error: function () {
-                    $('#logList').html('<div class="text-center text-danger">Gagal mengambil data target. Cek koneksi server.</div>');
-                }
+            $.get("{{ route('whatsapp.broadcast.targets') }}", { type: type }, function (response) {
+                queue = response; total = queue.length;
+                if (total === 0) { $('#logList').html('<div class="text-warning text-center py-2">No targets found.</div>'); return; }
+                $('#logList').html('');
+                current = 0; successCount = 0; failCount = 0;
+                $('button').prop('disabled', true);
+                processQueue();
+            }).fail(function () {
+                $('#logList').html('<div class="text-danger text-center py-2">Failed to fetch targets.</div>');
             });
         }
 
         function processQueue() {
             if (current >= total) {
-                // Selesai
                 $('button').prop('disabled', false);
-                alert("Broadcast Selesai! Sukses: " + successCount + ", Gagal: " + failCount);
-                $('#logList').prepend('<div class="log-item fw-bold text-primary">--- SELESAI ---</div>');
                 $('#progressBar').removeClass('progress-bar-animated');
+                $('#logList').prepend('<div class="log-item text-info text-center fw-bold py-1">--- DONE ---</div>');
+                alert("Broadcast Finished! Success: " + successCount + ", Failed: " + failCount);
                 return;
             }
-
             let target = queue[current];
-            let percent = Math.round(((current + 1) / total) * 100);
+            $('#progressBar').css('width', Math.round(((current + 1) / total) * 100) + '%');
 
-            // Update Progress Bar
-            $('#progressBar').css('width', percent + '%').text(percent + '%');
-
-            // Kirim AJAX Per Item
-            $.ajax({
-                url: "{{ route('whatsapp.broadcast.process') }}",
-                type: "POST",
-                data: {
-                    _token: $('meta[name="csrf-token"]').attr('content'),
-                    id: target.id,
-                    message: messageToSend
-                },
-                success: function (res) {
-                    if (res.status) {
-                        successCount++;
-                        $('#statSuccess').text(successCount);
-                        appendLog(target.name, true, 'Terkirim');
-                    } else {
-                        failCount++;
-                        $('#statFail').text(failCount);
-                        appendLog(target.name, false, res.message || 'Gagal API');
-                    }
-                },
-                error: function () {
-                    failCount++;
-                    $('#statFail').text(failCount);
-                    appendLog(target.name, false, 'Error Server');
-                },
-                complete: function () {
-                    current++;
-                    processQueue(); // Rekursif lanjut ke item berikutnya
-                }
-            });
+            $.post("{{ route('whatsapp.broadcast.process') }}", {
+                _token: $('meta[name="csrf-token"]').attr('content'),
+                id: target.id, message: messageToSend
+            }).done(function (res) {
+                if (res.status) { successCount++; $('#statSuccess').text(successCount); appendLog(target.name, true, 'Sent'); }
+                else { failCount++; $('#statFail').text(failCount); appendLog(target.name, false, res.message || 'Error'); }
+            }).fail(function () {
+                failCount++; $('#statFail').text(failCount); appendLog(target.name, false, 'Server Error');
+            }).always(function () { current++; processQueue(); });
         }
 
         function appendLog(name, status, msg) {
-            let colorClass = status ? 'log-success' : 'log-error';
-            let icon = status ? 'check' : 'times';
-            let html = `<div class="log-item">
-                            <i class="fas fa-${icon} ${colorClass} me-1"></i> 
-                            <b>${name}</b>: <span class="${colorClass}">${msg}</span>
-                        </div>`;
-            $('#logList').prepend(html);
+            let cls = status ? 'log-success' : 'log-error';
+            let ico = status ? 'check' : 'times';
+            $('#logList').prepend(`<div class="log-item"><i class="fas fa-${ico} ${cls} me-1"></i><b>${name}</b> <span class="float-end ${cls}">${msg}</span></div>`);
         }
-    </script>
-    <script>
-        // --- GATEWAY STATUS LOGIC ---
+
         let pollTimer = null;
-
-        $(document).ready(function () {
-            checkStatus();
-        });
-
         function checkStatus() {
             if (pollTimer) clearTimeout(pollTimer);
-
             $.get("{{ route('whatsapp.gateway.status') }}", function (data) {
-                // Handle response if string or json
                 let res = typeof data === 'string' ? JSON.parse(data) : data;
-                let status = res.status;
-
-                $('#ws-status').text(status || 'UNKNOWN');
-
-                if (status === 'CONNECTED') {
-                    $('#ws-qr-area').html('<div class="text-success py-3"><i class="fas fa-check-circle fa-4x mb-2"></i><br><strong>Gateway Terhubung</strong></div>');
-                } else if (status === 'QR_READY' || status === 'WAITING' || status === 'DISCONNECTED') {
+                let s = res.status;
+                if (s === 'CONNECTED') {
+                    $('#ws-status').text('CONNECTED').attr('class', 'badge bg-success rounded-pill px-3 py-2 mb-2');
+                    $('#ws-qr-area').html('<div class="status-connected p-3 rounded"><i class="fas fa-check-circle fa-3x text-success mb-2"></i><br><b>Connected</b></div>').removeClass('status-offline').addClass('status-connected');
+                    $('#disconnectArea').show(); $('#startArea').hide();
+                } else if (s === 'QR_READY' || s === 'WAITING' || s === 'DISCONNECTED') {
+                    $('#ws-status').text(s).attr('class', 'badge bg-warning text-dark rounded-pill px-3 py-2 mb-2');
+                    $('#disconnectArea').show(); $('#startArea').hide();
                     loadQr();
                 } else {
-                    $('#ws-qr-area').html('<div class="text-danger">Status Unknown</div>');
+                    $('#ws-status').text('OFFLINE').attr('class', 'badge bg-danger rounded-pill px-3 py-2 mb-2');
+                    $('#ws-qr-area').html('<div class="status-offline p-3 rounded"><i class="fas fa-server fa-3x text-danger mb-2"></i><br><b>Service Offline</b></div>');
+                    $('#disconnectArea').hide(); $('#startArea').show();
                 }
             }).fail(function () {
-                $('#ws-status').text('SERVER OFF');
-                $('#ws-qr-area').html('<div class="text-danger py-2"><i class="fas fa-exclamation-triangle fa-2x mb-2"></i><br>Gateway Node.js mati.<br>Jalankan <code>node index.js</code> di folder whatsapp-gateway.</div>');
+                $('#ws-status').text('OFFLINE').attr('class', 'badge bg-danger rounded-pill px-3 py-2 mb-2');
+                $('#ws-qr-area').html('<div class="status-offline p-3 rounded"><i class="fas fa-server fa-3x text-danger mb-2"></i><br><b>Service Offline</b></div>');
+                $('#disconnectArea').hide(); $('#startArea').show();
             });
         }
 
         function loadQr() {
             $.get("{{ route('whatsapp.gateway.qr') }}", function (data) {
                 let res = typeof data === 'string' ? JSON.parse(data) : data;
-
                 if (res.status === 'QR_READY' && res.qr_code) {
-                    $('#ws-qr-area').html('<img src="' + res.qr_code + '" class="img-fluid border p-2" style="max-width:250px"> <p class="small mt-2 log-item">Scan QR Code di atas dengan WhatsApp Anda.</p>');
-                    // Poll again
+                    $('#ws-qr-area').html('<img src="' + res.qr_code + '" class="img-fluid rounded" style="max-width:160px"><p class="small text-muted mt-1 mb-0">Scan with WhatsApp</p>');
                     pollTimer = setTimeout(checkStatus, 3000);
-                } else if (res.status === 'WAITING') {
-                    $('#ws-qr-area').html('<div class="spinner-border text-warning" role="status"></div><p class="mt-2">Menyiapkan QR Code...</p>');
-                    pollTimer = setTimeout(checkStatus, 2000);
-                } else if (res.status === 'CONNECTED') {
-                    checkStatus(); // Refresh main status
-                }
+                } else if (res.status === 'WAITING' || res.status === 'DISCONNECTED') {
+                    $('#ws-qr-area').html('<div class="spinner-border spinner-border-sm text-warning"></div><p class="small text-muted mt-1 mb-0">Generating QR...</p>');
+                    pollTimer = setTimeout(checkStatus, 4000);
+                } else if (res.status === 'CONNECTED') { checkStatus(); }
             });
+        }
+
+        function copyApiKey() {
+            var el = document.getElementById("apiKeyField");
+            el.select(); el.setSelectionRange(0, 99999);
+            navigator.clipboard.writeText(el.value);
+            alert("API Key copied!");
         }
     </script>
 </body>
