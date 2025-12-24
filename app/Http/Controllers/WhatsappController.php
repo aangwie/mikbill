@@ -402,8 +402,9 @@ class WhatsappController extends Controller
         }
 
         // Check if gateway is actually responding (works for cPanel)
+        $checkError = null;
         try {
-            $client = new \GuzzleHttp\Client();
+            $client = new \GuzzleHttp\Client(['verify' => false]); // Disable SSL verify for internal check
             $response = $client->get($this->getGatewayUrl('status'), [
                 'http_errors' => false,
                 'timeout' => 5
@@ -411,9 +412,12 @@ class WhatsappController extends Controller
             $body = json_decode($response->getBody(), true);
             if ($response->getStatusCode() == 200 && isset($body['status'])) {
                 $gatewayRunning = true;
+            } else {
+                $checkError = "Status code: " . $response->getStatusCode() . ". Response: " . substr($response->getBody(), 0, 100);
             }
         } catch (\Exception $e) {
             $gatewayRunning = false;
+            $checkError = $e->getMessage();
         }
 
         // Check if node_modules exists (look in root or gateway folder)
@@ -434,6 +438,7 @@ class WhatsappController extends Controller
             'gateway_url' => env('WHATSAPP_GATEWAY_URL', 'http://localhost:3000'),
             'gateway_path' => base_path(),
             'dependencies_installed' => $nodeModulesExists,
+            'check_error' => $checkError,
             'message' => $isCpanel && !$nodePath ? 'cPanel detected. PHP cannot detect Node.js directly. Please ensure WHATSAPP_GATEWAY_URL in .env matches your cPanel Application URL (e.g., https://billnesia.com).' : null,
         ]);
     }

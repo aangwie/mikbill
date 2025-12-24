@@ -373,6 +373,11 @@
                     let gatewayInfo = data.gateway_url ?
                         `<p class="small text-muted mt-2 mb-0">Gateway URL: <code>${data.gateway_url}</code></p>` : '';
 
+                    let checkError = data.check_error ? 
+                        `<div class="alert alert-danger py-2 small mt-2 mb-0">
+                            <i class="fas fa-exclamation-circle me-1"></i><b>Debug Info:</b> <code>${data.check_error}</code>
+                        </div>` : '';
+
                     $('#checkResult').html(`
                         <div class="check-error">
                             <h6 class="text-danger fw-bold mb-2"><i class="fas fa-times-circle me-1"></i>Node.js Not Detected</h6>
@@ -389,6 +394,7 @@
                                 </ul>
                             </div>
 
+                            ${checkError}
                             ${cpanelMsg}
                         </div>
                     `);
