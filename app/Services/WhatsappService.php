@@ -9,16 +9,25 @@ class WhatsappService
 {
     public static function send($targetNumber, $message)
     {
-        // 1. Format Nomor (Pastikan 628...)
+        // 1. Ambil Pengaturan dari Database
+        $setting = WhatsappSetting::first();
+        if (!$setting) {
+            return ['status' => false, 'message' => 'Pengaturan WhatsApp belum dikonfigurasi.'];
+        }
+
+        // 2. Format Nomor (Pastikan 628...)
         if (substr($targetNumber, 0, 1) == '0') {
             $targetNumber = '62' . substr($targetNumber, 1);
         }
 
-        // 2. Kirim ke Node.js Gateway (configurable via .env)
-        $baseUrl = rtrim(env('WHATSAPP_GATEWAY_URL', 'http://localhost:3000'), '/');
-        $url = $baseUrl . '/send';
+        // 3. Persiapkan Data (Sesuai parameter yang diminta user: host, api_key, sender)
+        $url = $setting->target_url;
+        $apiKey = $setting->api_key;
+        $sender = $setting->sender_number;
 
         $data = [
+            'api_key' => $apiKey,
+            'sender' => $sender,
             'number' => $targetNumber,
             'message' => $message,
         ];
@@ -26,20 +35,25 @@ class WhatsappService
         try {
             $client = new \GuzzleHttp\Client();
             $response = $client->post($url, [
-                'json' => $data,
+                'form_params' => $data, // Gunakan form_params atau json tergantung provider, biasanya form
+                'timeout' => 10,
                 'http_errors' => false
             ]);
 
-            $body = json_decode($response->getBody(), true);
+            $body = $response->getBody()->getContents();
+            $result = json_decode($body, true);
 
-            if ($response->getStatusCode() == 200 && ($body['status'] ?? false)) {
-                return ['status' => true, 'response' => 'Sent via Gateway'];
+            // Log response untuk debugging
+            Log::info("WA API Response: " . $body);
+
+            if ($response->getStatusCode() == 200) {
+                return ['status' => true, 'response' => $body];
             } else {
-                return ['status' => false, 'message' => $body['message'] ?? 'Unknown Error'];
+                return ['status' => false, 'message' => 'API Error (' . $response->getStatusCode() . '): ' . $body];
             }
         } catch (\Exception $e) {
-            Log::error("WA Gateway Error: " . $e->getMessage());
-            return ['status' => false, 'message' => 'Gateway Error: ' . $e->getMessage()];
+            Log::error("WA API Exception: " . $e->getMessage());
+            return ['status' => false, 'message' => 'Exception: ' . $e->getMessage()];
         }
     }
 }

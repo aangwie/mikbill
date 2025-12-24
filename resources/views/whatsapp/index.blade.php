@@ -173,13 +173,9 @@
     @include('layouts.navbar_partial')
 
     <div class="main-container">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <div>
-                <h4 class="fw-bold mb-0"><i class="fab fa-whatsapp text-success me-2"></i>WhatsApp Gateway</h4>
-                <small class="text-muted">Manage connections and broadcast messages</small>
-            </div>
-            <a href="{{ route('whatsapp.setup') }}" class="btn btn-outline-primary btn-sm"><i
-                    class="fas fa-cog me-1"></i>Setup & Docs</a>
+        <div class="mb-3">
+            <h4 class="fw-bold mb-0"><i class="fab fa-whatsapp text-success me-2"></i>WhatsApp Gateway</h4>
+            <small class="text-muted">Konfigurasi External API & Broadcast</small>
         </div>
 
         @if(session('success'))
@@ -197,49 +193,48 @@
 
         <div class="row g-3">
 
-            <!-- COL 1: Gateway Status Only -->
-            <div class="col-lg-3 col-md-4">
+            <!-- COL 1: API Configuration -->
+            <div class="col-lg-4 col-md-5">
                 <div class="card">
-                    <div class="card-header"><i class="fas fa-server text-primary me-2"></i>Gateway Status</div>
-                    <div class="card-body text-center p-3">
-                        <span id="ws-status" class="badge bg-secondary rounded-pill px-3 py-2 mb-2">Checking...</span>
+                    <div class="card-header"><i class="fas fa-cog text-primary me-2"></i>Konfigurasi WhatsApp API</div>
+                    <div class="card-body">
+                        <form action="{{ route('whatsapp.update') }}" method="POST">
+                            @csrf
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">API Host / Target URL</label>
+                                <input type="url" name="target_url" class="form-control form-control-sm"
+                                    placeholder="https://api.gateway.com/send" required
+                                    value="{{ optional($setting)->target_url ?? '' }}">
+                                <div class="form-text small" style="font-size: 0.75rem;">URL endpoint untuk pengiriman
+                                    pesan.</div>
+                            </div>
 
-                        <div id="ws-qr-area" class="status-box my-2" style="min-height: 140px;">
-                            <div class="spinner-border spinner-border-sm text-primary"></div>
-                            <p class="small text-muted mt-2 mb-0">Connecting...</p>
-                        </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">API Key</label>
+                                <input type="text" name="api_key" class="form-control form-control-sm"
+                                    placeholder="Masukkan API Key Provider" required value="{{ optional($setting)->api_key ?? '' }}">
+                            </div>
 
-                        <div id="disconnectArea" class="d-grid gap-2 mt-2" style="display: none;">
-                            <form action="{{ route('whatsapp.logout') }}" method="POST"
-                                onsubmit="return confirm('Disconnect?');">
-                                @csrf
-                                <button type="submit" class="btn btn-warning btn-sm w-100"><i
-                                        class="fas fa-sign-out-alt me-1"></i>Logout</button>
-                            </form>
-                            <form action="{{ route('whatsapp.stop') }}" method="POST"
-                                onsubmit="return confirm('Stop Service?');">
-                                @csrf
-                                <button type="submit" class="btn btn-danger btn-sm w-100"><i
-                                        class="fas fa-power-off me-1"></i>Stop</button>
-                            </form>
-                        </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Nomor Pengirim (Sender)</label>
+                                <input type="text" name="sender_number" class="form-control form-control-sm"
+                                    placeholder="628xxx" value="{{ optional($setting)->sender_number ?? '' }}">
+                                <div class="form-text small" style="font-size: 0.75rem;">Identitas pengirim (opsional).
+                                </div>
+                            </div>
 
-                        <div id="startArea" class="mt-2" style="display: none;">
-                            <form action="{{ route('whatsapp.start') }}" method="POST">
-                                @csrf
-                                <button type="submit" class="btn btn-success btn-sm w-100 pulse"><i
-                                        class="fas fa-play me-1"></i>Start Service</button>
-                            </form>
-                        </div>
-
-                        <button onclick="checkStatus()" class="btn btn-link btn-sm text-muted mt-1"><i
-                                class="fas fa-sync-alt me-1"></i>Refresh</button>
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-save me-1"></i>Simpan Pengaturan
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
 
             <!-- COL 2: Message Center (with all tabs) -->
-            <div class="col-lg-9 col-md-8">
+            <div class="col-lg-8 col-md-7">
                 <div class="card h-100">
                     <div class="card-header">
                         <i class="fas fa-broadcast-tower text-primary me-2"></i>Message Center
@@ -358,7 +353,8 @@
                                 <div class="row justify-content-center">
                                     <div class="col-md-8">
                                         <div class="alert alert-dark py-2 small mb-3"><i
-                                                class="fas fa-plug me-1"></i>Use this API Key to integrate WhatsApp
+                                                class="fas fa-plug me-1"></i>Use
+                                            this API Key to integrate WhatsApp
                                             messaging with external applications.</div>
 
                                         <label class="fw-bold mb-2">Your API Key</label>
@@ -432,7 +428,6 @@
     <script>
         $(document).ready(function () {
             $('#multiUserSelect').select2({ placeholder: "Search customers...", allowClear: true, width: '100%' });
-            checkStatus();
         });
 
         var queue = [], total = 0, current = 0, successCount = 0, failCount = 0, messageToSend = "";
@@ -487,45 +482,7 @@
             $('#logList').prepend(`<div class="log-item"><i class="fas fa-${ico} ${cls} me-1"></i><b>${name}</b> <span class="float-end ${cls}">${msg}</span></div>`);
         }
 
-        let pollTimer = null;
-        function checkStatus() {
-            if (pollTimer) clearTimeout(pollTimer);
-            $.get("{{ route('whatsapp.gateway.status') }}", function (data) {
-                let res = typeof data === 'string' ? JSON.parse(data) : data;
-                let s = res.status;
-                if (s === 'CONNECTED') {
-                    $('#ws-status').text('CONNECTED').attr('class', 'badge bg-success rounded-pill px-3 py-2 mb-2');
-                    $('#ws-qr-area').html('<div class="status-connected p-3 rounded"><i class="fas fa-check-circle fa-3x text-success mb-2"></i><br><b>Connected</b></div>').removeClass('status-offline').addClass('status-connected');
-                    $('#disconnectArea').show(); $('#startArea').hide();
-                } else if (s === 'QR_READY' || s === 'WAITING' || s === 'DISCONNECTED') {
-                    $('#ws-status').text(s).attr('class', 'badge bg-warning text-dark rounded-pill px-3 py-2 mb-2');
-                    $('#disconnectArea').show(); $('#startArea').hide();
-                    loadQr();
-                } else {
-                    $('#ws-status').text('OFFLINE').attr('class', 'badge bg-danger rounded-pill px-3 py-2 mb-2');
-                    $('#ws-qr-area').html('<div class="status-offline p-3 rounded"><i class="fas fa-server fa-3x text-danger mb-2"></i><br><b>Service Offline</b></div>');
-                    $('#disconnectArea').hide(); $('#startArea').show();
-                }
-            }).fail(function () {
-                $('#ws-status').text('OFFLINE').attr('class', 'badge bg-danger rounded-pill px-3 py-2 mb-2');
-                $('#ws-qr-area').html('<div class="status-offline p-3 rounded"><i class="fas fa-server fa-3x text-danger mb-2"></i><br><b>Service Offline</b></div>');
-                $('#disconnectArea').hide(); $('#startArea').show();
-            });
-        }
-
-        function loadQr() {
-            $.get("{{ route('whatsapp.gateway.qr') }}", function (data) {
-                let res = typeof data === 'string' ? JSON.parse(data) : data;
-                if (res.status === 'QR_READY' && res.qr_code) {
-                    $('#ws-qr-area').html('<img src="' + res.qr_code + '" class="img-fluid rounded" style="max-width:160px"><p class="small text-muted mt-1 mb-0">Scan with WhatsApp</p>');
-                    pollTimer = setTimeout(checkStatus, 3000);
-                } else if (res.status === 'WAITING' || res.status === 'DISCONNECTED') {
-                    $('#ws-qr-area').html('<div class="spinner-border spinner-border-sm text-warning"></div><p class="small text-muted mt-1 mb-0">Generating QR...</p>');
-                    pollTimer = setTimeout(checkStatus, 4000);
-                } else if (res.status === 'CONNECTED') { checkStatus(); }
-            });
-        }
-
+        // Gateway check removed for external API mode
         function copyApiKey() {
             var el = document.getElementById("apiKeyField");
             el.select(); el.setSelectionRange(0, 99999);
