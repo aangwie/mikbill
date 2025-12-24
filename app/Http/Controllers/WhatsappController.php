@@ -367,6 +367,8 @@ class WhatsappController extends Controller
 
     /**
      * Check if Node.js is installed on server
+     * Note: On CloudLinux/cPanel, PHP can't detect Node.js via exec()
+     * So we also check if the gateway is responding
      */
     public function checkNodejs()
     {
@@ -374,8 +376,15 @@ class WhatsappController extends Controller
         $nodeVersion = null;
         $npmVersion = null;
         $isWindows = strtoupper(substr(PHP_OS, 0, 3)) === 'WIN';
+        $gatewayRunning = false;
+        $isCpanel = false;
 
-        // Try to find node
+        // Check if running on cPanel (CloudLinux)
+        if (!$isWindows && (file_exists('/usr/local/cpanel/cpanel') || is_dir('/home') && file_exists('/etc/cpanel'))) {
+            $isCpanel = true;
+        }
+
+        // Try to find node via exec (works on localhost, not on cPanel)
         if ($isWindows) {
             exec('where node 2>nul', $nodeOutput, $nodeReturn);
         } else {
@@ -385,7 +394,6 @@ class WhatsappController extends Controller
         if ($nodeReturn === 0 && !empty($nodeOutput)) {
             $nodePath = trim($nodeOutput[0]);
 
-            // Get versions
             exec('node -v 2>&1', $versionOutput);
             $nodeVersion = isset($versionOutput[0]) ? trim($versionOutput[0]) : null;
 
@@ -393,17 +401,40 @@ class WhatsappController extends Controller
             $npmVersion = isset($npmOutput[0]) ? trim($npmOutput[0]) : null;
         }
 
-        // Check if gateway dependencies installed (node_modules in project root)
+        // Check if gateway is actually responding (works for cPanel)
+        try {
+            $client = new \GuzzleHttp\Client();
+            $response = $client->get($this->getGatewayUrl('status'), [
+                'http_errors' => false,
+                'timeout' => 5
+            ]);
+            $body = json_decode($response->getBody(), true);
+            if ($response->getStatusCode() == 200 && isset($body['status'])) {
+                $gatewayRunning = true;
+            }
+        } catch (\Exception $e) {
+            $gatewayRunning = false;
+        }
+
+        // Check if node_modules exists
         $nodeModulesExists = is_dir(base_path('node_modules'));
 
+        // Determine if Node.js is available
+        // On cPanel: we can't detect via exec, but if gateway runs then Node.js works
+        $nodeAvailable = ($nodePath !== null) || $gatewayRunning;
+
         return response()->json([
-            'installed' => $nodePath !== null,
+            'installed' => $nodeAvailable,
             'node_path' => $nodePath,
-            'node_version' => $nodeVersion,
+            'node_version' => $nodeVersion ?: ($gatewayRunning ? 'Detected via Gateway' : null),
             'npm_version' => $npmVersion,
             'os' => $isWindows ? 'Windows' : 'Linux/Unix',
+            'is_cpanel' => $isCpanel,
+            'gateway_running' => $gatewayRunning,
+            'gateway_url' => env('WHATSAPP_GATEWAY_URL', 'http://localhost:3000'),
             'gateway_path' => base_path(),
             'dependencies_installed' => $nodeModulesExists,
+            'message' => $isCpanel && !$nodePath ? 'cPanel detected. PHP cannot detect Node.js directly. Check if gateway is running via cPanel.' : null,
         ]);
     }
 

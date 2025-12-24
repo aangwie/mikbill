@@ -32,38 +32,85 @@ class SystemController extends Controller
     public function update(Request $request)
     {
         $log = [];
+        $githubToken = env('GITHUB_TOKEN');
+        $githubRepo = env('GITHUB_REPO', 'aangwie/mikbill'); // default repo
+        $branch = env('GITHUB_BRANCH', 'main');
 
-        // Check if git is available first
+        // If no .git folder, try to initialize it
         if (!is_dir(base_path('.git'))) {
-            return back()->with([
-                'status' => 'warning',
-                'message' => 'Git tidak tersedia. Project ini di-upload manual. Silakan upload ulang file secara manual untuk update.',
-                'log' => 'Project tidak menggunakan Git repository. Untuk update:\n1. Download versi terbaru dari GitHub\n2. Upload/replace file via File Manager atau FTP\n3. Jalankan: php artisan migrate --force\n4. Jalankan: php artisan optimize:clear'
-            ]);
+            if (empty($githubToken)) {
+                return back()->with([
+                    'status' => 'warning',
+                    'message' => 'Git tidak tersedia dan GITHUB_TOKEN belum diset.',
+                    'log' => "Project tidak memiliki .git folder.\n\nUntuk mengaktifkan auto-update, tambahkan ke file .env:\n\nGITHUB_TOKEN=your_personal_access_token\nGITHUB_REPO=username/repository\nGITHUB_BRANCH=main"
+                ]);
+            }
+
+            // Initialize git with token
+            try {
+                $log[] = ">>> INITIALIZING GIT...";
+                $this->runCommandSafe('git init');
+
+                $remoteUrl = "https://{$githubToken}@github.com/{$githubRepo}.git";
+                $this->runCommandSafe("git remote add origin {$remoteUrl}");
+                $this->runCommandSafe('git fetch origin');
+                $this->runCommandSafe("git checkout -f origin/{$branch}");
+                $this->runCommandSafe("git branch -M {$branch}");
+                $this->runCommandSafe("git reset --hard origin/{$branch}");
+
+                $log[] = "Git repository initialized successfully!";
+            } catch (\Exception $e) {
+                return back()->with([
+                    'status' => 'error',
+                    'message' => 'Gagal inisialisasi git repository.',
+                    'log' => $e->getMessage()
+                ]);
+            }
         }
 
         try {
-            // 1. GIT PULL (Tarik Data dari GitHub)
-            $gitOutput = $this->runCommand('git pull origin main 2>&1');
-            $log[] = ">>> GIT PULL:\n" . $gitOutput;
-
-            // Jika ada perubahan (bukan Already up to date), jalankan perintah lain
-            if (!str_contains($gitOutput, 'Already up to date')) {
-
-                // 2. MIGRATE DATABASE
-                $migrateOutput = $this->runCommand('php artisan migrate --force 2>&1');
-                $log[] = ">>> MIGRATION:\n" . $migrateOutput;
-
-                // 3. OPTIMIZE (Bersihkan Cache)
-                $optimizeOutput = $this->runCommand('php artisan optimize:clear 2>&1');
-                $log[] = ">>> OPTIMIZE:\n" . $optimizeOutput;
-
-                $status = 'success';
-                $message = 'Sistem berhasil diperbarui ke versi terbaru!';
-            } else {
-                $status = 'info';
-                $message = 'Sistem Anda sudah menggunakan versi terbaru.';
+            // Update remote URL with token if available (for authentication)
+            if (!empty($githubToken)) {
+                $remoteUrl = "https://{$githubToken}@github.com/{$githubRepo}.git";
+                $this->runCommandSafe("git remote set-url origin {$remoteUrl}");
             }
+
+            // 1. GIT FETCH & RESET (more reliable than pull)
+            $fetchOutput = $this->runCommandSafe("git fetch origin {$branch} 2>&1");
+            $log[] = ">>> GIT FETCH:\n" . $fetchOutput;
+
+            // Check if there are changes
+            $localHash = trim($this->runCommandSafe('git rev-parse HEAD'));
+            $remoteHash = trim($this->runCommandSafe("git rev-parse origin/{$branch}"));
+
+            if ($localHash === $remoteHash) {
+                return back()->with([
+                    'status' => 'info',
+                    'message' => 'Sistem Anda sudah menggunakan versi terbaru.',
+                    'log' => implode("\n\n", $log) . "\n\nLocal: {$localHash}\nRemote: {$remoteHash}"
+                ]);
+            }
+
+            // Reset to remote version
+            $resetOutput = $this->runCommandSafe("git reset --hard origin/{$branch} 2>&1");
+            $log[] = ">>> GIT RESET:\n" . $resetOutput;
+
+            // 2. MIGRATE DATABASE
+            $migrateOutput = $this->runCommandSafe('php artisan migrate --force 2>&1');
+            $log[] = ">>> MIGRATION:\n" . $migrateOutput;
+
+            // 3. OPTIMIZE (Bersihkan Cache)
+            $optimizeOutput = $this->runCommandSafe('php artisan optimize:clear 2>&1');
+            $log[] = ">>> OPTIMIZE:\n" . $optimizeOutput;
+
+            // 4. Composer install (if needed)
+            if (file_exists(base_path('composer.json'))) {
+                $composerOutput = $this->runCommandSafe('composer install --no-dev --optimize-autoloader 2>&1');
+                $log[] = ">>> COMPOSER:\n" . $composerOutput;
+            }
+
+            $status = 'success';
+            $message = 'Sistem berhasil diperbarui ke versi terbaru!';
 
         } catch (\Exception $e) {
             $status = 'error';

@@ -363,17 +363,40 @@
                         `);
                     }
                 } else {
+                    // Check if it's cPanel - show different message
+                    let cpanelMsg = data.is_cpanel ?
+                        `<div class="alert alert-info py-2 small mt-2 mb-0">
+                            <i class="fas fa-info-circle me-1"></i><b>cPanel Detected:</b> PHP cannot detect Node.js on CloudLinux. 
+                            Please start the Node.js app via cPanel Node.js Selector.
+                        </div>` : '';
+
+                    let gatewayInfo = data.gateway_url ?
+                        `<p class="small text-muted mt-2 mb-0">Gateway URL: <code>${data.gateway_url}</code></p>` : '';
+
                     $('#checkResult').html(`
                         <div class="check-error">
-                            <h6 class="text-danger fw-bold mb-2"><i class="fas fa-times-circle me-1"></i>Node.js Not Found</h6>
-                            <p class="small mb-0">Node.js is not installed on this server. Please install it first using the guide on the right.</p>
+                            <h6 class="text-danger fw-bold mb-2"><i class="fas fa-times-circle me-1"></i>Node.js Not Detected</h6>
+                            <p class="small mb-0">${data.is_cpanel ?
+                            'On cPanel hosting, start the app via Node.js Selector then check again.' :
+                            'Node.js is not installed. Please install it using the guide on the right.'}</p>
+                            ${gatewayInfo}
+                            ${cpanelMsg}
                         </div>
                     `);
-                    $('#actionButtons').show().html(`
-                        <a href="https://nodejs.org/" target="_blank" class="btn btn-primary w-100 mt-3">
-                            <i class="fas fa-download me-1"></i>Download Node.js
-                        </a>
-                    `);
+
+                    if (data.is_cpanel) {
+                        $('#actionButtons').show().html(`
+                            <a href="{{ route('whatsapp.index') }}" class="btn btn-primary w-100 mt-3">
+                                <i class="fas fa-play me-1"></i>Go to WhatsApp Gateway
+                            </a>
+                        `);
+                    } else {
+                        $('#actionButtons').show().html(`
+                            <a href="https://nodejs.org/" target="_blank" class="btn btn-primary w-100 mt-3">
+                                <i class="fas fa-download me-1"></i>Download Node.js
+                            </a>
+                        `);
+                    }
                 }
             }).fail(function () {
                 $('#checkResult').html(`
