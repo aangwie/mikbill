@@ -27,9 +27,9 @@ class WhatsappService
 
         $data = [
             'api_key' => $apiKey,
-            'sender' => $sender,
-            'number' => $targetNumber,
-            'message' => $message,
+            'nomor_pengirim' => $sender,
+            'nomor_penerima' => $targetNumber,
+            'pesan' => $message,
         ];
 
         try {
