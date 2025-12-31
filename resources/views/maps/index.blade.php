@@ -72,23 +72,85 @@
         /* Custom Switch - Handled by Tailwind peer classes */
 
         /* Map Icons */
-        .house-icon {
-            font-size: 24px;
-            text-align: center;
-            filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.3));
-            transition: transform 0.2s;
+        /* Elegant Map Pin */
+        .map-pin {
+            width: 40px;
+            height: 40px;
+            border-radius: 50% 50% 50% 0;
+            position: absolute;
+            transform: rotate(-45deg);
+            left: 50%;
+            top: 50%;
+            margin: -20px 0 0 -20px;
+            box-shadow: -2px 3px 6px rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
         }
 
-        .house-icon:hover {
-            transform: scale(1.2);
+        .map-pin.online {
+            background: #10b981;
+            /* Emerald 500 */
         }
 
-        .house-online {
-            color: #10b981;
+        .map-pin.offline {
+            background: #f43f5e;
+            /* Rose 500 */
         }
 
-        .house-offline {
-            color: #ef4444;
+        /* Inner White Circle */
+        .map-pin span {
+            width: 16px;
+            height: 16px;
+            background: #fff;
+            border-radius: 50%;
+            transform: rotate(45deg);
+            /* Counter-rotate to verify icon is upright */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: inset 0 0 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .map-pin span i {
+            font-size: 14px;
+        }
+
+        .map-pin:hover {
+            transform: rotate(-45deg) scale(1.1);
+            z-index: 1000;
+        }
+
+        /* Pulse for Online */
+        .map-pin.online::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50% 50% 50% 0;
+            background: rgba(16, 185, 129, 0.4);
+            top: 0;
+            left: 0;
+            z-index: -1;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                opacity: 0.8;
+            }
+
+            70% {
+                transform: scale(1.6);
+                opacity: 0;
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 0;
+            }
         }
 
         /* Map Popup Tailwind-like Styling */
@@ -120,44 +182,46 @@
         var markers = [];
 
         locations.forEach(function (loc) {
-            var colorClass = (loc.status === 'online') ? 'house-online' : 'house-offline';
+            var markerStatus = (loc.status === 'online') ? 'online' : 'offline';
+            var iconColorClass = (loc.status === 'online') ? 'text-emerald-600' : 'text-rose-600';
+
             var statusBadge = (loc.status === 'online') ?
                 '<span class="inline-flex items-center rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">ONLINE</span>' :
                 '<span class="inline-flex items-center rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-600/10">OFFLINE</span>';
 
-            var houseIcon = L.divIcon({
-                html: '<i class="fas fa-home ' + colorClass + '"></i>',
-                className: 'house-icon',
-                iconSize: [30, 30],
-                iconAnchor: [15, 30],
-                popupAnchor: [0, -30]
+            var customIcon = L.divIcon({
+                className: 'bg-transparent border-0',
+                html: `<div class="map-pin ${markerStatus}"><span><i class="fas fa-wifi ${iconColorClass}"></i></span></div>`,
+                iconSize: [40, 40],
+                iconAnchor: [20, 40], // Center bottom
+                popupAnchor: [0, -45] // Above pin
             });
 
-            var marker = L.marker([loc.lat, loc.lng], { icon: houseIcon }).addTo(map);
+            var marker = L.marker([loc.lat, loc.lng], { icon: customIcon }).addTo(map);
 
             var popupContent = `
-                                                                                <div class="px-4 py-3 bg-white min-w-[200px]">
-                                                                                    <div class="text-center mb-3">
-                                                                                        <h6 class="text-sm font-bold text-slate-800 mb-1 leading-tight">${loc.name}</h6>
-                                                                                        ${statusBadge}
-                                                                                    </div>
-                                                                                    <div class="space-y-1.5 border-t border-slate-100 pt-2">
-                                                                                        <div class="flex items-start text-xs text-slate-500">
-                                                                                            <i class="fas fa-user-circle mt-0.5 mr-2 text-slate-400"></i>
-                                                                                            <span class="font-mono text-slate-700">${loc.username}</span>
-                                                                                        </div>
-                                                                                        <div class="flex items-start text-xs text-slate-500">
-                                                                                            <i class="fas fa-map-marker-alt mt-0.5 mr-2 text-slate-400"></i>
-                                                                                            <span>${loc.address ? loc.address.substring(0, 30) + '...' : '-'}</span>
-                                                                                        </div>
-                                                                                    </div>
-                                                                                    <div class="mt-3 pt-2">
-                                                                                        <a href="https://wa.me/${loc.phone}" target="_blank" class="flex w-full justify-center items-center rounded-md bg-green-50 px-2 py-1.5 text-xs font-bold text-green-700 hover:bg-green-100 transition-colors">
-                                                                                            <i class="fab fa-whatsapp mr-1.5"></i> Chat WhatsApp
-                                                                                        </a>
-                                                                                    </div>
-                                                                                </div>
-                                                                            `;
+                                    <div class="px-4 py-3 bg-white min-w-[200px]">
+                                        <div class="text-center mb-3">
+                                            <h6 class="text-sm font-bold text-slate-800 mb-1 leading-tight">${loc.name}</h6>
+                                            ${statusBadge}
+                                        </div>
+                                        <div class="space-y-1.5 border-t border-slate-100 pt-2">
+                                            <div class="flex items-start text-xs text-slate-500">
+                                                <i class="fas fa-user-circle mt-0.5 mr-2 text-slate-400"></i>
+                                                <span class="font-mono text-slate-700">${loc.username}</span>
+                                            </div>
+                                            <div class="flex items-start text-xs text-slate-500">
+                                                <i class="fas fa-map-marker-alt mt-0.5 mr-2 text-slate-400"></i>
+                                                <span>${loc.address ? loc.address.substring(0, 30) + '...' : '-'}</span>
+                                            </div>
+                                        </div>
+                                        <div class="mt-3 pt-2">
+                                            <a href="https://wa.me/${loc.phone}" target="_blank" class="flex w-full justify-center items-center rounded-md bg-green-50 px-2 py-1.5 text-xs font-bold text-green-700 hover:bg-green-100 transition-colors">
+                                                <i class="fab fa-whatsapp mr-1.5"></i> Chat WhatsApp
+                                            </a>
+                                        </div>
+                                    </div>
+                                `;
 
             marker.bindPopup(popupContent);
             marker.on('mouseover', function (e) {
@@ -168,7 +232,7 @@
 
         if (markers.length > 0) {
             var group = new L.featureGroup(markers);
-            map.fitBounds(group.getBounds().pad(0.1));
+            map.fitBounds(group.getBounds().pad(0.2), { maxZoom: 50 });
         }
 
         // Auto Refresh Logic
