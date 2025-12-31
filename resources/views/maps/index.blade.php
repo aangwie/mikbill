@@ -136,30 +136,33 @@
             var marker = L.marker([loc.lat, loc.lng], { icon: houseIcon }).addTo(map);
 
             var popupContent = `
-                                                                            <div class="px-4 py-3 bg-white min-w-[200px]">
-                                                                                <div class="text-center mb-3">
-                                                                                    <h6 class="text-sm font-bold text-slate-800 mb-1 leading-tight">${loc.name}</h6>
-                                                                                    ${statusBadge}
-                                                                                </div>
-                                                                                <div class="space-y-1.5 border-t border-slate-100 pt-2">
-                                                                                    <div class="flex items-start text-xs text-slate-500">
-                                                                                        <i class="fas fa-user-circle mt-0.5 mr-2 text-slate-400"></i>
-                                                                                        <span class="font-mono text-slate-700">${loc.username}</span>
+                                                                                <div class="px-4 py-3 bg-white min-w-[200px]">
+                                                                                    <div class="text-center mb-3">
+                                                                                        <h6 class="text-sm font-bold text-slate-800 mb-1 leading-tight">${loc.name}</h6>
+                                                                                        ${statusBadge}
                                                                                     </div>
-                                                                                    <div class="flex items-start text-xs text-slate-500">
-                                                                                        <i class="fas fa-map-marker-alt mt-0.5 mr-2 text-slate-400"></i>
-                                                                                        <span>${loc.address ? loc.address.substring(0, 30) + '...' : '-'}</span>
+                                                                                    <div class="space-y-1.5 border-t border-slate-100 pt-2">
+                                                                                        <div class="flex items-start text-xs text-slate-500">
+                                                                                            <i class="fas fa-user-circle mt-0.5 mr-2 text-slate-400"></i>
+                                                                                            <span class="font-mono text-slate-700">${loc.username}</span>
+                                                                                        </div>
+                                                                                        <div class="flex items-start text-xs text-slate-500">
+                                                                                            <i class="fas fa-map-marker-alt mt-0.5 mr-2 text-slate-400"></i>
+                                                                                            <span>${loc.address ? loc.address.substring(0, 30) + '...' : '-'}</span>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                    <div class="mt-3 pt-2">
+                                                                                        <a href="https://wa.me/${loc.phone}" target="_blank" class="flex w-full justify-center items-center rounded-md bg-green-50 px-2 py-1.5 text-xs font-bold text-green-700 hover:bg-green-100 transition-colors">
+                                                                                            <i class="fab fa-whatsapp mr-1.5"></i> Chat WhatsApp
+                                                                                        </a>
                                                                                     </div>
                                                                                 </div>
-                                                                                <div class="mt-3 pt-2">
-                                                                                    <a href="https://wa.me/${loc.phone}" target="_blank" class="flex w-full justify-center items-center rounded-md bg-green-50 px-2 py-1.5 text-xs font-bold text-green-700 hover:bg-green-100 transition-colors">
-                                                                                        <i class="fab fa-whatsapp mr-1.5"></i> Chat WhatsApp
-                                                                                    </a>
-                                                                                </div>
-                                                                            </div>
-                                                                        `;
+                                                                            `;
 
             marker.bindPopup(popupContent);
+            marker.on('mouseover', function (e) {
+                this.openPopup();
+            });
             markers.push(marker);
         });
 

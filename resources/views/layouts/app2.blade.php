@@ -141,7 +141,7 @@
         <div class="mx-auto max-w-7xl px-6 py-4 md:flex md:items-center md:justify-between lg:px-8">
             <div class="w-full">
                 <p class="text-center text-xs leading-5 text-slate-500">
-                    &copy; 2025 Mikrotik App. All rights reserved. Managed Service Provider.
+                    &copy; 2025 Mikrotik App. All rights reserved. Develop By Aangwi.
                 </p>
             </div>
         </div>

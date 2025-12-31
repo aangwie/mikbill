@@ -4,14 +4,28 @@
         <div class="flex h-16 justify-between">
             <div class="flex">
                 <div class="flex flex-shrink-0 items-center">
-                    <a href="{{ route('pppoe.dashboard') }}" class="flex items-center gap-2 group">
-                        <div
-                            class="bg-[#352f99] text-white p-1.5 rounded-lg shadow-md group-hover:bg-indigo-700 transition">
-                            <i class="fas fa-wifi"></i>
-                        </div>
-                        <span
-                            class="text-xl font-bold text-slate-800 dark:text-white tracking-tight group-hover:text-[#352f99] transition">MikBill</span>
-                    </a>
+                    @if(isset($company) && (!empty($company->logo_path) || !empty($company->company_name)))
+                        <a href="{{ route('pppoe.dashboard') }}" class="flex items-center gap-2 group">
+                            @if(!empty($company->logo_path))
+                                <img src="{{ asset('uploads/' . $company->logo_path) }}" alt="Logo" class="h-10 w-auto rounded-lg">
+                            @else
+                                <div class="bg-[#352f99] text-white p-1.5 rounded-lg shadow-md group-hover:bg-indigo-700 transition">
+                                    <i class="fas fa-building"></i>
+                                </div>
+                            @endif
+                            <span class="text-xl font-bold text-slate-800 dark:text-white tracking-tight group-hover:text-[#352f99] transition">
+                                {{ $company->company_name ?? 'MikBill' }}
+                            </span>
+                        </a>
+                    @else
+                        <!-- Default Branding -->
+                        <a href="{{ route('pppoe.dashboard') }}" class="flex items-center gap-2 group">
+                            <div class="bg-[#352f99] text-white p-1.5 rounded-lg shadow-md group-hover:bg-indigo-700 transition">
+                                <i class="fas fa-wifi"></i>
+                            </div>
+                            <span class="text-xl font-bold text-slate-800 dark:text-white tracking-tight group-hover:text-[#352f99] transition">MikBill</span>
+                        </a>
+                    @endif
                 </div>
                 <div class="hidden sm:ml-8 sm:flex sm:space-x-1">
                     <!-- Dashboard -->
