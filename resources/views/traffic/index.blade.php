@@ -1,87 +1,128 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <title>Monitoring Traffic Interface</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
-    {{-- 1. TAMBAHKAN CSS SELECT2 --}}
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-    
-    <link rel="icon" href="{{ $global_favicon ?? asset('favicon.ico') }}">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
+@extends('layouts.app2')
 
-    <style>
-        /* Sedikit perbaikan agar Select2 terlihat serasi dengan Bootstrap 5 */
-        .select2-container .select2-selection--single {
-            height: 38px;
-            border: 1px solid #dee2e6;
-            padding-top: 5px;
-        }
-        .select2-container--default .select2-selection--single .select2-selection__arrow {
-            height: 36px;
-        }
-    </style>
-</head>
-<body class="bg-light">
+@section('title', 'Traffic Monitor')
+@section('header', 'Traffic Monitor')
+@section('subheader', 'Real-time interface traffic monitoring')
 
-    @include('layouts.navbar_partial')
+@section('content')
 
-    <div class="container pb-5">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h3><i class="fas fa-chart-area text-primary"></i> Traffic Monitor</h3>
+    <div class="space-y-6">
+        <!-- Controls -->
+        <div
+            class="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div class="flex items-center gap-2">
+                <div class="bg-primary-50 text-primary-600 p-2 rounded-lg">
+                    <i class="fas fa-network-wired"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm font-bold text-slate-800 dark:text-white">Interface</h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">Select interface to monitor</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3 flex-1 justify-end">
+                <div class="w-full sm:w-64">
+                    <select id="interfaceSelect"
+                        class="block w-full rounded-md border-0 py-1.5 text-slate-900 dark:text-white dark:bg-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 dark:ring-slate-600 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6">
+                        @foreach($interfaces as $iface)
+                            <option value="{{ $iface['name'] }}" {{ $iface['name'] == 'ether1' ? 'selected' : '' }}>
+                                {{ $iface['name'] }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+                <button onclick="resetChart()"
+                    class="inline-flex items-center rounded-lg bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 shadow-sm hover:bg-slate-50 dark:hover:bg-slate-600 transition-all">
+                    <i class="fas fa-sync-alt mr-2 text-slate-400"></i> Reset
+                </button>
+            </div>
         </div>
 
-        <div class="card shadow border-0">
-            <div class="card-header bg-white py-3">
-                <div class="row align-items-center">
-                    <div class="col-md-5">
-                        <h6 class="m-0 font-weight-bold text-secondary">Realtime Interface Traffic</h6>
+        <!-- Stats & Chart -->
+        <div
+            class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+            <div class="border-b border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 px-6 py-4">
+                <div class="grid grid-cols-2 gap-8 text-center divide-x divide-slate-200">
+                    <div>
+                        <p class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
+                            Download (RX)</p>
+                        <h2 class="text-3xl font-extrabold text-green-600 dark:text-green-500 tracking-tight" id="rxLabel">0
+                            Mbps</h2>
                     </div>
-                    <div class="col-md-7">
-                        <div class="d-flex gap-2 justify-content-end">
-                            <div style="min-width: 250px; flex-grow: 1;">
-                                {{-- Select ini akan berubah jadi Searchable --}}
-                                <select id="interfaceSelect" class="form-select" style="width: 100%;">
-                                    @foreach($interfaces as $iface)
-                                        <option value="{{ $iface['name'] }}" {{ $iface['name'] == 'ether1' ? 'selected' : '' }}>
-                                            {{ $iface['name'] }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <button class="btn btn-primary" onclick="resetChart()">
-                                <i class="fas fa-sync"></i> Reset
-                            </button>
-                        </div>
+                    <div>
+                        <p class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">Upload
+                            (TX)</p>
+                        <h2 class="text-3xl font-extrabold text-blue-600 dark:text-blue-500 tracking-tight" id="txLabel">0
+                            Mbps</h2>
                     </div>
                 </div>
             </div>
-            <div class="card-body">
-                <div class="row text-center mb-4">
-                    <div class="col-6 border-end">
-                        <h5 class="text-muted small text-uppercase">RX (Download)</h5>
-                        <h2 class="fw-bold text-success" id="rxLabel">0 Mbps</h2>
-                    </div>
-                    <div class="col-6">
-                        <h5 class="text-muted small text-uppercase">TX (Upload)</h5>
-                        <h2 class="fw-bold text-primary" id="txLabel">0 Mbps</h2>
-                    </div>
-                </div>
-
-                {{-- CANVAS CHART.JS --}}
-                <div style="height: 400px; width: 100%;">
+            <div class="p-6">
+                <div class="relative h-[400px] w-full">
                     <canvas id="trafficChart"></canvas>
                 </div>
             </div>
         </div>
     </div>
 
+@endsection
+
+@push('styles')
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <style>
+        .select2-container .select2-selection--single {
+            height: 38px;
+            border-color: #d1d5db;
+            border-radius: 0.375rem;
+            padding-top: 5px;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            top: 6px;
+        }
+
+        /* Dark Mode Select2 */
+        .dark .select2-container .select2-selection--single {
+            background-color: #1e293b;
+            /* slate-800 */
+            border-color: #475569;
+            /* slate-600 */
+            color: #fff;
+        }
+
+        .dark .select2-container--default .select2-selection--single .select2-selection__rendered {
+            color: #fff;
+        }
+
+        .dark .select2-dropdown {
+            background-color: #1e293b;
+            /* slate-800 */
+            border-color: #475569;
+            /* slate-600 */
+            color: #fff;
+        }
+
+        .dark .select2-search__field {
+            background-color: #0f172a;
+            /* slate-900 */
+            color: #fff;
+            border-color: #475569;
+        }
+
+        .dark .select2-results__option--highlighted[aria-selected] {
+            background-color: #2563eb;
+            /* primary-600 */
+        }
+
+        .dark .select2-results__option[aria-selected=true] {
+            background-color: #334155;
+            /* slate-700 */
+        }
+    </style>
+@endpush
+
+@push('scripts')
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    
-    {{-- 2. TAMBAHKAN JS SELECT2 & CHART.JS --}}
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -89,45 +130,40 @@
         var chart;
         var intervalId;
 
-        $(document).ready(function() {
-            // 3. INISIALISASI SELECT2 (Agar bisa search)
-            $('#interfaceSelect').select2({
-                placeholder: 'Cari Interface...',
-                width: 'resolve' // Mengikuti lebar style parent
-            });
+        $(document).ready(function () {
+            $('#interfaceSelect').select2({ placeholder: 'Cari Interface...', width: '100%' });
 
             initChart();
             startMonitoring();
 
-            // Event saat user memilih interface (Select2 menggunakan event 'select2:select' atau 'change')
-            $('#interfaceSelect').on('change', function() {
+            $('#interfaceSelect').on('change', function () {
                 resetChart();
             });
         });
 
-        // 1. Inisialisasi Chart Kosong
         function initChart() {
             var ctx = document.getElementById('trafficChart').getContext('2d');
-            
             chart = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: [], 
+                    labels: [],
                     datasets: [
                         {
                             label: 'RX (Download)',
-                            borderColor: '#198754', 
-                            backgroundColor: 'rgba(25, 135, 84, 0.1)',
+                            borderColor: '#059669', // emerald-600
+                            backgroundColor: 'rgba(5, 150, 105, 0.1)',
                             borderWidth: 2,
+                            pointRadius: 0,
                             data: [],
                             fill: true,
-                            tension: 0.4 
+                            tension: 0.4
                         },
                         {
                             label: 'TX (Upload)',
-                            borderColor: '#0d6efd',
-                            backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                            borderColor: '#2563eb', // blue-600
+                            backgroundColor: 'rgba(37, 99, 235, 0.1)',
                             borderWidth: 2,
+                            pointRadius: 0,
                             data: [],
                             fill: true,
                             tension: 0.4
@@ -137,48 +173,49 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    animation: false,
+                    interaction: { intersect: false, mode: 'index' },
                     scales: {
                         y: {
                             beginAtZero: true,
-                            title: { display: true, text: 'Speed (Mbps)' }
+                            grid: { borderDash: [2, 4], color: '#f1f5f9' },
+                            ticks: { callback: function (value) { return value + ' Mbps'; } }
                         },
                         x: { display: false }
                     },
                     plugins: {
-                        legend: { position: 'top' }
+                        legend: { position: 'top', align: 'end', labels: { usePointStyle: true, boxWidth: 6 } },
+                        tooltip: {
+                            backgroundColor: '#1e293b',
+                            padding: 12,
+                            titleFont: { size: 13 },
+                            bodyFont: { size: 12 },
+                            cornerRadius: 8,
+                            displayColors: true
+                        }
                     }
                 }
             });
         }
 
-        // 2. Fungsi Ambil Data ke Laravel
         function startMonitoring() {
             if (intervalId) clearInterval(intervalId);
 
-            intervalId = setInterval(function() {
+            intervalId = setInterval(function () {
                 var iface = $('#interfaceSelect').val();
-
                 $.ajax({
                     url: "{{ route('traffic.data') }}",
                     type: "POST",
-                    data: {
-                        _token: $('meta[name="csrf-token"]').attr('content'),
-                        interface: iface
-                    },
-                    success: function(response) {
+                    data: { _token: $('meta[name="csrf-token"]').attr('content'), interface: iface },
+                    success: function (response) {
                         if (response.status === 'success') {
                             updateChart(response.rx, response.tx);
                         }
                     },
-                    error: function() {
-                        console.log("Gagal mengambil data traffic");
-                    }
+                    error: function () { console.log("Failed to fetch traffic data"); }
                 });
-            }, 2000); 
+            }, 2000);
         }
 
-        // 3. Update Chart
         function updateChart(rxBits, txBits) {
             var rxMbps = (rxBits / 1000000).toFixed(2);
             var txMbps = (txBits / 1000000).toFixed(2);
@@ -187,7 +224,6 @@
             $('#txLabel').text(txMbps + ' Mbps');
 
             var now = new Date().toLocaleTimeString();
-            
             chart.data.labels.push(now);
             chart.data.datasets[0].data.push(rxMbps);
             chart.data.datasets[1].data.push(txMbps);
@@ -197,11 +233,9 @@
                 chart.data.datasets[0].data.shift();
                 chart.data.datasets[1].data.shift();
             }
-
-            chart.update();
+            chart.update('none'); // 'none' for performance
         }
 
-        // 4. Reset Chart
         function resetChart() {
             chart.data.labels = [];
             chart.data.datasets[0].data = [];
@@ -210,5 +244,4 @@
             startMonitoring();
         }
     </script>
-</body>
-</html>
+@endpush

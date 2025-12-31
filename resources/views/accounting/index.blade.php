@@ -1,147 +1,283 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <title>Manajemen Keuangan</title>
-    <link rel="icon" href="{{ $global_favicon ?? asset('favicon.ico') }}">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    {{-- CSS DataTables --}}
-    <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="icon" href="{{ $global_favicon ?? asset('favicon.ico') }}">
-    <style>
-        .dataTables_wrapper { padding: 15px; } /* Jarak agar search box rapi */
-    </style>
-</head>
-<body class="bg-light">
+@extends('layouts.app2')
 
-    @include('layouts.navbar_partial')
+@section('title', 'Manajemen Keuangan')
+@section('header', 'Akuntansi & Keuangan')
+@section('subheader', 'Kelola pendapatan, pengeluaran, dan laporan laba rugi.')
 
-    <div class="container pb-5">
-        
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h3><i class="fas fa-wallet text-primary"></i> Akuntansi & Keuangan</h3>
-            
-            {{-- FILTER BULAN --}}
-            <form action="{{ route('accounting.index') }}" method="GET" class="d-flex gap-2">
-                <select name="month" class="form-select">
+@section('content')
+
+    <div x-data="{ showPrintModal: false }">
+
+        <!-- Filter Bar -->
+        <div class="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div class="flex items-center gap-2">
+                <div class="bg-indigo-50 text-indigo-600 p-2 rounded-lg">
+                    <i class="fas fa-wallet"></i>
+                </div>
+                <h3 class="text-lg font-bold text-slate-800">Periode Keuangan</h3>
+            </div>
+            <form action="{{ route('accounting.index') }}" method="GET"
+                class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                <select name="month"
+                    class="block w-full sm:w-40 rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6">
                     @for ($i = 1; $i <= 12; $i++)
                         <option value="{{ $i }}" {{ $month == $i ? 'selected' : '' }}>
                             {{ DateTime::createFromFormat('!m', $i)->format('F') }}
                         </option>
                     @endfor
                 </select>
-                <select name="year" class="form-select">
+                <select name="year"
+                    class="block w-full sm:w-32 rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6">
                     @for ($y = date('Y'); $y >= 2023; $y--)
                         <option value="{{ $y }}" {{ $year == $y ? 'selected' : '' }}>{{ $y }}</option>
                     @endfor
                 </select>
-                <button type="submit" class="btn btn-primary"><i class="fas fa-filter"></i> Lihat</button>
+                <button type="submit"
+                    class="inline-flex justify-center items-center rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 transition-all">
+                    <i class="fas fa-filter mr-2"></i> Lihat
+                </button>
             </form>
         </div>
 
-        {{-- RINGKASAN KEUANGAN (CARD) --}}
-        <div class="row mb-4">
-            <div class="col-md-4">
-                <div class="card bg-success text-white shadow h-100">
-                    <div class="card-body">
-                        <div class="text-uppercase small fw-bold mb-1">Total Pendapatan (Omset)</div>
-                        <h3 class="fw-bold">Rp {{ number_format($totalRevenue, 0, ',', '.') }}</h3>
-                        <div class="small opacity-75"><i class="fas fa-arrow-up"></i> Dari Tagihan Lunas</div>
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-1 gap-5 sm:grid-cols-3 mb-8">
+            <!-- Revenue -->
+            <div class="relative overflow-hidden rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-900/5">
+                <dt class="truncate text-sm font-medium text-slate-500 uppercase tracking-wider">Total Pendapatan (Omset)
+                </dt>
+                <dd class="mt-2 text-3xl font-bold tracking-tight text-emerald-600">
+                    Rp {{ number_format($totalRevenue, 0, ',', '.') }}
+                </dd>
+                <div class="mt-2 flex items-center text-sm text-slate-500">
+                    <i class="fas fa-arrow-up text-emerald-500 mr-2"></i> Dari Tagihan Lunas
+                </div>
+                <div class="absolute top-0 right-0 p-4 opacity-10">
+                    <i class="fas fa-wallet text-emerald-600 fa-4x transform rotate-12"></i>
+                </div>
+            </div>
+
+            <!-- Expense -->
+            <div class="relative overflow-hidden rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-900/5">
+                <dt class="truncate text-sm font-medium text-slate-500 uppercase tracking-wider">Total Pengeluaran</dt>
+                <dd class="mt-2 text-3xl font-bold tracking-tight text-rose-600">
+                    Rp {{ number_format($totalExpense, 0, ',', '.') }}
+                </dd>
+                <div class="mt-2 flex items-center text-sm text-slate-500">
+                    <i class="fas fa-arrow-down text-rose-500 mr-2"></i> Operasional & Lainnya
+                </div>
+                <div class="absolute top-0 right-0 p-4 opacity-10">
+                    <i class="fas fa-money-bill-wave text-rose-600 fa-4x transform -rotate-12"></i>
+                </div>
+            </div>
+
+            <!-- Profit -->
+            <div
+                class="relative overflow-hidden rounded-2xl bg-gradient-to-br {{ $netProfit >= 0 ? 'from-blue-600 to-indigo-700' : 'from-amber-500 to-orange-600' }} p-6 shadow-md text-white">
+                <dt class="truncate text-sm font-medium text-white/80 uppercase tracking-wider">Laba Bersih (Profit)</dt>
+                <dd class="mt-2 text-3xl font-bold tracking-tight">
+                    Rp {{ number_format($netProfit, 0, ',', '.') }}
+                </dd>
+                <div class="mt-2 flex items-center text-sm text-white/90">
+                    @if($netProfit >= 0)
+                        <i class="fas fa-smile mr-2"></i> Untung
+                    @else
+                        <i class="fas fa-frown mr-2"></i> Rugi
+                    @endif
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+            <!-- Left: Expense List -->
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-2xl shadow-sm ring-1 ring-slate-900/5 overflow-hidden">
+                    <div
+                        class="border-b border-slate-200 px-4 py-5 sm:px-6 bg-slate-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <h3 class="text-base font-semibold leading-6 text-slate-900">Rincian Pengeluaran Bulan Ini</h3>
+                        <button @click="showPrintModal = true"
+                            class="inline-flex items-center rounded-md bg-slate-800 px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-slate-700">
+                            <i class="fas fa-print mr-2"></i> Cetak Laporan
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto p-4">
+                        <table id="tableExpenses" class="w-full text-left border-collapse">
+                            <thead>
+                                <tr>
+                                    <th
+                                        class="text-xs font-semibold text-slate-500 uppercase tracking-wider py-3 px-4 bg-slate-50 rounded-l-lg">
+                                        Tanggal</th>
+                                    <th
+                                        class="text-xs font-semibold text-slate-500 uppercase tracking-wider py-3 px-4 bg-slate-50">
+                                        Keterangan</th>
+                                    <th
+                                        class="text-xs font-semibold text-slate-500 uppercase tracking-wider py-3 px-4 bg-slate-50 text-right">
+                                        Jumlah</th>
+                                    <th
+                                        class="text-xs font-semibold text-slate-500 uppercase tracking-wider py-3 px-4 bg-slate-50 rounded-r-lg text-right">
+                                        Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+                                @foreach($expenses as $exp)
+                                    <tr class="hover:bg-slate-50 transition-colors">
+                                        <td class="px-4 py-3 align-middle text-sm text-slate-600 whitespace-nowrap">
+                                            {{ $exp->transaction_date->format('d/m/Y') }}
+                                        </td>
+                                        <td class="px-4 py-3 align-middle text-sm text-slate-900">{{ $exp->description }}</td>
+                                        <td
+                                            class="px-4 py-3 align-middle text-sm font-bold text-rose-600 text-right whitespace-nowrap">
+                                            Rp {{ number_format($exp->amount, 0, ',', '.') }}</td>
+                                        <td class="px-4 py-3 align-middle text-right">
+                                            <form action="{{ route('accounting.destroy', $exp->id) }}" method="POST"
+                                                onsubmit="return confirm('Hapus pengeluaran ini?');">
+                                                @csrf @method('DELETE')
+                                                <button type="submit"
+                                                    class="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 p-1.5 rounded-md transition-colors"><i
+                                                        class="fas fa-trash-alt"></i></button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
 
-            <div class="col-md-4">
-                <div class="card bg-danger text-white shadow h-100">
-                    <div class="card-body">
-                        <div class="text-uppercase small fw-bold mb-1">Total Pengeluaran</div>
-                        <h3 class="fw-bold">Rp {{ number_format($totalExpense, 0, ',', '.') }}</h3>
-                        <div class="small opacity-75"><i class="fas fa-arrow-down"></i> Operasional & Lainnya</div>
+            <!-- Right: Add Expense Form -->
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-2xl shadow-sm ring-1 ring-slate-900/5 overflow-hidden sticky top-24">
+                    <div class="bg-rose-600 px-6 py-4 border-b border-rose-500">
+                        <h3 class="text-base font-bold text-white flex items-center">
+                            <i class="fas fa-plus-circle mr-2"></i> Catat Pengeluaran
+                        </h3>
                     </div>
-                </div>
-            </div>
+                    <div class="p-6">
+                        @if(session('success'))
+                            <div class="mb-4 rounded-md bg-green-50 p-4 border border-green-200">
+                                <div class="flex">
+                                    <div class="flex-shrink-0"><i class="fas fa-check-circle text-green-400"></i></div>
+                                    <div class="ml-3">
+                                        <p class="text-sm font-medium text-green-800">{{ session('success') }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
 
-            <div class="col-md-4">
-                <div class="card {{ $netProfit >= 0 ? 'bg-primary' : 'bg-warning' }} text-white shadow h-100">
-                    <div class="card-body">
-                        <div class="text-uppercase small fw-bold mb-1">Laba Bersih (Profit)</div>
-                        <h3 class="fw-bold">Rp {{ number_format($netProfit, 0, ',', '.') }}</h3>
-                        <div class="small opacity-75">
-                            @if($netProfit >= 0) <i class="fas fa-smile"></i> Untung @else <i class="fas fa-frown"></i> Rugi @endif
-                        </div>
+                        <form action="{{ route('accounting.store') }}" method="POST">
+                            @csrf
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-900 mb-1">Tanggal</label>
+                                    <input type="date" name="transaction_date"
+                                        class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-rose-600 sm:text-sm sm:leading-6"
+                                        value="{{ date('Y-m-d') }}" required>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-900 mb-1">Keterangan</label>
+                                    <textarea name="description" rows="3"
+                                        class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-rose-600 sm:text-sm sm:leading-6"
+                                        placeholder="Beli peralatan, bayar listrik..." required></textarea>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-900 mb-1">Nominal (Rp)</label>
+                                    <div class="relative rounded-md shadow-sm">
+                                        <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                                            <span class="text-slate-500 sm:text-sm">Rp</span>
+                                        </div>
+                                        <input type="number" name="amount"
+                                            class="block w-full rounded-md border-0 py-1.5 pl-10 text-slate-900 ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-rose-600 sm:text-sm sm:leading-6"
+                                            placeholder="0" required>
+                                    </div>
+                                </div>
+                                <div class="pt-2">
+                                    <button type="submit"
+                                        class="w-full justify-center rounded-lg bg-rose-600 px-3 py-2 text-sm font-bold text-white shadow-sm hover:bg-rose-500 transition-all">
+                                        Simpan Pengeluaran
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="row">
-            <div class="col-md-8">
-                <div class="card shadow border-0">
-                    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-                        <h6 class="m-0 font-weight-bold text-secondary">Rincian Pengeluaran Bulan Ini</h6>
-                        
-                        {{-- TOMBOL BUKA MODAL CETAK --}}
-                        <button class="btn btn-sm btn-dark" data-bs-toggle="modal" data-bs-target="#modalPrint">
-                            <i class="fas fa-print me-1"></i> Cetak Laporan
-                        </button>
-                    </div>
-                    <div class="card-body p-0">
-                        <div class="table-responsive">
-                            {{-- TAMBAHKAN ID DISINI UNTUK DATATABLES --}}
-                            <table id="tableExpenses" class="table table-hover mb-0 align-middle w-100">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>Tanggal</th>
-                                        <th>Keterangan</th>
-                                        <th class="text-end">Jumlah</th>
-                                        <th class="text-end">Aksi</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach($expenses as $exp)
-                                    <tr>
-                                        <td>{{ $exp->transaction_date->format('d/m/Y') }}</td>
-                                        <td>{{ $exp->description }}</td>
-                                        <td class="text-end fw-bold text-danger">Rp {{ number_format($exp->amount, 0, ',', '.') }}</td>
-                                        <td class="text-end">
-                                            <form action="{{ route('accounting.destroy', $exp->id) }}" method="POST" onsubmit="return confirm('Hapus pengeluaran ini?');">
-                                                @csrf @method('DELETE')
-                                                <button class="btn btn-sm btn-link text-danger p-0"><i class="fas fa-trash"></i></button>
-                                            </form>
-                                        </td>
-                                    </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <!-- Print Modal (Alpine) -->
+        <div x-show="showPrintModal" class="relative z-500" style="display:none;">
+            <div class="fixed inset-0 bg-slate-900/75 backdrop-blur-sm" x-transition.opacity></div>
+            <div class="fixed inset-0 z-10 overflow-y-auto">
+                <div class="flex min-h-full items-center justify-center p-4">
+                    <div class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-xl transition-all sm:w-full sm:max-w-lg"
+                        @click.away="showPrintModal = false" x-transition.scale>
+                        <form action="{{ route('accounting.print') }}" method="GET" target="_blank">
+                            <input type="hidden" name="month" value="{{ $month }}">
+                            <input type="hidden" name="year" value="{{ $year }}">
 
-            <div class="col-md-4">
-                <div class="card shadow border-0">
-                    <div class="card-header bg-danger text-white">
-                        <h6 class="m-0"><i class="fas fa-plus-circle me-1"></i> Catat Pengeluaran</h6>
-                    </div>
-                    <div class="card-body">
-                        @if(session('success')) <div class="alert alert-success small mb-3">{{ session('success') }}</div> @endif
+                            <div class="bg-slate-800 px-4 py-3 sm:px-6 flex justify-between items-center">
+                                <h3 class="text-base font-bold leading-6 text-white"><i class="fas fa-print mr-2"></i> Pilih
+                                    Jenis Laporan</h3>
+                                <button type="button" @click="showPrintModal = false"
+                                    class="text-slate-400 hover:text-white"><i class="fas fa-times"></i></button>
+                            </div>
 
-                        <form action="{{ route('accounting.store') }}" method="POST">
-                            @csrf
-                            <div class="mb-3">
-                                <label class="form-label">Tanggal</label>
-                                <input type="date" name="transaction_date" class="form-control" value="{{ date('Y-m-d') }}" required>
+                            <div class="px-4 py-5 sm:p-6">
+                                <div class="space-y-4">
+                                    <label
+                                        class="flex items-start cursor-pointer hover:bg-slate-50 p-3 rounded-lg border border-transparent hover:border-slate-200 transition-all">
+                                        <input type="radio" name="report_type" value="1"
+                                            class="mt-1 h-4 w-4 border-slate-300 text-indigo-600 focus:ring-indigo-600"
+                                            checked>
+                                        <div class="ml-3">
+                                            <span class="block text-sm font-medium text-slate-900">Rincian Lengkap</span>
+                                            <span class="block text-sm text-slate-500">Cetak semua detail transaksi
+                                                pemasukan dan pengeluaran.</span>
+                                        </div>
+                                    </label>
+                                    <label
+                                        class="flex items-start cursor-pointer hover:bg-slate-50 p-3 rounded-lg border border-transparent hover:border-slate-200 transition-all">
+                                        <input type="radio" name="report_type" value="2"
+                                            class="mt-1 h-4 w-4 border-slate-300 text-indigo-600 focus:ring-indigo-600">
+                                        <div class="ml-3">
+                                            <span class="block text-sm font-medium text-slate-900">Rekap Omset & Rincian
+                                                Biaya</span>
+                                            <span class="block text-sm text-slate-500">Ringkasan total pemasukan, tapi
+                                                rincian pengeluaran ditampilkan.</span>
+                                        </div>
+                                    </label>
+                                    <label
+                                        class="flex items-start cursor-pointer hover:bg-slate-50 p-3 rounded-lg border border-transparent hover:border-slate-200 transition-all">
+                                        <input type="radio" name="report_type" value="3"
+                                            class="mt-1 h-4 w-4 border-slate-300 text-indigo-600 focus:ring-indigo-600">
+                                        <div class="ml-3">
+                                            <span class="block text-sm font-medium text-slate-900">Rincian Omset & Rekap
+                                                Biaya</span>
+                                            <span class="block text-sm text-slate-500">Detail pemasukan ditampilkan,
+                                                pengeluaran hanya totalnya saja.</span>
+                                        </div>
+                                    </label>
+                                    <label
+                                        class="flex items-start cursor-pointer hover:bg-slate-50 p-3 rounded-lg border border-transparent hover:border-slate-200 transition-all">
+                                        <input type="radio" name="report_type" value="4"
+                                            class="mt-1 h-4 w-4 border-slate-300 text-indigo-600 focus:ring-indigo-600">
+                                        <div class="ml-3">
+                                            <span class="block text-sm font-medium text-slate-900">Rekapitulasi Total</span>
+                                            <span class="block text-sm text-slate-500">Hanya menampilkan total akhir
+                                                pemasukan, pengeluaran, dan laba bersih.</span>
+                                        </div>
+                                    </label>
+                                </div>
                             </div>
-                            <div class="mb-3">
-                                <label class="form-label">Keterangan / Keperluan</label>
-                                <textarea name="description" class="form-control" rows="3" placeholder="Cth: Beli Konektor RJ45, Bayar Listrik Server..." required></textarea>
+
+                            <div class="bg-slate-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+                                <button type="submit" @click="showPrintModal = false"
+                                    class="inline-flex w-full justify-center rounded-lg bg-slate-800 px-3 py-2 text-sm font-bold text-white shadow-sm hover:bg-slate-700 sm:ml-3 sm:w-auto">
+                                    <i class="fas fa-print mr-2"></i> Cetak PDF
+                                </button>
+                                <button type="button" @click="showPrintModal = false"
+                                    class="mt-3 inline-flex w-full justify-center rounded-lg bg-white px-3 py-2 text-sm font-semibold text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50 sm:mt-0 sm:w-auto">Batal</button>
                             </div>
-                            <div class="mb-3">
-                                <label class="form-label">Nominal (Rp)</label>
-                                <input type="number" name="amount" class="form-control" placeholder="0" required>
-                            </div>
-                            <button type="submit" class="btn btn-danger w-100">Simpan Pengeluaran</button>
                         </form>
                     </div>
                 </div>
@@ -149,63 +285,19 @@
         </div>
     </div>
 
-    <div class="modal fade" id="modalPrint" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <form action="{{ route('accounting.print') }}" method="GET" target="_blank">
-                    <div class="modal-header bg-dark text-white">
-                        <h5 class="modal-title"><i class="fas fa-print me-2"></i>Pilih Jenis Laporan</h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <input type="hidden" name="month" value="{{ $month }}">
-                        <input type="hidden" name="year" value="{{ $year }}">
+@endsection
 
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Format Laporan:</label>
-                            
-                            <div class="form-check mb-2">
-                                <input class="form-check-input" type="radio" name="report_type" value="1" id="type1" checked>
-                                <label class="form-check-label" for="type1">1. <b>Cetak Rincian Semua</b></label>
-                            </div>
-                            <div class="form-check mb-2">
-                                <input class="form-check-input" type="radio" name="report_type" value="2" id="type2">
-                                <label class="form-check-label" for="type2">2. <b>Cetak Rekap Omset & Rincian Pengeluaran</b></label>
-                            </div>
-                            <div class="form-check mb-2">
-                                <input class="form-check-input" type="radio" name="report_type" value="3" id="type3">
-                                <label class="form-check-label" for="type3">3. <b>Cetak Rincian Omset & Rekap Pengeluaran</b></label>
-                            </div>
-                            <div class="form-check mb-2">
-                                <input class="form-check-input" type="radio" name="report_type" value="4" id="type4">
-                                <label class="form-check-label" for="type4">4. <b>Cetak Rekap Semua</b></label>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                        <button type="submit" class="btn btn-dark"><i class="fas fa-print"></i> Cetak PDF</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
+@push('styles')
+    <link rel="stylesheet" href="https://cdn.datatables.net/2.1.8/css/dataTables.tailwindcss.css">
+@endpush
 
-    {{-- Script DataTables --}}
+@push('scripts')
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
-    
+    <script src="https://cdn.datatables.net/2.1.8/js/dataTables.js"></script>
+    <script src="https://cdn.datatables.net/2.1.8/js/dataTables.tailwindcss.js"></script>
     <script>
-        $(document).ready(function() {
-            $('#tableExpenses').DataTable({
-                "language": {
-                    "url": "//cdn.datatables.net/plug-ins/1.10.24/i18n/Indonesian.json"
-                },
-                "order": [[ 0, "desc" ]] // Urutkan tanggal terbaru
-            });
+        $(document).ready(function () {
+            $('#tableExpenses').DataTable({ responsive: true, order: [[0, "desc"]] });
         });
     </script>
-</body>
-</html>
+@endpush

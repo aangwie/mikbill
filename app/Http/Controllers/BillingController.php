@@ -188,7 +188,8 @@ class BillingController extends Controller
         $invoice = Invoice::with('customer')->findOrFail($id);
         $customer = $invoice->customer;
 
-        if ($invoice->status != 'paid') return back()->with('error', 'Gagal.');
+        if ($invoice->status != 'paid')
+            return back()->with('error', 'Gagal.');
 
         // Validasi Operator
         if (Auth::user()->role == 'operator') {
@@ -233,11 +234,25 @@ class BillingController extends Controller
         return back()->with('warning', "Pembayaran DIBATALKAN! $pesanMikrotik $pesanWA");
     }
 
+    public function destroy($id)
+    {
+        $invoice = Invoice::findOrFail($id);
+
+        if (Auth::user()->role == 'operator') {
+            if ($invoice->customer->operator_id != Auth::user()->id)
+                abort(403);
+        }
+
+        $invoice->delete();
+        return back()->with('success', 'Invoice berhasil dihapus.');
+    }
+
     public function print($id)
     {
         $invoice = Invoice::with('customer')->findOrFail($id);
         if (Auth::user()->role == 'operator') {
-            if ($invoice->customer->operator_id != Auth::user()->id) abort(403);
+            if ($invoice->customer->operator_id != Auth::user()->id)
+                abort(403);
         }
         $company = Company::first();
         return view('billing.invoice', compact('invoice', 'company'));

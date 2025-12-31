@@ -61,6 +61,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/billing/store', [BillingController::class, 'store'])->name('billing.store');
     Route::post('/billing/generate', [BillingController::class, 'generate'])->name('billing.generate');
     Route::get('/billing/{id}/print', [BillingController::class, 'print'])->name('billing.print');
+    Route::delete('/billing/{id}', [BillingController::class, 'destroy'])->name('billing.destroy');
 
     // Report
     Route::get('/report', [ReportController::class, 'index'])->name('report.index');
@@ -120,6 +121,8 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/system/clear-cache', [SystemController::class, 'clearCache'])->name('system.clear-cache');
 
         Route::resource('users', UserController::class);
-        Route::resource('customers', CustomerController::class);
     });
+
+    // CUSTOMER MANAGEMENT (Accessible by Admin & Operator)
+    Route::resource('customers', CustomerController::class);
 });

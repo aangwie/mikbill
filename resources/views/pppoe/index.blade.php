@@ -1,255 +1,331 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monitoring PPPoE Mikrotik</title>
-    <link rel="icon" href="{{ $global_favicon ?? asset('favicon.ico') }}">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
-    <link rel="icon" href="{{ $global_favicon ?? asset('favicon.ico') }}">
+@extends('layouts.app2')
 
-    <style>
-        .status-dot { height: 10px; width: 10px; background-color: #bbb; border-radius: 50%; display: inline-block; }
-        .online { background-color: #28a745; box-shadow: 0 0 5px #28a745; }
-        .offline { background-color: #dc3545; }
-        .navbar-brand { font-weight: bold; letter-spacing: 1px; }
-        .dataTables_wrapper { padding: 20px; }
-    </style>
-</head>
-<body class="bg-light">
+@section('title', 'Dashboard PPPoE')
+@section('header', 'Monitor PPPoE')
+@section('subheader', 'Real-time monitoring user online & offline Mikrotik')
 
-    @include('layouts.navbar_partial')
+@section('content')
 
-    <div class="container pb-5">
-        
-        {{-- Info Header --}}
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <div>
-                <h3><i class="fas fa-network-wired text-primary"></i> Monitor User Online</h3>
-                
-                {{-- CONTROL PANEL AUTO REFRESH --}}
-                <div class="d-flex align-items-center gap-3 mt-2 p-2 bg-white rounded shadow-sm border" style="width: fit-content;">
-                    
-                    {{-- 1. Switch ON/OFF --}}
-                    <div class="form-check form-switch mb-0">
-                        <input class="form-check-input" type="checkbox" id="switchAutoRefresh" checked>
-                        <label class="form-check-label small fw-bold" for="switchAutoRefresh">Auto Refresh</label>
-                    </div>
-
-                    {{-- 2. Pilihan Waktu --}}
-                    <select id="selectInterval" class="form-select form-select-sm border-secondary" style="width: auto; cursor: pointer;">
-                        <option value="5">5 Detik</option>
-                        <option value="15">15 Detik</option>
-                        <option value="30">30 Detik</option>
-                        <option value="60">60 Detik</option>
-                        <option value="180">3 Menit</option>
-                        <option value="360">6 Menit</option>
-                    </select>
-
-                    {{-- 3. Indikator Countdown --}}
-                    <span class="badge bg-light text-dark border">
-                        <i class="fas fa-clock text-warning me-1"></i> <b id="timerDisplay">--</b>s
-                    </span>
-                </div>
+    <!-- Controls & Router Info -->
+    <div class="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <!-- Auto Refresh Controls -->
+        <div
+            class="inline-flex items-center rounded-lg bg-white dark:bg-slate-800 p-2 shadow-sm border border-slate-200 dark:border-slate-700">
+            <div class="flex items-center px-2">
+                <span class="relative flex h-3 w-3 mr-2">
+                    <span
+                        class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                </span>
+                <span class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Live</span>
             </div>
-            
-            <div class="text-end">
-                <h5 class="mb-1">
-                    Host: <strong>{{ $routerInfo->host ?? 'Belum Disetting' }}</strong>
-                    <span class="text-muted small">({{ $routerInfo->username ?? '-' }})</span>
-                </h5>
-                @if(isset($isConnected) && $isConnected)
-                    <span class="badge bg-success shadow-sm"><i class="fas fa-link me-1"></i> TERHUBUNG</span>
-                    <span class="badge bg-secondary ms-1">Port: {{ $routerInfo->port }}</span>
-                @else
-                    <span class="badge bg-danger shadow-sm"><i class="fas fa-unlink me-1"></i> TERPUTUS</span>
-                    @if($routerInfo)
-                        @if(auth()->user()->role == 'admin')
-                            <a href="{{ route('router.index') }}" class="btn btn-sm btn-outline-danger ms-2 py-0"><i class="fas fa-cog"></i> Config</a>
-                        @endif
-                    @endif
-                @endif
+
+            <div class="h-6 w-px bg-slate-200 dark:bg-slate-700 mx-2"></div>
+
+            <label class="flex items-center cursor-pointer mr-3">
+                <div class="relative">
+                    <input type="checkbox" id="switchAutoRefresh" class="sr-only" checked>
+                    <div class="block bg-slate-200 dark:bg-slate-700 w-10 h-6 rounded-full transition-colors duration-300"
+                        id="switchBg">
+                    </div>
+                    <div class="dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform duration-300 transform translate-x-4 shadow"
+                        id="switchDot"></div>
+                </div>
+                <span class="ml-2 text-sm font-medium text-slate-600 dark:text-slate-300">Auto</span>
+            </label>
+
+            <select id="selectInterval"
+                class="block w-24 rounded-md border-0 py-1.5 text-slate-900 dark:text-white dark:bg-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 dark:ring-slate-600 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-xs sm:leading-6 cursor-pointer">
+                <option value="5">5s</option>
+                <option value="15">15s</option>
+                <option value="30">30s</option>
+                <option value="60">1m</option>
+                <option value="180">3m</option>
+            </select>
+
+            <div class="ml-3 hidden sm:flex items-center text-xs text-slate-400 dark:text-slate-500 font-mono">
+                <i class="fas fa-history mr-1.5"></i> <span id="timerDisplay">--</span>s
             </div>
         </div>
 
-        {{-- Alerts --}}
-        @if(isset($error) && $error) <div class="alert alert-danger shadow-sm">{{ $error }}</div> @endif
-        @if(session('success')) <div class="alert alert-success shadow-sm">{{ session('success') }}</div> @endif
-        @if(session('warning')) <div class="alert alert-warning shadow-sm">{{ session('warning') }}</div> @endif
+        <!-- Router Info -->
+        <div class="flex items-center gap-3">
+            <div class="text-right hidden sm:block">
+                <p class="text-sm font-bold text-slate-900 dark:text-white">{{ $routerInfo->host ?? 'No Host' }}</p>
+                <p class="text-xs text-slate-500 dark:text-slate-400">{{ $routerInfo->username ?? '-' }}</p>
+            </div>
 
-        {{-- KARTU MONITORING --}}
-        @if(isset($secrets) && isset($actives))
-            @php
-                $totalUser = count($secrets);
-                $onlineUser = $actives->count();
-                $offlineUser = $totalUser - $onlineUser;
-            @endphp
-            <div class="row mb-4">
-                <div class="col-md-4">
-                    <div class="card bg-primary text-white shadow-sm h-100 border-0">
-                        <div class="card-body d-flex justify-content-between align-items-center">
-                            <div><h6 class="text-uppercase mb-1 opacity-75">Total Pelanggan</h6><h2 class="mb-0 fw-bold">{{ $totalUser }}</h2></div>
-                            <i class="fas fa-users fa-3x opacity-50"></i>
-                        </div>
-                    </div>
+            @if(isset($isConnected) && $isConnected)
+                <div class="flex items-center justify-center h-10 w-10 rounded-full bg-green-100 dark:bg-green-900/50 text-green-600 dark:text-green-400 shadow-sm"
+                    title="Terhubung">
+                    <i class="fas fa-link"></i>
                 </div>
-                <div class="col-md-4">
-                    <div class="card bg-success text-white shadow-sm h-100 border-0">
-                        <div class="card-body d-flex justify-content-between align-items-center">
-                            <div><h6 class="text-uppercase mb-1 opacity-75">Sedang Online</h6><h2 class="mb-0 fw-bold">{{ $onlineUser }}</h2></div>
-                            <i class="fas fa-wifi fa-3x opacity-50"></i>
-                        </div>
-                    </div>
+            @else
+                <div class="flex items-center justify-center h-10 w-10 rounded-full bg-red-100 text-red-600 shadow-sm animate-pulse"
+                    title="Terputus">
+                    <i class="fas fa-unlink"></i>
                 </div>
-                <div class="col-md-4">
-                    <div class="card bg-danger text-white shadow-sm h-100 border-0">
-                        <div class="card-body d-flex justify-content-between align-items-center">
-                            <div><h6 class="text-uppercase mb-1 opacity-75">Sedang Offline</h6><h2 class="mb-0 fw-bold">{{ $offlineUser }}</h2></div>
-                            <i class="fas fa-power-off fa-3x opacity-50"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        @endif
+            @endif
 
-        {{-- Tabel DataTables --}}
-        @if(isset($secrets))
-        <div class="card shadow border-0">
-            <div class="card-header bg-white py-3">
-                <h5 class="mb-0 fw-bold text-secondary">Daftar Pelanggan ({{ count($secrets) }})</h5>
-            </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table id="tableUser" class="table table-hover mb-0 align-middle w-100">
-                        <thead class="table-light">
-                            <tr>
-                                {{-- TOTAL KOLOM DASAR: 7 --}}
-                                <th>Status</th>
-                                <th>Username</th>
-                                <th>Profile</th>
-                                <th>IP Address</th>
-                                <th>Status</th>
-                                <th>Terakhir Terputus</th>
-                                <th>Durasi (Uptime)</th>
-                                
-                                {{-- KOLOM KE-8 (HANYA ADMIN) --}}
-                                @if(auth()->user()->role == 'admin')
-                                    <th class="text-end">Aksi</th>
-                                @endif
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($secrets as $secret)
-                                @php
-                                    $name = $secret['name'];
-                                    $isActive = $actives->has($name);
-                                    $activeData = $isActive ? $actives[$name] : null;
-                                    $isDisabled = isset($secret['disabled']) && $secret['disabled'] == 'true';
-                                    $lastLoggedOut = $secret['last-logged-out'] ?? '-';
-                                @endphp
-                                <tr class="{{ $isDisabled ? 'table-secondary text-muted' : '' }}">
-                                    <td>
-                                        @if($isDisabled) <span class="badge bg-secondary">Disabled</span>
-                                        @elseif($isActive) <span class="status-dot online"></span> <span class="d-none">Online</span>
-                                        @else <span class="status-dot offline"></span> <span class="d-none">Offline</span> @endif
-                                    </td>
-                                    <td class="fw-bold">{{ $secret['name'] }} @if($isDisabled) <i class="fas fa-ban text-danger ms-1"></i> @endif</td>
-                                    <td><span class="badge bg-info text-dark">{{ $secret['profile'] ?? 'default' }}</span></td>
-                                    <td>{{ $activeData['address'] ?? '-' }}</td>
-                                    <td>
-                                        @if($isActive) <span class="text-success small fw-bold"><i class="fas fa-plug me-1"></i>Connected</span>
-                                        @else <span class="text-danger small fw-bold"><i class="fas fa-chain-broken me-1"></i>Disconnected</span> @endif
-                                    </td>
-                                    <td>
-                                        @if($isActive) <span class="text-muted small">-</span>
-                                        @else <small class="text-secondary">{{ $lastLoggedOut }}</small> @endif
-                                    </td>
-                                    <td class="fw-bold text-dark">{{ $activeData['uptime'] ?? '-' }}</td>
-                                    
-                                    {{-- KOLOM KE-8 (HANYA ADMIN) --}}
-                                    @if(auth()->user()->role == 'admin')
-                                        <td class="text-end">
-                                            <div class="d-flex gap-1 justify-content-end">
-                                                @if($isActive)
-                                                    <form action="{{ route('pppoe.kick') }}" method="POST" onsubmit="return confirm('Reset koneksi user {{ $name }}?');">
-                                                        @csrf
-                                                        <input type="hidden" name="username" value="{{ $name }}">
-                                                        <button type="submit" class="btn btn-sm btn-warning" title="Reset Koneksi"><i class="fas fa-sync-alt"></i></button>
-                                                    </form>
-                                                @endif
-                                                <form action="{{ route('pppoe.toggle') }}" method="POST">
-                                                    @csrf
-                                                    <input type="hidden" name="username" value="{{ $name }}">
-                                                    @if($isDisabled)
-                                                        <input type="hidden" name="action" value="enable">
-                                                        <button type="submit" class="btn btn-sm btn-success" title="Aktifkan"><i class="fas fa-check"></i></button>
-                                                    @else
-                                                        <input type="hidden" name="action" value="disable">
-                                                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Blokir user {{ $name }}?');" title="Blokir"><i class="fas fa-ban"></i></button>
-                                                    @endif
-                                                </form>
-                                            </div>
-                                        </td>
-                                    @endif
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+            @if(auth()->user()->role == 'admin')
+                <a href="{{ route('router.index') }}"
+                    class="flex items-center justify-center h-10 w-10 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-400 hover:text-primary-600 hover:border-primary-600 transition shadow-sm"
+                    title="Konfigurasi">
+                    <i class="fas fa-cog"></i>
+                </a>
+            @endif
         </div>
-        @endif
     </div>
 
-    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    <!-- Stats Cards -->
+    @if(isset($secrets) && isset($actives))
+        @php
+            $totalUser = count($secrets);
+            $onlineUser = $actives->count();
+            $offlineUser = $totalUser - $onlineUser;
+        @endphp
+        <dl class="grid grid-cols-1 gap-5 sm:grid-cols-3 mb-8">
+            <!-- Total -->
+            <div
+                class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-700 to-slate-900 border border-slate-600 p-6 shadow-lg shadow-slate-900/20 hover:shadow-xl transition-shadow group">
+                <dt class="truncate text-sm font-medium text-slate-300">Total Pelanggan</dt>
+                <dd class="mt-2 flex items-baseline text-3xl font-bold tracking-tight text-white">
+                    {{ $totalUser }}
+                </dd>
+                <div class="absolute right-4 top-4 text-white/10 group-hover:text-white/20 transition-colors">
+                    <i class="fas fa-users fa-3x transform rotate-12"></i>
+                </div>
+            </div>
 
+            <!-- Online -->
+            <div
+                class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 border border-emerald-400 p-6 shadow-lg shadow-emerald-500/20 hover:shadow-xl transition-shadow group">
+                <dt class="truncate text-sm font-medium text-emerald-100">Online</dt>
+                <dd class="mt-2 flex items-baseline text-3xl font-bold tracking-tight text-white">
+                    {{ $onlineUser }}
+                </dd>
+                <div class="absolute right-4 top-4 text-white/20 group-hover:text-white/30 transition-colors">
+                    <i class="fas fa-wifi fa-3x"></i>
+                </div>
+            </div>
+
+            <!-- Offline -->
+            <div
+                class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-rose-500 to-pink-600 border border-rose-400 p-6 shadow-lg shadow-rose-500/20 hover:shadow-xl transition-shadow group">
+                <dt class="truncate text-sm font-medium text-rose-100">Offline</dt>
+                <dd class="mt-2 flex items-baseline text-3xl font-bold tracking-tight text-white">
+                    {{ $offlineUser }}
+                    <span class="ml-2 text-sm font-medium text-rose-200/80">/ {{ $totalUser }}</span>
+                </dd>
+                <div class="absolute right-4 top-4 text-white/20 group-hover:text-white/30 transition-colors">
+                    <i class="fas fa-power-off fa-3x"></i>
+                </div>
+            </div>
+        </dl>
+    @endif
+
+    <!-- Table Section -->
+    @if(isset($secrets))
+        <div class="bg-white rounded-2xl shadow-sm ring-1 ring-slate-900/5 overflow-hidden">
+            <div
+                class="border-b border-slate-200 dark:border-slate-700 px-4 py-5 sm:px-6 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
+                <h3 class="text-base font-semibold leading-6 text-slate-900 dark:text-white">Daftar Pelanggan</h3>
+                <span
+                    class="inline-flex items-center rounded-md bg-primary-50 dark:bg-primary-900/20 px-2 py-1 text-xs font-medium text-primary-700 dark:text-primary-400 ring-1 ring-inset ring-primary-700/10 dark:ring-primary-400/20">{{ count($secrets) }}
+                    User</span>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700" id="tableUser">
+                    <thead class="bg-slate-50 dark:bg-slate-700">
+                        <tr>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-300 uppercase tracking-wider">
+                                Status
+                            </th>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-300 uppercase tracking-wider">
+                                Username</th>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-300 uppercase tracking-wider">
+                                Profile</th>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-300 uppercase tracking-wider hidden sm:table-cell">
+                                IP Address</th>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-300 uppercase tracking-wider hidden sm:table-cell">
+                                Uptime</th>
+                            @if(auth()->user()->role == 'admin')
+                                <th scope="col" class="relative px-6 py-3 text-right">
+                                    <span class="sr-only">Actions</span>
+                                </th>
+                            @endif
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
+                        @foreach($secrets as $secret)
+                            @php
+                                $name = $secret['name'];
+                                $isActive = $actives->has($name);
+                                $activeData = $isActive ? $actives[$name] : null;
+                                $isDisabled = isset($secret['disabled']) && $secret['disabled'] == 'true';
+                            @endphp
+                            <tr
+                                class="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors {{ $isDisabled ? 'bg-slate-50 dark:bg-slate-900 opacity-60' : '' }}">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        @if($isDisabled)
+                                            <span class="h-2.5 w-2.5 rounded-full bg-slate-400 mr-2"></span>
+                                            <span class="text-xs font-medium text-slate-500 dark:text-slate-400">Disabled</span>
+                                        @elseif($isActive)
+                                            <span class="relative flex h-2.5 w-2.5 mr-2">
+                                                <span
+                                                    class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                                <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                                            </span>
+                                            <span class="text-xs font-medium text-emerald-700 dark:text-emerald-400">Online</span>
+                                        @else
+                                            <span class="h-2.5 w-2.5 rounded-full bg-rose-400 mr-2"></span>
+                                            <span class="text-xs font-medium text-rose-600 dark:text-rose-400">Offline</span>
+                                        @endif
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-semibold text-slate-900 dark:text-white">{{ $name }}</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span
+                                        class="inline-flex items-center rounded-md bg-blue-50 dark:bg-blue-900/30 px-2 py-1 text-xs font-medium text-blue-700 dark:text-blue-300 ring-1 ring-inset ring-blue-700/10 dark:ring-blue-500/20">
+                                        {{ $secret['profile'] ?? 'default' }}
+                                    </span>
+                                </td>
+                                <td
+                                    class="px-6 py-4 whitespace-nowrap text-sm text-slate-600 dark:text-slate-300 hidden sm:table-cell">
+                                    {{ $activeData['address'] ?? '-' }}
+                                </td>
+                                <td
+                                    class="px-6 py-4 whitespace-nowrap text-sm text-slate-600 dark:text-slate-300 hidden sm:table-cell font-mono">
+                                    {{ $activeData['uptime'] ?? '-' }}
+                                </td>
+                                @if(auth()->user()->role == 'admin')
+                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <div class="flex justify-end gap-2">
+                                            @if($isActive)
+                                                <form action="{{ route('pppoe.kick') }}" method="POST"
+                                                    onsubmit="return confirm('Kick user {{ $name }}?');">
+                                                    @csrf
+                                                    <input type="hidden" name="username" value="{{ $name }}">
+                                                    <button type="submit"
+                                                        class="text-amber-500 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300 transition-colors"
+                                                        title="Reset/Kick Connection">
+                                                        <i class="fas fa-sync-alt"></i>
+                                                    </button>
+                                                </form>
+                                            @endif
+
+                                            <form action="{{ route('pppoe.toggle') }}" method="POST">
+                                                @csrf
+                                                <input type="hidden" name="username" value="{{ $name }}">
+                                                @if($isDisabled)
+                                                    <input type="hidden" name="action" value="enable">
+                                                    <button type="submit"
+                                                        class="text-green-500 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300 transition-colors"
+                                                        title="Enable User">
+                                                        <i class="fas fa-user-check"></i>
+                                                    </button>
+                                                @else
+                                                    <input type="hidden" name="action" value="disable">
+                                                    <button type="submit"
+                                                        class="text-rose-500 hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-300 transition-colors"
+                                                        onclick="return confirm('Disable user {{ $name }}?');" title="Disable User">
+                                                        <i class="fas fa-user-slash"></i>
+                                                    </button>
+                                                @endif
+                                            </form>
+                                        </div>
+                                    </td>
+                                @endif
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    @endif
+
+@endsection
+
+@push('styles')
+    <!-- DataTables Tailwind -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/2.1.8/css/dataTables.tailwindcss.css">
+    <style>
+        /* Custom switch for Auto Refresh */
+        input:checked~#switchBg {
+            @apply bg-green-500;
+        }
+
+        input:checked~#switchDot {
+            @apply translate-x-6;
+        }
+
+        /* DataTable customization to match clean theme */
+        div.dt-container .dt-paging .dt-paging-button {
+            @apply px-3 py-1 text-sm rounded bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600 hover:text-slate-900 dark:hover:text-white ml-1 !important;
+        }
+
+        div.dt-container .dt-paging .dt-paging-button.current {
+            @apply bg-primary-600 text-white border-primary-600 hover:bg-primary-700 hover:text-white !important;
+        }
+
+        div.dt-container .dt-search input {
+            @apply rounded-md border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm !important;
+        }
+
+        div.dt-container select {
+            @apply rounded-md border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm py-1 !important;
+        }
+    </style>
+@endpush
+
+@push('scripts')
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.datatables.net/2.1.8/js/dataTables.js"></script>
+    <script src="https://cdn.datatables.net/2.1.8/js/dataTables.tailwindcss.js"></script>
     <script>
-        $(document).ready(function() {
+        $(document).ready(function () {
             $('#tableUser').DataTable({
-                "language": { "url": "//cdn.datatables.net/plug-ins/1.10.24/i18n/Indonesian.json" }
+                responsive: true,
+                language: {
+                    search: "",
+                    searchPlaceholder: "Search user...",
+                    lengthMenu: "Show _MENU_"
+                },
+                dom: '<"flex flex-col sm:flex-row justify-between items-center bg-white dark:bg-slate-800 px-4 py-3 border-b border-slate-200 dark:border-slate-700"f<"mt-2 sm:mt-0"l>>t<"flex flex-col sm:flex-row justify-between items-center bg-white dark:bg-slate-800 px-4 py-3"ip>',
             });
 
-            // --- LOGIKA AUTO REFRESH CANGGIH ---
-            
-            // 1. Ambil Settingan Terakhir dari LocalStorage (Agar browser ingat pilihan user)
+            // --- Auto Refresh Logic ---
             let savedInterval = localStorage.getItem('dashboard_refresh_interval') || 30;
-            let savedStatus = localStorage.getItem('dashboard_refresh_active'); 
-            
-            // Konversi string 'false' menjadi boolean false, default true
-            let isRefreshOn = (savedStatus === 'false') ? false : true; 
+            let savedStatus = localStorage.getItem('dashboard_refresh_active');
+            let isRefreshOn = (savedStatus === 'false') ? false : true;
 
-            // 2. Set Nilai Awal ke Elemen HTML
             $('#selectInterval').val(savedInterval);
             $('#switchAutoRefresh').prop('checked', isRefreshOn);
 
-            // Variable Timer
             let timeLeft = parseInt(savedInterval);
             let timerElement = document.getElementById('timerDisplay');
             let intervalId;
 
-            // 3. Fungsi Menjalankan Timer
             function startTimer() {
-                if (intervalId) clearInterval(intervalId); // Reset jika ada interval lama
-
-                // Update tampilan awal
+                if (intervalId) clearInterval(intervalId);
                 if (!isRefreshOn) {
                     timerElement.innerHTML = "OFF";
                     return;
                 }
                 timerElement.innerHTML = timeLeft;
 
-                intervalId = setInterval(function() {
-                    // PENGAMAN: Cek Modal (Jangan refresh jika admin lagi buka modal)
-                    if ($('.modal.show').length > 0) {
-                        timerElement.innerHTML = "Paused";
-                        return;
-                    }
+                intervalId = setInterval(function () {
+                    // Check if user is interacting with something
+                    if ($('.dt-search input').is(':focus')) return;;
 
                     if (timeLeft <= 0) {
                         window.location.reload();
@@ -260,13 +336,11 @@
                 }, 1000);
             }
 
-            // 4. Event Listener: Saat Switch ON/OFF Diubah
-            $('#switchAutoRefresh').change(function() {
+            $('#switchAutoRefresh').change(function () {
                 isRefreshOn = $(this).is(':checked');
-                localStorage.setItem('dashboard_refresh_active', isRefreshOn); // Simpan ke browser
-                
+                localStorage.setItem('dashboard_refresh_active', isRefreshOn);
                 if (isRefreshOn) {
-                    timeLeft = parseInt($('#selectInterval').val()); // Reset waktu
+                    timeLeft = parseInt($('#selectInterval').val());
                     startTimer();
                 } else {
                     clearInterval(intervalId);
@@ -274,20 +348,14 @@
                 }
             });
 
-            // 5. Event Listener: Saat Durasi Waktu Diubah
-            $('#selectInterval').change(function() {
+            $('#selectInterval').change(function () {
                 let newVal = $(this).val();
-                localStorage.setItem('dashboard_refresh_interval', newVal); // Simpan ke browser
-                
-                timeLeft = parseInt(newVal); // Reset waktu hitung mundur
-                if (isRefreshOn) {
-                    timerElement.innerHTML = timeLeft;
-                }
+                localStorage.setItem('dashboard_refresh_interval', newVal);
+                timeLeft = parseInt(newVal);
+                if (isRefreshOn) timerElement.innerHTML = timeLeft;
             });
 
-            // Jalankan Timer Pertama Kali
             startTimer();
         });
     </script>
-</body>
-</html>
+@endpush

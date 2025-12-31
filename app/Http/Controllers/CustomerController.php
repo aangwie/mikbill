@@ -23,7 +23,15 @@ class CustomerController extends Controller
     // 1. Halaman Utama Manajemen Pelanggan
     public function index()
     {
-        $customers = Customer::with('operator')->get();
+        $user = auth()->user();
+
+        $query = Customer::with('operator');
+
+        if ($user->role == 'operator') {
+            $query->where('operator_id', $user->id);
+        }
+
+        $customers = $query->get();
         $operators = User::where('role', 'operator')->get();
 
         // Ambil profile dari Mikrotik untuk dropdown 'Tambah User'
@@ -197,13 +205,13 @@ class CustomerController extends Controller
         }
     }
 
-    public function export() 
+    public function export()
     {
         return Excel::download(new CustomersExport, 'data_pelanggan.xlsx');
     }
 
     // 2. Import Data dari Excel
-    public function import(Request $request) 
+    public function import(Request $request)
     {
         $request->validate([
             'file' => 'required|mimes:xlsx,xls,csv'
@@ -217,7 +225,7 @@ class CustomerController extends Controller
         }
     }
 
-    public function downloadTemplate() 
+    public function downloadTemplate()
     {
         return Excel::download(new CustomerTemplateExport, 'template_import_pelanggan.xlsx');
     }

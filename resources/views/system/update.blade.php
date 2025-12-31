@@ -1,103 +1,103 @@
-<!DOCTYPE html>
-<html lang="id">
+@extends('layouts.app2')
 
-<head>
-    <meta charset="UTF-8">
-    <title>Update Sistem</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="icon" href="{{ $global_favicon ?? asset('favicon.ico') }}">
-    <style>
-        .terminal-window {
-            background-color: #1e1e1e;
-            color: #00ff00;
-            font-family: 'Courier New', Courier, monospace;
-            padding: 15px;
-            border-radius: 5px;
-            height: 300px;
-            overflow-y: auto;
-            white-space: pre-wrap;
-            /* Agar baris baru terbaca */
-            border: 1px solid #333;
-        }
-    </style>
-</head>
+@section('title', 'System Update')
+@section('header', 'System Update')
+@section('subheader', 'Pembaruan sistem dan perawatan rutin.')
 
-<body class="bg-light">
+@section('content')
 
-    @include('layouts.navbar_partial')
-
-    <div class="container pb-5">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h3><i class="fas fa-sync-alt text-primary"></i> System Update</h3>
-        </div>
-
-        <div class="row justify-content-center">
-            <div class="col-md-8">
-
-                {{-- CARD VERSI --}}
-                <div class="card shadow border-0 mb-4">
-                    <div class="card-body text-center py-4">
-                        <i class="fab fa-github fa-4x text-dark mb-3"></i>
-                        <h5>Versi Terinstall Saat Ini:</h5>
-                        <code class="fs-5 bg-light px-3 py-1 rounded d-block mb-3 text-primary">
-                            {{ $currentVersion ?? 'Tidak diketahui' }}
-                        </code>
-
-                        <p class="text-muted small">
-                            Sumber: <a href="https://github.com/username_saya/myproject" target="_blank">Repository
-                                GitHub</a>
-                        </p>
-
-                        <form action="{{ route('system.update') }}" method="POST"
-                            onsubmit="return confirm('Yakin ingin melakukan update? Pastikan tidak ada file yang diedit manual di hosting.');"
-                            class="d-inline">
-                            @csrf
-                            <button type="submit" class="btn btn-primary btn-lg px-4 shadow-sm">
-                                <i class="fas fa-cloud-download-alt me-2"></i> Cek & Update
-                            </button>
-                        </form>
-
-                        <form action="{{ route('system.clear-cache') }}" method="POST" class="d-inline ms-2">
-                            @csrf
-                            <button type="submit" class="btn btn-warning btn-lg px-4 shadow-sm">
-                                <i class="fas fa-broom me-2"></i> Clear Cache
-                            </button>
-                        </form>
-                    </div>
+    <div class="max-w-3xl mx-auto">
+        <!-- Version Card -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden mb-8">
+            <div class="p-8 text-center">
+                <div
+                    class="inline-flex items-center justify-center h-20 w-20 rounded-full bg-slate-100 text-slate-800 mb-6">
+                    <i class="fab fa-github text-4xl"></i>
                 </div>
 
-                {{-- CARD LOG TERMINAL --}}
-                @if(session('log'))
-                    <div class="card shadow border-0">
-                        <div class="card-header bg-dark text-white">
-                            <i class="fas fa-terminal me-2"></i> Update Log
-                        </div>
-                        <div class="card-body bg-dark p-0">
-                            <div class="terminal-window">
-                                {{ session('log') }}
-                            </div>
-                        </div>
-                        <div class="card-footer bg-white">
-                            @if(session('status') == 'success')
-                                <div class="text-success fw-bold"><i class="fas fa-check-circle me-1"></i>
-                                    {{ session('message') }}</div>
-                            @elseif(session('status') == 'info')
-                                <div class="text-info fw-bold"><i class="fas fa-info-circle me-1"></i> {{ session('message') }}
-                                </div>
-                            @else
-                                <div class="text-danger fw-bold"><i class="fas fa-exclamation-triangle me-1"></i>
-                                    {{ session('message') }}</div>
-                            @endif
-                        </div>
-                    </div>
-                @endif
+                <h2 class="text-base font-semibold text-slate-500 uppercase tracking-wide mb-2">Versi Terinstall Saat Ini
+                </h2>
+                <div
+                    class="inline-block bg-indigo-50 text-indigo-700 px-6 py-2 rounded-lg font-mono text-xl font-bold border border-indigo-100 mb-6">
+                    {{ $currentVersion ?? 'v1.0.0' }}
+                </div>
 
+                <p class="text-sm text-slate-400 mb-8">
+                    Pastikan Anda telah membackup database dan file konfigurasi sebelum melakukan update.
+                    Sumber: <a href="#" class="text-indigo-600 hover:text-indigo-500 font-medium">Repository GitHub</a>
+                </p>
+
+                <div class="flex flex-col sm:flex-row justify-center gap-4">
+                    <form action="{{ route('system.update') }}" method="POST"
+                        onsubmit="return confirm('Yakin ingin melakukan update? Pastikan tidak ada file yang diedit manual di hosting.');">
+                        @csrf
+                        <button type="submit"
+                            class="w-full sm:w-auto inline-flex items-center justify-center rounded-lg bg-primary-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-primary-600/30 hover:bg-primary-500 hover:shadow-primary-600/40 transition-all transform hover:-translate-y-0.5">
+                            <i class="fas fa-cloud-download-alt mr-2"></i> Cek & Update Sistem
+                        </button>
+                    </form>
+
+                    <form action="{{ route('system.clear-cache') }}" method="POST">
+                        @csrf
+                        <button type="submit"
+                            class="w-full sm:w-auto inline-flex items-center justify-center rounded-lg bg-white border border-slate-300 px-6 py-3 text-sm font-bold text-slate-700 shadow-sm hover:bg-slate-50 hover:text-slate-900 transition-all transform hover:-translate-y-0.5">
+                            <i class="fas fa-broom mr-2 text-amber-500"></i> Clear Cache
+                        </button>
+                    </form>
+                </div>
             </div>
         </div>
+
+        <!-- Log Terminal -->
+        @if(session('log'))
+            <div class="bg-slate-900 rounded-2xl shadow-lg border border-slate-800 overflow-hidden font-mono text-sm">
+                <div class="bg-slate-800 px-4 py-2 border-b border-slate-700 flex items-center gap-2">
+                    <div class="flex gap-1.5">
+                        <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                        <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                        <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                    </div>
+                    <span class="ml-2 text-slate-400 text-xs text-center flex-1">Update Log Terminal</span>
+                </div>
+                <div
+                    class="p-4 text-green-400 max-h-[400px] overflow-y-auto whitespace-pre-wrap leading-relaxed custom-scrollbar">
+                    {{ session('log') }}
+                </div>
+                <div class="bg-slate-800 px-4 py-3 border-t border-slate-700">
+                    @if(session('status') == 'success')
+                        <div class="text-green-400 font-bold flex items-center"><i class="fas fa-check-circle mr-2"></i>
+                            {{ session('message') }}</div>
+                    @elseif(session('status') == 'info')
+                        <div class="text-blue-400 font-bold flex items-center"><i class="fas fa-info-circle mr-2"></i>
+                            {{ session('message') }}</div>
+                    @else
+                        <div class="text-red-400 font-bold flex items-center"><i class="fas fa-exclamation-triangle mr-2"></i>
+                            {{ session('message') }}</div>
+                    @endif
+                </div>
+            </div>
+        @endif
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
+@endsection
 
-</html>
+@push('styles')
+    <style>
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            bg: #1e293b;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            bg: #334155;
+            border-radius: 4px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            bg: #475569;
+        }
+    </style>
+@endpush

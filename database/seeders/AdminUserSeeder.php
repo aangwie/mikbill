@@ -14,6 +14,7 @@ class AdminUserSeeder extends Seeder
             'name' => 'Administrator',
             'email' => 'admin@mikrotik.com',
             'password' => Hash::make('admin123'), // Password login nanti
+            'role' => 'admin',
         ]);
     }
 }
