@@ -11,13 +11,46 @@
             showGenerateModal: false 
         }">
 
+        <!-- Filter Bar -->
+        <div class="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div class="flex items-center gap-2">
+                <div class="bg-indigo-50 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 p-2 rounded-lg">
+                    <i class="fas fa-filter"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-slate-800 dark:text-white">Filter Tagihan</h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">Tampilkan berdasarkan periode</p>
+                </div>
+            </div>
+            <form action="{{ route('billing.index') }}" method="GET" class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                <select name="month"
+                    class="block w-full sm:w-40 rounded-md border-0 py-1.5 text-slate-900 dark:text-white dark:bg-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 dark:ring-slate-600 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6">
+                    @for ($i = 1; $i <= 12; $i++)
+                        <option value="{{ $i }}" {{ $month == $i ? 'selected' : '' }}>
+                            {{ DateTime::createFromFormat('!m', $i)->format('F') }}
+                        </option>
+                    @endfor
+                </select>
+                <select name="year"
+                    class="block w-full sm:w-32 rounded-md border-0 py-1.5 text-slate-900 dark:text-white dark:bg-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 dark:ring-slate-600 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6">
+                    @for ($y = date('Y'); $y >= 2023; $y--)
+                        <option value="{{ $y }}" {{ $year == $y ? 'selected' : '' }}>{{ $y }}</option>
+                    @endfor
+                </select>
+                <button type="submit"
+                    class="inline-flex justify-center items-center rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 transition-all">
+                    <i class="fas fa-search mr-2"></i> Tampilkan
+                </button>
+            </form>
+        </div>
+
         <!-- Stats Overview -->
         <div class="mb-8 grid grid-cols-1 gap-5 sm:grid-cols-3">
             <div
                 class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 p-6 shadow-lg shadow-indigo-500/20 text-white hover:shadow-xl transition-shadow group">
-                <dt class="truncate text-sm font-medium text-indigo-100">Total Tagihan Bulan Ini</dt>
+                <dt class="truncate text-sm font-medium text-indigo-100">Total Tagihan (Periode Ini)</dt>
                 <dd class="mt-2 text-3xl font-bold tracking-tight text-white">
-                    {{ number_format($total_bill ?? 0, 0, ',', '.') }}
+                    Rp {{ number_format($total_bill ?? 0, 0, ',', '.') }}
                 </dd>
                 <div
                     class="absolute right-4 top-4 text-white/10 group-hover:text-white/20 transition-all transform group-hover:scale-110">
@@ -28,7 +61,7 @@
                 class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 p-6 shadow-lg shadow-emerald-500/20 text-white hover:shadow-xl transition-shadow group">
                 <dt class="truncate text-sm font-medium text-emerald-100">Sudah Dibayar</dt>
                 <dd class="mt-2 text-3xl font-bold tracking-tight text-white">
-                    {{ number_format($paid_bill ?? 0, 0, ',', '.') }}
+                    Rp {{ number_format($paid_bill ?? 0, 0, ',', '.') }}
                 </dd>
                 <div
                     class="absolute right-4 top-4 text-white/10 group-hover:text-white/20 transition-all transform group-hover:scale-110">
@@ -39,7 +72,7 @@
                 class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-rose-500 to-pink-600 p-6 shadow-lg shadow-rose-500/20 text-white hover:shadow-xl transition-shadow group">
                 <dt class="truncate text-sm font-medium text-rose-100">Belum Dibayar</dt>
                 <dd class="mt-2 text-3xl font-bold tracking-tight text-white">
-                    {{ number_format($unpaid_bill ?? 0, 0, ',', '.') }}
+                    Rp {{ number_format($unpaid_bill ?? 0, 0, ',', '.') }}
                 </dd>
                 <div
                     class="absolute right-4 top-4 text-white/10 group-hover:text-white/20 transition-all transform group-hover:scale-110">
@@ -95,7 +128,7 @@
                         @foreach($invoices as $inv)
                             <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors group">
                                 <td class="px-4 py-3 align-middle font-mono text-sm text-slate-600 dark:text-slate-300">
-                                    #{{ $inv->inv_number }}
+                                    #INV-{{ str_pad($inv->id, 5, '0', STR_PAD_LEFT) }}
                                 </td>
                                 <td class="px-4 py-3 align-middle">
                                     <div class="font-medium text-slate-900 dark:text-white">
@@ -105,10 +138,13 @@
                                 </td>
                                 <td
                                     class="px-4 py-3 align-middle hidden sm:table-cell text-sm text-slate-600 dark:text-slate-300">
-                                    {{ $inv->month }} / {{ $inv->year }}
+                                    {{ \Carbon\Carbon::parse($inv->due_date)->isoFormat('MMMM Y') }}
                                 </td>
                                 <td class="px-4 py-3 align-middle font-medium text-slate-700 dark:text-slate-200">
-                                    Rp {{ number_format($inv->price, 0, ',', '.') }}
+                                    @php
+                                        $displayPrice = $inv->price > 0 ? $inv->price : ($inv->customer->monthly_price ?? 0);
+                                    @endphp
+                                    Rp {{ number_format($displayPrice, 0, ',', '.') }}
                                 </td>
                                 <td class="px-4 py-3 align-middle">
                                     @if($inv->status == 'paid')

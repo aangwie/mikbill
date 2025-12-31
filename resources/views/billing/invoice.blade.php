@@ -4,7 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Invoice #{{ $invoice->inv_number }}</title>
+    <title>Invoice #INV-{{ str_pad($invoice->id, 5, '0', STR_PAD_LEFT) }}</title>
+     <!-- Favicon -->
+    <link rel="icon" href="{{ $global_favicon ?? asset('favicon.ico') }}">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @media print {
@@ -34,10 +36,14 @@
         <div class="flex justify-between items-start border-b border-gray-200 pb-8 mb-8">
             <div>
                 <div class="flex items-center gap-3 mb-4">
-                    <div
-                        class="h-10 w-10 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-xl">
-                        M</div>
-                    <h1 class="text-3xl font-bold text-gray-900 tracking-tight">MIKBILL</h1>
+                    @if(!empty($company->logo_path))
+                        <img src="{{ asset('uploads/' . $company->logo_path) }}" alt="Logo" class="h-10 w-auto rounded-lg">
+                    @else
+                        <div class="h-10 w-10 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-xl">
+                            {{ substr($company->company_name ?? 'M', 0, 1) }}
+                        </div>
+                    @endif
+                    <h1 class="text-3xl font-bold text-gray-900 tracking-tight">{{ $company->company_name ?? 'MIKBILL' }}</h1>
                 </div>
                 <p class="text-sm text-gray-500">
                     {{ $company->address ?? 'Alamat Perusahaan belum diatur' }}<br>
@@ -47,7 +53,7 @@
             </div>
             <div class="text-right">
                 <h2 class="text-2xl font-bold text-gray-400 uppercase tracking-widest mb-1">Invoice</h2>
-                <p class="text-lg font-semibold text-gray-900">#{{ $invoice->inv_number }}</p>
+                <p class="text-lg font-semibold text-gray-900">#INV-{{ str_pad($invoice->id, 5, '0', STR_PAD_LEFT) }}</p>
                 <div class="mt-4">
                     @if($invoice->status == 'paid')
                         <span
@@ -77,7 +83,8 @@
                 <div>
                     <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Jatuh Tempo:</p>
                     <p class="text-sm font-semibold text-gray-900">
-                        {{ \Carbon\Carbon::parse($invoice->due_date)->format('d/m/Y') }}</p>
+                        {{ \Carbon\Carbon::parse($invoice->due_date)->format('d/m/Y') }}
+                    </p>
                 </div>
             </div>
         </div>
@@ -101,10 +108,13 @@
                         <p class="text-xs text-gray-500">{{ $invoice->customer->profile ?? 'Default Profile' }}</p>
                     </td>
                     <td class="py-4 px-4 border-b border-gray-100 text-sm text-gray-600">
-                        {{ DateTime::createFromFormat('!m', $invoice->month)->format('F') }} {{ $invoice->year }}
+                        {{ \Carbon\Carbon::parse($invoice->due_date)->isoFormat('MMMM Y') }}
                     </td>
                     <td class="py-4 px-4 border-b border-gray-100 text-right font-bold text-gray-900">
-                        Rp {{ number_format($invoice->price, 0, ',', '.') }}
+                        @php
+                            $displayPrice = $invoice->price > 0 ? $invoice->price : ($invoice->customer->monthly_price ?? 0);
+                        @endphp
+                        Rp {{ number_format($displayPrice, 0, ',', '.') }}
                     </td>
                 </tr>
             </tbody>
@@ -112,7 +122,8 @@
                 <tr>
                     <td colspan="2" class="py-4 text-right text-sm font-semibold text-gray-500">Total Tagihan</td>
                     <td class="py-4 text-right text-xl font-bold text-indigo-600">Rp
-                        {{ number_format($invoice->price, 0, ',', '.') }}</td>
+                        {{ number_format($displayPrice, 0, ',', '.') }}
+                    </td>
                 </tr>
             </tfoot>
         </table>
@@ -126,7 +137,7 @@
             <div class="print:hidden">
                 <button onclick="window.print()"
                     class="px-6 py-2 bg-indigo-600 text-white rounded-lg shadow hover:bg-indigo-700 transition font-medium">
-                    <i class="fas fa-print mr-2"></i> Cetak PDF
+                    <i class="fas fa-print mr-2"></i> Cetak
                 </button>
             </div>
         </div>

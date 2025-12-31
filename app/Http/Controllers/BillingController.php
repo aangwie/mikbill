@@ -23,12 +23,18 @@ class BillingController extends Controller
         $this->wa = $whatsappService;
     }
 
-    public function index()
+    public function index(Request $request)
     {
         $user = Auth::user();
 
-        // Query Tagihan: Tampilkan SEMUA (Paid & Unpaid)
+        // 1. Ambil Filter Bulan & Tahun (Default: Bulan Ini)
+        $month = $request->input('month', date('n'));
+        $year = $request->input('year', date('Y'));
+
+        // Query Tagihan dengan Filter
         $invoiceQuery = Invoice::with('customer')
+            ->whereMonth('due_date', $month)
+            ->whereYear('due_date', $year)
             ->orderByRaw("FIELD(status, 'unpaid', 'paid')")
             ->orderBy('due_date', 'asc');
 
@@ -40,13 +46,39 @@ class BillingController extends Controller
 
         $invoices = $invoiceQuery->get();
 
+        // 2. Hitung Totals dari Data Terfilter
+        $total_bill = 0;
+        $paid_bill = 0;
+        $unpaid_bill = 0;
+
+        foreach ($invoices as $inv) {
+            // Asumsi 'price' ada di tabel Invoice. 
+            // Jika price di invoice null/0 (pake harga customer), logicnya harus disesuaikan.
+            // Tapi biasanya saat generate, price disimpan. Kita pakai $inv->price langsung.
+            // Jika $inv->price belum ada (masih ikut customer), ambil dari relation.
+            // Untuk simplifikasi dan performa, sebaiknya saat create invoice price disimpan.
+            // Cek implementation generate: Invoice::create([...]) -> price tdk di set? 
+            // Jika tdk di set, berarti nol. Kita cek view: {{ number_format($inv->price, ...) }}
+            // View pakai $inv->price. Jadi asumsi column price ada.
+
+            // Perbaikan logic harga: Jika invoice price 0, ambil dari customer
+            $price = $inv->price > 0 ? $inv->price : ($inv->customer->monthly_price ?? 0);
+
+            $total_bill += $price;
+            if ($inv->status == 'paid') {
+                $paid_bill += $price;
+            } else {
+                $unpaid_bill += $price;
+            }
+        }
+
         $customerQuery = Customer::orderBy('name', 'asc');
         if ($user->role == 'operator') {
             $customerQuery->where('operator_id', $user->id);
         }
         $customers = $customerQuery->get();
 
-        return view('billing.index', compact('invoices', 'customers'));
+        return view('billing.index', compact('invoices', 'customers', 'month', 'year', 'total_bill', 'paid_bill', 'unpaid_bill'));
     }
 
     public function generate(Request $request)
