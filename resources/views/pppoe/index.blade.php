@@ -24,11 +24,11 @@
 
             <label class="flex items-center cursor-pointer mr-3">
                 <div class="relative">
-                    <input type="checkbox" id="switchAutoRefresh" class="sr-only" checked>
-                    <div class="block bg-slate-200 dark:bg-slate-700 w-10 h-6 rounded-full transition-colors duration-300"
+                    <input type="checkbox" id="switchAutoRefresh" class="sr-only peer" checked>
+                    <div class="block bg-slate-200 dark:bg-slate-700 w-10 h-6 rounded-full transition-colors duration-300 peer-checked:bg-green-500"
                         id="switchBg">
                     </div>
-                    <div class="dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform duration-300 transform translate-x-4 shadow"
+                    <div class="dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform duration-300 transform peer-checked:translate-x-4 shadow"
                         id="switchDot"></div>
                 </div>
                 <span class="ml-2 text-sm font-medium text-slate-600 dark:text-slate-300">Auto</span>
@@ -259,14 +259,7 @@
     <!-- DataTables Tailwind -->
     <link rel="stylesheet" href="https://cdn.datatables.net/2.1.8/css/dataTables.tailwindcss.css">
     <style>
-        /* Custom switch for Auto Refresh */
-        input:checked~#switchBg {
-            @apply bg-green-500;
-        }
-
-        input:checked~#switchDot {
-            @apply translate-x-6;
-        }
+        /* Custom switch for Auto Refresh - Handled by Tailwind peer classes */
 
         /* DataTable customization to match clean theme */
         div.dt-container .dt-paging .dt-paging-button {
