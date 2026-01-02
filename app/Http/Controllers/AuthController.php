@@ -44,20 +44,17 @@ class AuthController extends Controller
             'password' => Hash::make($request->password),
             'role' => User::ROLE_ADMIN,
             'is_activated' => false,
+            'activation_token' => Str::random(60),
         ]);
 
         // Kirim Email Verifikasi
         try {
             $this->applyMailConfig();
 
-            // Generate link verifikasi (signed URL)
-            $verificationUrl = URL::temporarySignedRoute(
-                'activate.user',
-                now()->addHours(24),
-                ['user' => $user->id]
-            );
+            // Link verifikasi sederhana
+            $activationUrl = route('activate.user', ['token' => $user->activation_token]);
 
-            Mail::raw("Halo {$user->name},\n\nTerima kasih telah mendaftar di MikBill System.\n\nHarap klik link di bawah ini untuk memverifikasi email Anda agar dapat login ke dashboard:\n{$verificationUrl}\n\nSetelah login, Anda dapat melengkapi profil. Namun, fitur manajemen router akan diaktifkan secara manual oleh Superadmin setelah verifikasi akun Anda selesai.\n\nSalam,\nMikBill Team", function ($message) use ($user) {
+            Mail::raw("Halo {$user->name},\n\nTerima kasih telah mendaftar di MikBill System.\n\nHarap klik link di bawah ini untuk memverifikasi email Anda agar dapat login ke dashboard:\n{$activationUrl}\n\nSetelah login, Anda dapat melengkapi profil. Namun, fitur manajemen router akan diaktifkan secara manual oleh Superadmin setelah verifikasi akun Anda selesai.\n\nSalam,\nMikBill Team", function ($message) use ($user) {
                 $message->to($user->email)->subject('Verifikasi Email MikBill');
             });
 
@@ -80,19 +77,18 @@ class AuthController extends Controller
     }
 
     // 10. Aktivasi User via Link
-    public function activateUser(Request $request, $id)
+    public function activateUser(Request $request, $token)
     {
-        if (!$request->hasValidSignature()) {
-            abort(403, 'Link aktivasi tidak valid atau sudah kadaluarsa.');
+        $user = User::where('activation_token', $token)->first();
+
+        if (!$user) {
+            return redirect()->route('login')->with('error', 'Link aktivasi tidak valid atau sudah digunakan.');
         }
 
-        $user = User::findOrFail($id);
-
-        if ($user->email_verified_at) {
-            return redirect()->route('login')->with('success', 'Email Anda sudah diverifikasi. Silakan login.');
-        }
-
-        $user->update(['email_verified_at' => now()]);
+        $user->update([
+            'email_verified_at' => now(),
+            'activation_token' => null // Clear token after use
+        ]);
 
         return redirect()->route('login')->with('success', 'Email Anda berhasil diverifikasi! Silakan login. Tunggu aktivasi fitur router dari Superadmin untuk mengelola perangkat.');
     }

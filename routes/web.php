@@ -51,11 +51,13 @@ Route::middleware('guest')->group(function () {
     Route::post('/forgot-password', [AuthController::class, 'sendResetLink'])->name('password.email');
     Route::get('/reset-password/{token}', [AuthController::class, 'showResetPasswordForm'])->name('password.reset');
     Route::post('/reset-password', [AuthController::class, 'resetPassword'])->name('password.update');
+
+    // Account Activation (Public)
+    Route::get('/activate/{token}', [AuthController::class, 'activateUser'])->name('activate.user');
 });
 
 // Activation & Notifications (Requires Auth)
 Route::middleware(['auth'])->group(function () {
-    Route::get('/activate/{user}', [AuthController::class, 'activateUser'])->name('activate.user')->middleware('signed');
     Route::post('/request-activation', [AuthController::class, 'requestRouterActivation'])->name('request.activation');
 
     Route::get('/notifications', [AuthController::class, 'getNotifications'])->name('notifications.index');
