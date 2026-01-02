@@ -171,6 +171,7 @@
                                             <i class="fas fa-edit"></i>
                                         </button>
 
+                                        @if(auth()->user()->id != $user->id)
                                             @if(auth()->user()->isSuperAdmin() && $user->role === 'admin' && $user->plan_id)
                                                 <form action="{{ route('users.suspend', $user->id) }}" method="POST" class="inline">
                                                     @csrf
