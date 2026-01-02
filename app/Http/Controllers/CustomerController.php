@@ -50,6 +50,20 @@ class CustomerController extends Controller
     // 2. Simpan User Baru (Ke DB & Mikrotik)
     public function store(Request $request)
     {
+        $user = auth()->user();
+        $plan = $user->plan;
+
+        if (!$plan) {
+            return back()->with('error', 'Layanan Anda belum diaktifkan (Belum memiliki paket).');
+        }
+
+        if (!$request->id) { // New customer
+            $currentCount = Customer::count();
+            if ($currentCount >= $plan->max_customers) {
+                return back()->with('error', "Limit Pelanggan Tercapai! Paket Anda (" . $plan->name . ") hanya mendukung maksimal " . $plan->max_customers . " pelanggan.");
+            }
+        }
+
         $request->validate([
             'name' => 'required',
             'internet_number' => 'required|unique:customers,internet_number', // Validasi baru
@@ -132,19 +146,28 @@ class CustomerController extends Controller
         }
     }
 
-    // 4. Hapus User (Dari DB & Mikrotik)
-    public function destroy($id)
+    // 4. Hapus User (Dari DB & Mikrotik OPSIONAL)
+    public function destroy(Request $request, $id)
     {
         $customer = Customer::findOrFail($id);
 
         try {
-            // Hapus di Mikrotik
-            $this->mikrotik->removeSecret($customer->pppoe_username);
+            // Hapus di Mikrotik jika diminta (default true jika dari form lama tanpa flag, 
+            // tapi kita akan ubah workflow di view untuk selalu kirim flag)
+            $deleteMikrotik = $request->input('delete_mikrotik', '0') == '1';
+
+            if ($deleteMikrotik) {
+                $this->mikrotik->removeSecret($customer->pppoe_username);
+            }
 
             // Hapus di DB
             $customer->delete();
 
-            return back()->with('success', 'Pelanggan dihapus permanen.');
+            $msg = 'Pelanggan dihapus dari database.';
+            if ($deleteMikrotik)
+                $msg .= ' PPPoE Secret juga dihapus dari Mikrotik.';
+
+            return back()->with('success', $msg);
         } catch (\Exception $e) {
             return back()->with('error', $e->getMessage());
         }
@@ -228,5 +251,54 @@ class CustomerController extends Controller
     public function downloadTemplate()
     {
         return Excel::download(new CustomerTemplateExport, 'template_import_pelanggan.xlsx');
+    }
+
+    // 10. Hapus Semua Pelanggan (Tenant-Aware)
+    public function destroyAll(Request $request)
+    {
+        $user = auth()->user();
+        $query = Customer::query();
+
+        if ($user->role == 'operator') {
+            $query->where('operator_id', $user->id);
+        }
+
+        $customers = $query->get();
+
+        if ($customers->isEmpty()) {
+            return back()->with('info', 'Tidak ada data pelanggan untuk dihapus.');
+        }
+
+        try {
+            $failedMikrotik = [];
+            $deleteMikrotik = $request->has('delete_mikrotik') && $request->delete_mikrotik == '1';
+
+            if ($deleteMikrotik) {
+                foreach ($customers as $customer) {
+                    try {
+                        $this->mikrotik->removeSecret($customer->pppoe_username);
+                    } catch (\Exception $e) {
+                        $failedMikrotik[] = $customer->pppoe_username;
+                    }
+                }
+            }
+
+            // Bulk delete database records
+            $count = $customers->count();
+            Customer::whereIn('id', $customers->pluck('id'))->delete();
+
+            $msg = "Berhasil menghapus {$count} pelanggan dari database.";
+            if ($deleteMikrotik) {
+                if (empty($failedMikrotik)) {
+                    $msg .= " Semua user juga berhasil dihapus dari Mikrotik.";
+                } else {
+                    $msg .= " Catatan: " . count($failedMikrotik) . " user gagal dihapus di Mikrotik.";
+                }
+            }
+
+            return back()->with('success', $msg);
+        } catch (\Exception $e) {
+            return back()->with('error', 'Gagal hapus massal: ' . $e->getMessage());
+        }
     }
 }

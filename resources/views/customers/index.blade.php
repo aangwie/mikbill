@@ -7,33 +7,45 @@
 @section('content')
 
     <div x-data="{ 
-                        showAddModal: false, 
-                        showEditModal: false, 
-                        showImportModal: false, 
-                        showSyncModal: false 
-                    }" @open-edit-modal.window="showEditModal = true">
+                                        showAddModal: false, 
+                                        showEditModal: false, 
+                                        showImportModal: false, 
+                                        showSyncModal: false,
+                                        showDeleteAllModal: false,
+                                        deleteMethod: '0'
+                                    }" @open-edit-modal.window="showEditModal = true">
 
         <!-- Toolbar -->
         <div class="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            @if(Auth::user()->role !== 'superadmin')
+                <div class="flex gap-2">
+                    <button @click="showAddModal = true"
+                        class="inline-flex items-center rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 transition-all">
+                        <i class="fas fa-plus mr-2"></i> Tambah Baru
+                    </button>
+                    <button @click="showSyncModal = true"
+                        class="inline-flex items-center rounded-lg bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 shadow-sm hover:bg-slate-50 dark:hover:bg-slate-600 transition-all">
+                        <i class="fas fa-sync mr-2 text-slate-400"></i> Sinkron
+                    </button>
+                </div>
+            @endif
             <div class="flex gap-2">
-                <button @click="showAddModal = true"
-                    class="inline-flex items-center rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 transition-all">
-                    <i class="fas fa-plus mr-2"></i> Tambah Baru
-                </button>
-                <button @click="showSyncModal = true"
-                    class="inline-flex items-center rounded-lg bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 shadow-sm hover:bg-slate-50 dark:hover:bg-slate-600 transition-all">
-                    <i class="fas fa-sync mr-2 text-slate-400"></i> Sinkron
-                </button>
-            </div>
-            <div class="flex gap-2">
-                <button @click="showImportModal = true"
-                    class="inline-flex items-center rounded-lg bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 shadow-sm hover:bg-slate-50 dark:hover:bg-slate-600 transition-all">
-                    <i class="fas fa-file-upload mr-2 text-blue-500"></i> Impor
-                </button>
+                @if(Auth::user()->role !== 'superadmin')
+                    <button @click="showImportModal = true"
+                        class="inline-flex items-center rounded-lg bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 shadow-sm hover:bg-slate-50 dark:hover:bg-slate-600 transition-all">
+                        <i class="fas fa-file-upload mr-2 text-blue-500"></i> Impor
+                    </button>
+                @endif
                 <a href="{{ route('customers.export') }}"
                     class="inline-flex items-center rounded-lg bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 shadow-sm hover:bg-slate-50 dark:hover:bg-slate-600 transition-all">
                     <i class="fas fa-file-excel mr-2 text-green-600"></i> Ekspor
                 </a>
+                @if(Auth::user()->role !== 'superadmin')
+                    <button @click="showDeleteAllModal = true"
+                        class="inline-flex items-center rounded-lg bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-900/50 px-3 py-2 text-sm font-medium text-rose-600 dark:text-rose-400 shadow-sm hover:bg-rose-100 dark:hover:bg-rose-900/40 transition-all">
+                        <i class="fas fa-trash-alt mr-2"></i> Hapus Semua
+                    </button>
+                @endif
             </div>
         </div>
 
@@ -119,13 +131,12 @@
                                             data-notes="{{ $c->notes }}">
                                             <i class="fas fa-pencil-alt"></i>
                                         </button>
-                                        <form action="{{ route('customers.destroy', $c->id) }}" method="POST" class="d-inline"
-                                            onsubmit="return confirm('Hapus permanen pelanggan ini? Data di Mikrotik juga akan dihapus.');">
-                                            @csrf @method('DELETE')
-                                            <button
-                                                class="p-1.5 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors"><i
-                                                    class="fas fa-trash-alt"></i></button>
-                                        </form>
+                                        @if(Auth::user()->role !== 'superadmin')
+                                            <button type="button" onclick="confirmDelete('{{ $c->id }}', '{{ $c->name }}')"
+                                                class="p-1.5 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                        @endif
                                     </div>
                                 </td>
                             </tr>
@@ -329,7 +340,8 @@
                                                 <div class="mt-1 flex rounded-md shadow-sm">
                                                     <input type="text" name="internet_number" id="editInet"
                                                         class="block w-full rounded-l-md border-0 py-1.5 text-slate-900 dark:text-white dark:bg-slate-700 ring-1 ring-inset ring-slate-300 dark:ring-slate-600 sm:text-sm"
-                                                        required>
+                                                        required @if(Auth::user()->role === 'superadmin') readonly disabled
+                                                        @endif>
                                                     <button type="button" onclick="generateRandomInetEdit()"
                                                         class="relative -ml-px inline-flex items-center gap-x-1.5 rounded-r-md px-3 py-2 text-sm font-semibold text-slate-600 dark:text-slate-300 ring-1 ring-inset ring-slate-300 dark:ring-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700"><i
                                                             class="fas fa-random"></i></button>
@@ -338,22 +350,26 @@
                                             <div><label
                                                     class="block text-sm font-medium text-slate-900 dark:text-white">Nama
                                                     Pelanggan</label><input type="text" name="name" id="editName"
-                                                    class="mt-1 block w-full rounded-md border-0 py-1.5 ring-1 ring-inset ring-slate-300 dark:ring-slate-600 text-slate-900 dark:text-white bg-white dark:bg-slate-700 sm:text-sm">
+                                                    class="mt-1 block w-full rounded-md border-0 py-1.5 ring-1 ring-inset ring-slate-300 dark:ring-slate-600 text-slate-900 dark:text-white bg-white dark:bg-slate-700 sm:text-sm"
+                                                    @if(Auth::user()->role === 'superadmin') readonly disabled @endif>
                                             </div>
                                             <div><label class="block text-sm font-medium text-slate-900 dark:text-white">No.
                                                     HP</label><input type="text" name="phone" id="editPhone"
-                                                    class="mt-1 block w-full rounded-md border-0 py-1.5 ring-1 ring-inset ring-slate-300 dark:ring-slate-600 text-slate-900 dark:text-white bg-white dark:bg-slate-700 sm:text-sm">
+                                                    class="mt-1 block w-full rounded-md border-0 py-1.5 ring-1 ring-inset ring-slate-300 dark:ring-slate-600 text-slate-900 dark:text-white bg-white dark:bg-slate-700 sm:text-sm"
+                                                    @if(Auth::user()->role === 'superadmin') readonly disabled @endif>
                                             </div>
                                             <div><label
                                                     class="block text-sm font-medium text-slate-900 dark:text-white">Harga
                                                     Paket</label><input type="number" name="monthly_price" id="editPrice"
-                                                    class="mt-1 block w-full rounded-md border-0 py-1.5 ring-1 ring-inset ring-slate-300 dark:ring-slate-600 text-slate-900 dark:text-white bg-white dark:bg-slate-700 sm:text-sm">
+                                                    class="mt-1 block w-full rounded-md border-0 py-1.5 ring-1 ring-inset ring-slate-300 dark:ring-slate-600 text-slate-900 dark:text-white bg-white dark:bg-slate-700 sm:text-sm"
+                                                    @if(Auth::user()->role === 'superadmin') readonly disabled @endif>
                                             </div>
                                             <div>
                                                 <label
                                                     class="block text-sm font-medium text-slate-900 dark:text-white">Operator</label>
                                                 <select name="operator_id" id="editOperator"
-                                                    class="mt-1 block w-full rounded-md border-0 py-1.5 ring-1 ring-inset ring-slate-300 dark:ring-slate-600 text-slate-900 dark:text-white bg-white dark:bg-slate-700 sm:text-sm">
+                                                    class="mt-1 block w-full rounded-md border-0 py-1.5 ring-1 ring-inset ring-slate-300 dark:ring-slate-600 text-slate-900 dark:text-white bg-white dark:bg-slate-700 sm:text-sm"
+                                                    @if(Auth::user()->role === 'superadmin') disabled @endif>
                                                     <option value="">-- Admin Langsung --</option>
                                                     @if(isset($operators)) @foreach($operators as $op) <option
                                                     value="{{ $op->id }}">{{ $op->name }}</option> @endforeach @endif
@@ -362,7 +378,9 @@
                                             <div><label
                                                     class="block text-sm font-medium text-slate-700 dark:text-slate-300">Catatan</label><textarea
                                                     name="notes" id="editNotes" rows="2"
-                                                    class="mt-1 block w-full rounded-md border-0 py-1.5 ring-1 ring-inset ring-slate-300 dark:ring-slate-600 text-slate-900 dark:text-white bg-white dark:bg-slate-700 sm:text-sm"></textarea>
+                                                    class="mt-1 block w-full rounded-md border-0 py-1.5 ring-1 ring-inset ring-slate-300 dark:ring-slate-600 text-slate-900 dark:text-white bg-white dark:bg-slate-700 sm:text-sm"
+                                                    @if(Auth::user()->role === 'superadmin') readonly disabled
+                                                    @endif></textarea>
                                             </div>
                                         </div>
                                         <div class="mt-6 pt-4 border-t border-slate-100 dark:border-slate-700">
@@ -370,7 +388,8 @@
                                                 Internet
                                                 (Profile)</label>
                                             <select name="profile" id="editProfile"
-                                                class="mt-2 block w-full rounded-md border-0 py-1.5 pl-3 pr-10 ring-1 ring-inset ring-slate-300 dark:ring-slate-600 text-slate-900 dark:text-white bg-white dark:bg-slate-700 focus:ring-2 focus:ring-primary-600 sm:text-sm sm:leading-6">
+                                                class="mt-2 block w-full rounded-md border-0 py-1.5 pl-3 pr-10 ring-1 ring-inset ring-slate-300 dark:ring-slate-600 text-slate-900 dark:text-white bg-white dark:bg-slate-700 focus:ring-2 focus:ring-primary-600 sm:text-sm sm:leading-6"
+                                                @if(Auth::user()->role === 'superadmin') disabled @endif>
                                                 @if(isset($profiles)) @foreach($profiles as $p) <option
                                                 value="{{ $p['name'] }}">{{ $p['name'] }}</option> @endforeach @else
                                                     <option value="default">Default</option> @endif
@@ -389,23 +408,30 @@
                                             class="h-64 w-full rounded-lg border border-slate-300 mb-4 z-10 relative"></div>
                                         <div class="grid grid-cols-2 gap-4 mb-4">
                                             <input type="text" name="latitude" id="editLat"
-                                                class="block w-full rounded-md border-0 py-1.5 text-xs bg-slate-50 dark:bg-slate-700 dark:text-white ring-1 ring-inset ring-slate-200 dark:ring-slate-600">
+                                                class="block w-full rounded-md border-0 py-1.5 text-xs bg-slate-50 dark:bg-slate-700 dark:text-white ring-1 ring-inset ring-slate-200 dark:ring-slate-600"
+                                                @if(Auth::user()->role === 'superadmin') readonly disabled @endif>
                                             <input type="text" name="longitude" id="editLng"
-                                                class="block w-full rounded-md border-0 py-1.5 text-xs bg-slate-50 dark:bg-slate-700 dark:text-white ring-1 ring-inset ring-slate-200 dark:ring-slate-600">
+                                                class="block w-full rounded-md border-0 py-1.5 text-xs bg-slate-50 dark:bg-slate-700 dark:text-white ring-1 ring-inset ring-slate-200 dark:ring-slate-600"
+                                                @if(Auth::user()->role === 'superadmin') readonly disabled @endif>
                                         </div>
                                         <div><label class="block text-sm font-medium text-slate-900 dark:text-white">Alamat
                                                 Lengkap</label><textarea name="address" id="editAddress" rows="3"
-                                                class="mt-1 block w-full rounded-md border-0 py-1.5 ring-1 ring-inset ring-slate-300 dark:ring-slate-600 text-slate-900 dark:text-white bg-white dark:bg-slate-700 sm:text-sm"></textarea>
+                                                class="mt-1 block w-full rounded-md border-0 py-1.5 ring-1 ring-inset ring-slate-300 dark:ring-slate-600 text-slate-900 dark:text-white bg-white dark:bg-slate-700 sm:text-sm"
+                                                @if(Auth::user()->role === 'superadmin') readonly disabled @endif></textarea>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                             <div class="bg-amber-50 dark:bg-slate-700/50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
-                                <button type="submit"
-                                    class="inline-flex w-full justify-center rounded-md bg-amber-600 px-3 py-2 text-sm font-bold text-white shadow-sm hover:bg-amber-500 sm:ml-3 sm:w-auto">Update
-                                    Data</button>
+                                @if(Auth::user()->role !== 'superadmin')
+                                    <button type="submit"
+                                        class="inline-flex w-full justify-center rounded-md bg-amber-600 px-3 py-2 text-sm font-bold text-white shadow-sm hover:bg-amber-500 sm:ml-3 sm:w-auto">Update
+                                        Data</button>
+                                @endif
                                 <button type="button" @click="showEditModal = false"
-                                    class="mt-3 inline-flex w-full justify-center rounded-md bg-white dark:bg-slate-700 px-3 py-2 text-sm font-semibold text-slate-900 dark:text-slate-200 shadow-sm ring-1 ring-inset ring-slate-300 dark:ring-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600 sm:mt-0 sm:w-auto">Batal</button>
+                                    class="mt-3 inline-flex w-full justify-center rounded-md bg-white dark:bg-slate-700 px-3 py-2 text-sm font-semibold text-slate-900 dark:text-slate-200 shadow-sm ring-1 ring-inset ring-slate-300 dark:ring-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600 sm:mt-0 sm:w-auto">
+                                    {{ Auth::user()->role === 'superadmin' ? 'Tutup' : 'Batal' }}
+                                </button>
                             </div>
                         </form>
                     </div>
@@ -498,7 +524,108 @@
             </div>
         </div>
 
+        <!-- MODAL DELETE ALL (Alpine) -->
+        <div x-show="showDeleteAllModal" class="relative z-500" style="display:none;" x-cloak>
+            <div class="fixed inset-0 bg-slate-900/75 backdrop-blur-sm"></div>
+            <div class="fixed inset-0 z-10 overflow-y-auto">
+                <div class="flex min-h-full items-center justify-center p-4">
+                    <div class="relative transform overflow-hidden rounded-lg bg-white dark:bg-slate-800 text-left shadow-xl transition-all sm:w-full sm:max-w-lg"
+                        @click.away="showDeleteAllModal = false">
+                        <form action="{{ route('customers.destroyAll') }}" method="POST">
+                            @csrf
+                            <div class="bg-white dark:bg-slate-800 px-4 pb-4 pt-5 sm:p-6">
+                                <div
+                                    class="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-rose-100 dark:bg-rose-900/50 mb-4">
+                                    <i class="fas fa-exclamation-triangle text-rose-600 dark:text-rose-400 text-xl"></i>
+                                </div>
+                                <div class="text-center">
+                                    <h3 class="text-lg font-bold leading-6 text-slate-900 dark:text-white">Hapus Seluruh
+                                        Pelanggan</h3>
+                                    <p class="text-sm text-slate-500 dark:text-slate-400 mt-2">
+                                        Pilih metode penghapusan data pelanggan. Tindakan ini tidak dapat dibatalkan!
+                                    </p>
+                                </div>
+
+                                <div class="mt-6 space-y-3">
+                                    <!-- Option 1: DB Only -->
+                                    <label
+                                        :class="deleteMethod == '0' ? 'border-primary-500 ring-1 ring-primary-500 bg-primary-50/30 dark:bg-primary-900/10' : 'border-slate-200 dark:border-slate-600'"
+                                        class="relative flex cursor-pointer rounded-lg border p-4 shadow-sm focus:outline-none hover:border-primary-500 transition-all bg-white dark:bg-slate-700">
+                                        <input type="radio" name="delete_mikrotik" value="0" x-model="deleteMethod"
+                                            class="sr-only">
+                                        <span class="flex flex-1">
+                                            <span class="flex flex-col">
+                                                <span
+                                                    class="block text-sm font-bold text-slate-900 dark:text-white">Database
+                                                    Web Saja</span>
+                                                <span
+                                                    class="mt-1 flex items-center text-xs text-slate-500 dark:text-slate-400">
+                                                    Hanya menghapus data dari panel ini. Data di Mikrotik tetap aman.
+                                                </span>
+                                            </span>
+                                        </span>
+                                        <div class="ml-4 flex items-center">
+                                            <div :class="deleteMethod == '0' ? 'border-primary-500 bg-primary-500' : 'border-slate-300 dark:border-slate-500 bg-transparent'"
+                                                class="h-4 w-4 rounded-full border flex items-center justify-center transition-all">
+                                                <div x-show="deleteMethod == '0'" class="h-1.5 w-1.5 rounded-full bg-white">
+                                                </div>
+                                            </div>
+                                            <i class="fas fa-database text-slate-400 ml-3"></i>
+                                        </div>
+                                    </label>
+
+                                    <!-- Option 2: DB + Mikrotik -->
+                                    <label
+                                        :class="deleteMethod == '1' ? 'border-rose-500 ring-1 ring-rose-500 bg-rose-50/30 dark:bg-rose-900/10' : 'border-slate-200 dark:border-slate-600'"
+                                        class="relative flex cursor-pointer rounded-lg border p-4 shadow-sm focus:outline-none hover:border-rose-500 transition-all bg-white dark:bg-slate-700">
+                                        <input type="radio" name="delete_mikrotik" value="1" x-model="deleteMethod"
+                                            class="sr-only">
+                                        <span class="flex flex-1">
+                                            <span class="flex flex-col">
+                                                <span
+                                                    class="block text-sm font-bold text-rose-600 dark:text-rose-400">Database
+                                                    & Mikrotik</span>
+                                                <span
+                                                    class="mt-1 flex items-center text-xs text-slate-500 dark:text-slate-400">
+                                                    Hapus data dari Database DAN hapus PPPoE Secret dari Router Mikrotik.
+                                                </span>
+                                            </span>
+                                        </span>
+                                        <div class="ml-4 flex items-center">
+                                            <div :class="deleteMethod == '1' ? 'border-rose-500 bg-rose-500' : 'border-slate-300 dark:border-slate-500 bg-transparent'"
+                                                class="h-4 w-4 rounded-full border flex items-center justify-center transition-all">
+                                                <div x-show="deleteMethod == '1'" class="h-1.5 w-1.5 rounded-full bg-white">
+                                                </div>
+                                            </div>
+                                            <i class="fas fa-network-wired text-rose-400 ml-3"></i>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="bg-slate-50 dark:bg-slate-700/50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+                                <button type="submit"
+                                    onclick="return confirm('KONFIRMASI AKHIR: Anda yakin ingin menghapus SEMUA data?')"
+                                    class="inline-flex w-full justify-center rounded-md bg-rose-600 px-3 py-2 text-sm font-bold text-white shadow-sm hover:bg-rose-500 sm:ml-3 sm:w-auto">
+                                    Ya, Hapus Sekarang
+                                </button>
+                                <button type="button" @click="showDeleteAllModal = false"
+                                    class="mt-3 inline-flex w-full justify-center rounded-md bg-white dark:bg-slate-700 px-3 py-2 text-sm font-semibold text-slate-900 dark:text-slate-200 shadow-sm ring-1 ring-inset ring-slate-300 dark:ring-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600 sm:mt-0 sm:w-auto">
+                                    Batal
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
+
+    <!-- Hidden Form for Enhanced Deletion -->
+    <form id="enhancedDeleteForm" method="POST" style="display:none;">
+        @csrf @method('DELETE')
+        <input type="hidden" name="delete_mikrotik" id="deleteMikrotikFlag" value="0">
+    </form>
 
 @endsection
 
@@ -629,6 +756,48 @@
                 },
                 error: function () { processQueue(secrets, total, index + 1); }
             });
+        }
+
+        // Enhanced Delete with SweetAlert2
+        function confirmDelete(id, name) {
+            Swal.fire({
+                title: 'Hapus Pelanggan?',
+                text: "Anda akan menghapus " + name + ". Pilih metode penghapusan:",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#4f46e5', // Primary
+                cancelButtonColor: '#f43f5e', // Rose
+                confirmButtonText: '<i class="fas fa-database mr-2"></i> Database Saja',
+                cancelButtonText: '<i class="fas fa-network-wired mr-2"></i> DB + Mikrotik',
+                showDenyButton: true,
+                denyButtonText: 'Batal',
+                reverseButtons: false
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Database Only
+                    submitDelete(id, '0');
+                } else if (result.dismiss === Swal.DismissReason.cancel) {
+                    // DB + Mikrotik
+                    Swal.fire({
+                        title: 'Konfirmasi Akhir',
+                        text: "Secret PPPoE di Mikrotik juga akan dihapus. Lanjutkan?",
+                        icon: 'error',
+                        showCancelButton: true,
+                        confirmButtonText: 'Ya, Hapus Keduanya',
+                        cancelButtonText: 'Batal',
+                        confirmButtonColor: '#f43f5e'
+                    }).then((final) => {
+                        if (final.isConfirmed) submitDelete(id, '1');
+                    });
+                }
+            });
+        }
+
+        function submitDelete(id, mikrotikFlag) {
+            let form = $('#enhancedDeleteForm');
+            form.attr('action', '/customers/' + id);
+            $('#deleteMikrotikFlag').val(mikrotikFlag);
+            form.submit();
         }
     </script>
 @endpush

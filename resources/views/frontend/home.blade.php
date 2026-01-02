@@ -16,7 +16,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Cek Tagihan Internet - MikBill</title>
+    <title>Cek Tagihan Internet - BillNesia</title>
     <link rel="icon" href="{{ $global_favicon ?? asset('favicon.ico') }}">
 
     <!-- Fonts & Icons -->
@@ -57,7 +57,7 @@
                     <div class="bg-[#352f99] text-white p-1.5 rounded-lg shadow-sm">
                         <i class="fas fa-wifi text-sm"></i>
                     </div>
-                    <span class="text-xl font-bold text-[#352f99] dark:text-white tracking-tight">MyISP Portal</span>
+                    <span class="text-xl font-bold text-[#352f99] dark:text-white tracking-tight"><a href="{{ config('app.url') }}">BillNesia</a></span>
                 </div>
                 <div class="flex items-center gap-4">
                     <!-- Theme Toggle -->
@@ -67,8 +67,12 @@
                         <i class="fas fa-moon text-lg" x-show="darkMode" style="display: none;"></i>
                     </button>
 
+                    <a href="{{ route('register') }}"
+                        class="hidden sm:inline-flex items-center justify-center rounded-full bg-white dark:bg-emerald-500/10 px-4 py-2 text-sm font-medium text-slate-700 dark:text-emerald-400 border border-slate-200 dark:border-emerald-500/20 hover:bg-slate-50 dark:hover:bg-emerald-500/20 transition-all">
+                        Daftar
+                    </a>
                     <a href="{{ route('login') }}"
-                        class="group inline-flex items-center justify-center rounded-full bg-[#352f99]/10 px-4 py-2 text-sm font-medium text-[#352f99] hover:bg-[#352f99] hover:text-white dark:bg-white/10 dark:text-white dark:hover:bg-white dark:hover:text-[#352f99] focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all">
+                        class="group inline-flex items-center justify-center rounded-full bg-[#352f99] px-4 py-2 text-sm font-medium text-white hover:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all shadow-md shadow-indigo-500/20">
                         Login Admin <i class="fas fa-arrow-right ml-2 opacity-50 group-hover:opacity-100"></i>
                     </a>
                 </div>

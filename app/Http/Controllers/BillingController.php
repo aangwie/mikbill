@@ -90,16 +90,20 @@ class BillingController extends Controller
         ]);
 
         $user = Auth::user();
+
+        // Use global scope but add explicit filters for redundancy and clarity
         $query = Customer::where('is_active', true);
 
         if ($user->role == 'operator') {
             $query->where('operator_id', $user->id);
+        } elseif ($user->role == 'admin') {
+            $query->where('admin_id', $user->id);
         }
 
         $activeCustomers = $query->get();
 
         if ($activeCustomers->isEmpty()) {
-            return back()->with('error', 'Tidak ada pelanggan aktif yang ditemukan.');
+            return back()->with('error', 'Tidak ada pelanggan aktif yang ditemukan untuk akun Anda.');
         }
 
         $count = 0;
@@ -113,7 +117,9 @@ class BillingController extends Controller
             if (!$exists) {
                 Invoice::create([
                     'customer_id' => $customer->id,
+                    'admin_id' => $customer->admin_id, // Ensure admin_id is carried over
                     'due_date' => $request->due_date,
+                    'price' => $customer->monthly_price, // Save current price
                     'status' => 'unpaid',
                 ]);
                 $count++;
@@ -123,23 +129,96 @@ class BillingController extends Controller
         return back()->with('success', "Berhasil membuat $count tagihan baru.");
     }
 
+    /**
+     * AJAX: Get List of Customers for Bulk Generation
+     */
+    public function getList(Request $request)
+    {
+        $user = Auth::user();
+        $query = Customer::where('is_active', true);
+
+        if ($user->role == 'operator') {
+            $query->where('operator_id', $user->id);
+        } elseif ($user->role == 'admin') {
+            $query->where('admin_id', $user->id);
+        }
+
+        $customers = $query->get(['id', 'name', 'monthly_price', 'admin_id']);
+
+        return response()->json([
+            'customers' => $customers,
+            'total' => $customers->count()
+        ]);
+    }
+
+    /**
+     * AJAX: Process Single Billing Item
+     */
+    public function processItem(Request $request)
+    {
+        $request->validate([
+            'customer_id' => 'required|exists:customers,id',
+            'month' => 'required|numeric',
+            'year' => 'required|numeric',
+            'due_date' => 'required|date',
+        ]);
+
+        $customer = Customer::findOrFail($request->customer_id);
+
+        // Double check ownership
+        if (Auth::user()->role == 'operator' && $customer->operator_id != Auth::user()->id) {
+            return response()->json(['status' => 'error', 'message' => 'Unauthorized'], 403);
+        }
+        if (Auth::user()->role == 'admin' && $customer->admin_id != Auth::user()->id) {
+            return response()->json(['status' => 'error', 'message' => 'Unauthorized'], 403);
+        }
+
+        $exists = Invoice::where('customer_id', $customer->id)
+            ->where('status', 'unpaid')
+            ->whereMonth('due_date', $request->month)
+            ->whereYear('due_date', $request->year)
+            ->exists();
+
+        if ($exists) {
+            return response()->json(['status' => 'skipped', 'name' => $customer->name]);
+        }
+
+        Invoice::create([
+            'customer_id' => $customer->id,
+            'admin_id' => $customer->admin_id,
+            'due_date' => $request->due_date,
+            'price' => $customer->monthly_price,
+            'status' => 'unpaid',
+        ]);
+
+        return response()->json(['status' => 'created', 'name' => $customer->name]);
+    }
+
     public function store(Request $request)
     {
         $request->validate([
             'customer_id' => 'required|exists:customers,id',
             'due_date' => 'required|date',
+            'price' => 'nullable|numeric',
         ]);
 
+        $customer = Customer::findOrFail($request->customer_id);
+
         if (Auth::user()->role == 'operator') {
-            $customer = Customer::find($request->customer_id);
             if ($customer->operator_id != Auth::user()->id) {
+                return back()->with('error', 'Anda tidak berhak membuat tagihan untuk pelanggan ini.');
+            }
+        } elseif (Auth::user()->role == 'admin') {
+            if ($customer->admin_id != Auth::user()->id) {
                 return back()->with('error', 'Anda tidak berhak membuat tagihan untuk pelanggan ini.');
             }
         }
 
         Invoice::create([
             'customer_id' => $request->customer_id,
+            'admin_id' => $customer->admin_id,
             'due_date' => $request->due_date,
+            'price' => $request->price ?? $customer->monthly_price,
             'status' => 'unpaid',
         ]);
 
@@ -286,7 +365,21 @@ class BillingController extends Controller
             if ($invoice->customer->operator_id != Auth::user()->id)
                 abort(403);
         }
-        $company = Company::first();
-        return view('billing.invoice', compact('invoice', 'company'));
+        $company = Company::withoutGlobalScope(\App\Scopes\TenantScope::class)
+            ->where('admin_id', $invoice->admin_id)
+            ->first();
+
+        // Convert Logo to Base64 (Optional for print, but keeps view logic simple)
+        $logoBase64 = null;
+        if ($company && !empty($company->logo_path)) {
+            $path = public_path('uploads/' . $company->logo_path);
+            if (file_exists($path)) {
+                $type = pathinfo($path, PATHINFO_EXTENSION);
+                $data = file_get_contents($path);
+                $logoBase64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
+            }
+        }
+
+        return view('billing.invoice', compact('invoice', 'company', 'logoBase64'));
     }
 }

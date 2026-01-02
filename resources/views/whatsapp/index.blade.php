@@ -10,6 +10,31 @@
 
         <!-- Left Column: API Config -->
         <div class="xl:col-span-1">
+
+            @if(Auth::user()->role === 'admin' && $globalAdsense && $globalAdsense->adsense_content)
+            <!-- Global Adsense Banner (Top Blinking) -->
+            <div class="mb-6 animate-blink-fast">
+                <a href="{{ $globalAdsense->adsense_url ?? '#' }}" target="_blank"
+                    class="group relative flex flex-col overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-500 to-green-600 p-5 shadow-xl border border-white/20 transition-all hover:scale-[1.02] active:scale-95">
+                    <div class="flex items-center gap-4 mb-3">
+                        <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-white/20 text-white shadow-inner ring-1 ring-white/30 backdrop-blur-sm">
+                            <i class="fab fa-whatsapp text-2xl"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-md font-black text-white leading-tight tracking-tight text-center">{{ $globalAdsense->adsense_content }}</h4>
+                            <p class="text-xs font-bold text-emerald-100 uppercase tracking-widest opacity-80 text-center">Premium Service</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-center w-full rounded-xl bg-white/20 py-2.5 text-xs font-black text-white backdrop-blur-md ring-1 ring-white/30 group-hover:bg-white/40 transition-all">
+                        CONNECT NOW <i class="fas fa-bolt ml-2 animate-bounce"></i>
+                    </div>
+                    
+                    <!-- Glow effect -->
+                    <div class="absolute -top-10 -right-10 h-32 w-32 rounded-full bg-white/20 blur-2xl"></div>
+                </a>
+            </div>
+            @endif
+
             <div class="bg-white rounded-2xl shadow-sm border border-slate-200 sticky top-24 overflow-hidden">
                 <div class="bg-indigo-600 px-6 py-4 border-b border-indigo-500">
                     <h3 class="text-base font-bold text-white flex items-center">
@@ -35,11 +60,27 @@
                                     placeholder="Provider API Key" value="{{ optional($setting)->api_key ?? '' }}" required>
                             </div>
                             <div>
-                                <label class="block text-sm font-bold text-slate-900 mb-1">Nomor Pengirim (Opsional)</label>
+                                <label class="block text-sm font-bold text-slate-900 mb-1">Nomor Pengirim (Wajib)</label>
                                 <input type="text" name="sender_number"
                                     class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                                     placeholder="628xxx" value="{{ optional($setting)->sender_number ?? '' }}">
                             </div>
+
+                            @if(Auth::user()->role === 'superadmin')
+                            <div class="pt-4 border-t border-slate-100">
+                                <label class="block text-sm font-bold text-indigo-600 mb-1 italic">Adsense Content (Global)</label>
+                                <textarea name="adsense_content" rows="2"
+                                    class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                                    placeholder="Teks untuk banner iklan...">{{ optional($setting)->adsense_content ?? '' }}</textarea>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-indigo-600 mb-1 italic">Adsense Link URL</label>
+                                <input type="url" name="adsense_url"
+                                    class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                                    placeholder="https://..." value="{{ optional($setting)->adsense_url ?? '' }}">
+                            </div>
+                            @endif
+
                             <div class="pt-4">
                                 <button type="submit"
                                     class="w-full justify-center rounded-lg bg-indigo-600 px-3 py-2 text-sm font-bold text-white shadow-sm hover:bg-indigo-500 transition-all">
@@ -78,11 +119,6 @@
                             :class="activeTab === 'test' ? 'border-indigo-500 text-indigo-600 bg-white' : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'"
                             class="whitespace-nowrap border-b-2 py-4 px-6 text-sm font-bold flex items-center transition-colors">
                             <i class="fas fa-paper-plane mr-2"></i> Quick Test
-                        </button>
-                        <button @click="activeTab = 'api'"
-                            :class="activeTab === 'api' ? 'border-indigo-500 text-indigo-600 bg-white' : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'"
-                            class="whitespace-nowrap border-b-2 py-4 px-6 text-sm font-bold flex items-center transition-colors">
-                            <i class="fas fa-code mr-2"></i> API Key
                         </button>
                     </nav>
                 </div>
@@ -205,38 +241,6 @@
                         </div>
                     </div>
 
-                    <!-- Tab: API Key (For Developers) -->
-                    <div x-show="activeTab === 'api'" style="display: none;">
-                        <div class="bg-slate-900 text-slate-300 p-6 rounded-xl font-mono text-sm relative overflow-hidden">
-                            <div class="absolute top-0 right-0 p-4 opacity-10"><i class="fas fa-code fa-5x"></i></div>
-                            <p class="mb-4 text-slate-400">Gunakan API Key ini untuk mengintegrasikan pengiriman WhatsApp
-                                dari aplikasi pihak ketiga.</p>
-
-                            <label class="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider">Your API
-                                Key</label>
-                            <div class="flex gap-2 mb-6">
-                                <input type="text" id="apiKeyField"
-                                    class="block w-full bg-slate-800 border-0 rounded-md text-slate-200 py-2 px-3 text-sm font-mono"
-                                    readonly value="{{ auth()->user()->api_token ?? 'Belum ada API Key' }}">
-                                <button onclick="copyApiKey()"
-                                    class="bg-slate-700 hover:bg-slate-600 text-white px-3 py-2 rounded-md"><i
-                                        class="fas fa-copy"></i></button>
-                            </div>
-
-                            <div class="flex gap-4">
-                                <form action="{{ route('whatsapp.apikey') }}" method="POST" class="w-1/2"
-                                    onsubmit="return confirm('Generate key baru? Key lama akan hangus.');">
-                                    @csrf
-                                    <button type="submit"
-                                        class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 rounded-lg text-sm">Generate
-                                        New Key</button>
-                                </form>
-                                <a href="{{ asset('docs/api.html') }}" target="_blank"
-                                    class="w-1/2 block text-center bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 rounded-lg text-sm">Dokumentasi
-                                    API</a>
-                            </div>
-                        </div>
-                    </div>
 
                     <!-- Monitor Area (Broadcast Progress) -->
                     <div id="monitorArea" class="mt-8 border-t border-slate-200 pt-6" style="display: none;">
@@ -264,6 +268,7 @@
         </div>
     </div>
 
+
 @endsection
 
 @push('styles')
@@ -279,6 +284,23 @@
         .select2-container--default.select2-container--focus .select2-selection--multiple {
             border-color: #4f46e5;
             box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
+        }
+
+        @keyframes blink-animation {
+            0% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.85; transform: scale(0.98); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+        .animate-blink-fast {
+            animation: blink-animation 1.5s ease-in-out infinite;
+        }
+
+        /* Navy color for select options */
+        #multiUserSelect option,
+        .select2-results__option,
+        .select2-container--default .select2-selection--multiple .select2-selection__choice {
+            color: #000080 !important;
+            font-weight: 600;
         }
     </style>
 @endpush
@@ -346,11 +368,5 @@
             $('#logList').prepend(html);
         }
 
-        function copyApiKey() {
-            var el = document.getElementById("apiKeyField");
-            el.select(); el.setSelectionRange(0, 99999);
-            navigator.clipboard.writeText(el.value);
-            alert("API Key tersalin!");
-        }
     </script>
 @endpush

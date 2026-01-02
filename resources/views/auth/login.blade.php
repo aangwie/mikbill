@@ -10,7 +10,8 @@
             document.documentElement.classList.remove('dark');
         }
     }
-}" x-init="$watch('darkMode', val => val ? document.documentElement.classList.add('dark') : document.documentElement.classList.remove('dark')); if(darkMode) document.documentElement.classList.add('dark');">
+}"
+    x-init="$watch('darkMode', val => val ? document.documentElement.classList.add('dark') : document.documentElement.classList.remove('dark')); if(darkMode) document.documentElement.classList.add('dark');">
 
 <head>
     <meta charset="utf-8">
@@ -54,7 +55,8 @@
     </script>
 </head>
 
-<body class="min-h-full font-sans antialiased text-slate-800 dark:text-slate-100 bg-slate-50 dark:bg-slate-900 text-slate-900 transition-colors duration-300 relative selection:bg-indigo-500 selection:text-white">
+<body
+    class="min-h-full font-sans antialiased text-slate-800 dark:text-slate-100 bg-slate-50 dark:bg-slate-900 text-slate-900 transition-colors duration-300 relative selection:bg-indigo-500 selection:text-white">
 
     <!-- Theme Toggle (Absolute Top Right) -->
     <div class="absolute top-4 right-4 z-50">
@@ -70,8 +72,10 @@
         <!-- Light Mode Gradient -->
         <div class="absolute inset-0 bg-gradient-to-br from-indigo-50 to-white dark:hidden opacity-80"></div>
         <!-- Dark Mode Gradient -->
-        <div class="absolute inset-0 bg-gradient-to-br from-[#352f99] to-indigo-900 mix-blend-multiply opacity-90 hidden dark:block"></div>
-        
+        <div
+            class="absolute inset-0 bg-gradient-to-br from-[#352f99] to-indigo-900 mix-blend-multiply opacity-90 hidden dark:block">
+        </div>
+
         <svg viewBox="0 0 1097 845" aria-hidden="true"
             class="hidden transform-gpu blur-3xl sm:block opacity-20 dark:opacity-40 absolute top-[10%] left-[50%] -translate-x-1/2 w-[68.5625rem]">
             <path fill="url(#gradient)" fill-opacity=".6"
@@ -87,37 +91,65 @@
     </div>
 
     <div class="flex min-h-full flex-col justify-center py-12 pb-24 sm:px-6 lg:px-8 relative z-10">
-        
-        <div class="sm:mx-auto sm:w-full sm:max-w-md text-center mb-8">
-            <a href="{{ route('frontend.index') }}" class="inline-block group">
-                 @if(isset($global_favicon) || file_exists(public_path('favicon.ico')))
-                    <img class="mx-auto h-20 w-auto mb-4 drop-shadow-lg transition-transform group-hover:scale-105 duration-300" src="{{ $global_favicon ?? asset('favicon.ico') }}" alt="Logo">
-                @else
-                    <div
-                        class="mx-auto h-16 w-16 bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl flex items-center justify-center text-white text-3xl mb-4 shadow-xl transition-transform group-hover:scale-105 duration-300">
-                        <i class="fas fa-wifi"></i>
-                    </div>
-                @endif
-            <h2 class="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-2">Admin Portal</h2>
-            </a>
-            <p class="text-slate-600 dark:text-indigo-200 text-sm">
-                Masuk untuk mengelola sistem jaringan
-            </p>
-        </div>
 
         <div class="sm:mx-auto sm:w-full sm:max-w-[420px]">
             <div
                 class="bg-white dark:bg-slate-800/95 backdrop-blur-sm py-10 px-6 shadow-2xl rounded-2xl sm:px-10 border border-slate-200 dark:border-white/10">
 
+                <div class="text-center mb-8">
+                    @if(isset($company) && !empty($company->logo_path))
+                        <img class="mx-auto h-20 w-auto mb-4 drop-shadow-lg transition-transform hover:scale-105 duration-300 rounded-lg"
+                            src="{{ asset('uploads/' . $company->logo_path) }}" alt="Logo">
+                    @else
+                        @if(isset($global_favicon) || file_exists(public_path('favicon.ico')))
+                            <img class="mx-auto h-16 w-auto mb-4 drop-shadow-lg transition-transform hover:scale-105 duration-300"
+                                src="{{ $global_favicon ?? asset('favicon.ico') }}" alt="Logo">
+                        @else
+                            <div
+                                class="mx-auto h-16 w-16 bg-indigo-600 rounded-2xl flex items-center justify-center text-white text-3xl mb-4 shadow-xl">
+                                <i class="fas fa-wifi"></i>
+                            </div>
+                        @endif
+                    @endif
+                    <h2 class="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">Admin Portal</h2>
+                    <p class="text-slate-500 dark:text-slate-400 text-sm mt-1">
+                        {{ $company->company_name ?? 'Managed Service Provider' }}
+                    </p>
+                </div>
+
+                @if (session('success'))
+                    <div class="mb-6 rounded-lg bg-green-50 p-4 border-l-4 border-green-500">
+                        <div class="flex">
+                            <i class="fas fa-check-circle text-green-500 mt-1"></i>
+                            <div class="ml-3 font-medium text-green-800">{{ session('success') }}</div>
+                        </div>
+                    </div>
+                @endif
+
+                @if (session('error'))
+                    <div class="mb-6 rounded-lg bg-red-50 p-4 border-l-4 border-red-500">
+                        <div class="flex">
+                            <i class="fas fa-exclamation-circle text-red-500 mt-1"></i>
+                            <div class="ml-3 font-medium text-red-800">{{ session('error') }}</div>
+                        </div>
+                    </div>
+                @endif
+
                 @if ($errors->any())
-                    <div class="mb-6 rounded-lg bg-red-50 p-4 border-l-4 border-red-500 animate-pulse">
+                    <div class="mb-6 rounded-lg bg-red-50 p-4 border-l-4 border-red-500">
                         <div class="flex">
                             <div class="flex-shrink-0">
                                 <i class="fas fa-exclamation-circle text-red-500"></i>
                             </div>
                             <div class="ml-3">
                                 <h3 class="text-sm font-medium text-red-800">Login Gagal</h3>
-                                <div class="mt-1 text-sm text-red-700">Email atau password salah.</div>
+                                <div class="mt-1 text-sm text-red-700">
+                                    <ul class="list-disc list-inside">
+                                        @foreach ($errors->all() as $error)
+                                            <li>{{ $error }}</li>
+                                        @endforeach
+                                    </ul>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -126,7 +158,9 @@
                 <form class="space-y-6" action="{{ route('login.post') }}" method="POST">
                     @csrf
                     <div>
-                        <label for="email" class="block text-sm font-semibold leading-6 text-slate-900 dark:text-white">Email Address</label>
+                        <label for="email"
+                            class="block text-sm font-semibold leading-6 text-slate-900 dark:text-white">Email
+                            Address</label>
                         <div class="relative mt-2 rounded-md shadow-sm">
                             <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                                 <i class="fas fa-envelope text-slate-400 sm:text-sm"></i>
@@ -155,7 +189,14 @@
                         <div class="flex items-center">
                             <input id="remember-me" name="remember-me" type="checkbox"
                                 class="h-4 w-4 rounded border-gray-300 dark:border-slate-600 text-[#352f99] focus:ring-[#352f99] dark:bg-slate-700">
-                            <label for="remember-me" class="ml-2 block text-sm text-slate-600 dark:text-slate-300">Ingat saya</label>
+                            <label for="remember-me" class="ml-2 block text-sm text-slate-600 dark:text-slate-300">Ingat
+                                saya</label>
+                        </div>
+                        <div class="text-sm">
+                            <a href="{{ route('password.request') }}"
+                                class="font-bold text-[#352f99] dark:text-indigo-400 hover:underline">
+                                Lupa password?
+                            </a>
                         </div>
                     </div>
 
@@ -168,16 +209,23 @@
                 </form>
 
                 <div class="mt-8">
-                     <div class="relative">
+                    <div class="relative">
                         <div class="absolute inset-0 flex items-center">
                             <div class="w-full border-t border-slate-200 dark:border-slate-700"></div>
                         </div>
                         <div class="relative flex justify-center text-sm">
-                            <span class="bg-white dark:bg-slate-800 px-2 text-slate-400 dark:text-slate-500">Atau kembali ke</span>
+                            <span class="bg-white dark:bg-slate-800 px-2 text-slate-400 dark:text-slate-500">Atau
+                                kembali ke</span>
                         </div>
                     </div>
 
                     <div class="mt-6 text-center">
+                        <p class="text-sm text-slate-500 dark:text-slate-400 mb-4">
+                            Belum punya akun?
+                            <a href="{{ route('register') }}"
+                                class="font-bold text-[#352f99] dark:text-indigo-400 hover:underline">Daftar
+                                sekarang</a>
+                        </p>
                         <a href="{{ route('frontend.index') }}"
                             class="text-sm font-medium text-slate-500 hover:text-[#352f99] flex items-center justify-center gap-2 transition-colors">
                             <i class="fas fa-home"></i> Halaman Depan
@@ -186,7 +234,7 @@
                 </div>
             </div>
 
-             <p class="mt-8 text-center text-xs text-slate-500 dark:text-indigo-200">
+            <p class="mt-8 text-center text-xs text-slate-500 dark:text-indigo-200">
                 &copy; {{ date('Y') }} Managed Service Provider. <br>System v1.0
             </p>
         </div>

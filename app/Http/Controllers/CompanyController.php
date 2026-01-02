@@ -10,7 +10,7 @@ class CompanyController extends Controller
 {
     public function index()
     {
-        // Ambil data pertama. Jika belum ada, buat objek kosong baru.
+        // TenantScope automatically filters this to the current Admin/Operator
         $company = Company::first() ?? new Company();
         return view('company.index', compact('company'));
     }
@@ -28,10 +28,8 @@ class CompanyController extends Controller
             'signature' => 'nullable|image|max:2048',
         ]);
 
-        $company = Company::first();
-        if (!$company) {
-            $company = new Company();
-        }
+        // TenantScope automatically filters this
+        $company = Company::first() ?? new Company();
 
         $company->company_name = $request->company_name;
         $company->address = $request->address;

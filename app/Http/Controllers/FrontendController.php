@@ -50,13 +50,26 @@ class FrontendController extends Controller
     public function downloadInvoice($id)
     {
         $invoice = Invoice::with('customer')->findOrFail($id);
-        $company = Company::first();
+        $company = Company::withoutGlobalScope(\App\Scopes\TenantScope::class)
+            ->where('admin_id', $invoice->admin_id)
+            ->first();
 
-        // Tambahkan variable 'isPdf' => true
+        // Convert Logo to Base64 for PDF
+        $logoBase64 = null;
+        if ($company && !empty($company->logo_path)) {
+            $path = public_path('uploads/' . $company->logo_path);
+            if (file_exists($path)) {
+                $type = pathinfo($path, PATHINFO_EXTENSION);
+                $data = file_get_contents($path);
+                $logoBase64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
+            }
+        }
+
         $data = [
             'invoice' => $invoice,
             'company' => $company,
-            'isPdf'   => true  // <--- INI KUNCINYA
+            'logoBase64' => $logoBase64,
+            'isPdf' => true
         ];
 
         $pdf = Pdf::loadView('billing.invoice', $data);

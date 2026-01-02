@@ -19,7 +19,20 @@ class WhatsappController extends Controller
 
     public function index()
     {
+        $user = auth()->user();
+        $plan = $user->plan;
+
+        if (!$plan || !$plan->wa_gateway) {
+            return redirect()->route('router.index')->with('warning', 'Layanan WhatsApp Gateway tidak tersedia di paket Anda. Silakan upgrade paket.');
+        }
+
         $setting = WhatsappSetting::first();
+
+        // Global Adsense: Fetch any record that has adsense content (bypassing all scopes)
+        $globalAdsense = WhatsappSetting::withoutGlobalScopes()
+            ->whereNotNull('adsense_content')
+            ->where('adsense_content', '!=', '')
+            ->first();
 
         // Ambil pelanggan yang punya Nomor HP saja
         $customers = Customer::whereNotNull('phone')
@@ -27,17 +40,25 @@ class WhatsappController extends Controller
             ->orderBy('name', 'asc')
             ->get();
 
-        return view('whatsapp.index', compact('setting', 'customers'));
+        return view('whatsapp.index', compact('setting', 'customers', 'globalAdsense'));
     }
 
     // Simpan Konfigurasi
     public function update(Request $request)
     {
-        $data = $request->validate([
+        $user = auth()->user();
+        $rules = [
             'target_url' => 'required|url',
             'api_key' => 'required|string',
             'sender_number' => 'nullable|string',
-        ]);
+        ];
+
+        if ($user->isSuperAdmin()) {
+            $rules['adsense_content'] = 'nullable|string';
+            $rules['adsense_url'] = 'nullable|url';
+        }
+
+        $data = $request->validate($rules);
 
         $setting = WhatsappSetting::first();
         if ($setting) {

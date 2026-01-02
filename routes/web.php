@@ -14,6 +14,12 @@ use App\Http\Controllers\AccountingController;
 use App\Http\Controllers\RouterSettingController;
 use App\Http\Controllers\TrafficController;
 use App\Http\Controllers\SystemController;
+use App\Http\Controllers\MailSettingController;
+use App\Http\Controllers\MonitorController;
+use App\Http\Controllers\HotspotController;
+use App\Http\Controllers\PlanController;
+use App\Http\Controllers\PaymentSettingController;
+use App\Http\Controllers\SubscriptionController;
 
 
 /*
@@ -27,12 +33,32 @@ Route::get('/', [FrontendController::class, 'index'])->name('frontend.index');
 Route::post('/check-bill', [FrontendController::class, 'check'])->name('frontend.check');
 Route::get('/invoice/{id}/download', [FrontendController::class, 'downloadInvoice'])->name('frontend.invoice');
 
-// Login & Logout
+// Login, Register & Reset Password
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [AuthController::class, 'login'])->name('login.post');
+
+    // Registration
+    Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('register');
+    Route::post('/register', [AuthController::class, 'register'])->name('register.post');
+
+    // Password Reset
+    Route::get('/forgot-password', [AuthController::class, 'showForgotPasswordForm'])->name('password.request');
+    Route::post('/forgot-password', [AuthController::class, 'sendResetLink'])->name('password.email');
+    Route::get('/reset-password/{token}', [AuthController::class, 'showResetPasswordForm'])->name('password.reset');
+    Route::post('/reset-password', [AuthController::class, 'resetPassword'])->name('password.update');
 });
-Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+
+// Activation & Notifications (Requires Auth)
+Route::middleware(['auth'])->group(function () {
+    Route::get('/activate/{user}', [AuthController::class, 'activateUser'])->name('activate.user')->middleware('signed');
+    Route::post('/request-activation', [AuthController::class, 'requestRouterActivation'])->name('request.activation');
+
+    Route::get('/notifications', [AuthController::class, 'getNotifications'])->name('notifications.index');
+    Route::post('/notifications/mark-read', [AuthController::class, 'markNotificationsRead'])->name('notifications.markRead');
+});
+
+Route::match(['get', 'post'], '/logout', [AuthController::class, 'logout'])->name('logout');
 
 
 /*
@@ -60,6 +86,9 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/billing/{id}/cancel', [BillingController::class, 'cancelPayment'])->name('billing.cancel');
     Route::post('/billing/store', [BillingController::class, 'store'])->name('billing.store');
     Route::post('/billing/generate', [BillingController::class, 'generate'])->name('billing.generate');
+    // AJAX Bulk Billing
+    Route::get('/billing/generate-list', [BillingController::class, 'getList'])->name('billing.list');
+    Route::post('/billing/generate-process', [BillingController::class, 'processItem'])->name('billing.process');
     Route::get('/billing/{id}/print', [BillingController::class, 'print'])->name('billing.print');
     Route::delete('/billing/{id}', [BillingController::class, 'destroy'])->name('billing.destroy');
 
@@ -67,7 +96,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/report', [ReportController::class, 'index'])->name('report.index');
 
     // Admin Only
-    Route::middleware(['role:admin'])->group(function () {
+    Route::middleware(['role:admin,superadmin'])->group(function () {
         // EXPORT & IMPORT
         Route::get('/customers/export', [CustomerController::class, 'export'])->name('customers.export');
         Route::post('/customers/import', [CustomerController::class, 'import'])->name('customers.import');
@@ -113,16 +142,53 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/router-setting/activate/{id}', [RouterSettingController::class, 'activate'])->name('router.activate');
         Route::delete('/router-setting/{id}', [RouterSettingController::class, 'destroy'])->name('router.destroy');
 
+        Route::get('/paket-plan', [PlanController::class, 'publicIndex'])->name('plans.public');
+        Route::post('/paket-plan/checkout', [SubscriptionController::class, 'checkout'])->name('plans.checkout');
 
 
-        // SYSTEM UPDATE
-        Route::get('/system/update', [SystemController::class, 'index'])->name('system.index');
-        Route::post('/system/update', [SystemController::class, 'update'])->name('system.update');
-        Route::post('/system/clear-cache', [SystemController::class, 'clearCache'])->name('system.clear-cache');
+
+        // SUPERADMIN ONLY (System & Mail)
+        Route::middleware(['role:superadmin'])->group(function () {
+            // SYSTEM UPDATE
+            Route::get('/system/update', [SystemController::class, 'index'])->name('system.index');
+            Route::post('/system/update', [SystemController::class, 'update'])->name('system.update');
+            Route::post('/system/clear-cache', [SystemController::class, 'clearCache'])->name('system.clear-cache');
+
+            // MAIL SETTINGS
+            Route::get('/mail/setting', [MailSettingController::class, 'index'])->name('mail.index');
+            Route::post('/mail/setting', [MailSettingController::class, 'update'])->name('mail.update');
+            Route::post('/mail/test', [MailSettingController::class, 'sendTestEmail'])->name('mail.test');
+
+            // PLAN MANAGEMENT
+            Route::resource('plans', PlanController::class);
+
+            // PAYMENT SETTINGS
+            Route::get('/payment/setting', [PaymentSettingController::class, 'index'])->name('payment.index');
+            Route::post('/payment/setting', [PaymentSettingController::class, 'update'])->name('payment.update');
+        });
 
         Route::resource('users', UserController::class);
     });
 
+    // Hotspot Routes (Admin & Operator)
+    Route::prefix('hotspot')->name('hotspot.')->group(function () {
+        Route::get('/monitor', [HotspotController::class, 'monitor'])->name('monitor');
+        Route::get('/generate', [HotspotController::class, 'generateForm'])->name('generate');
+        Route::post('/generate', [HotspotController::class, 'generateStore'])->name('generate.store');
+        Route::delete('/user/{name}', [HotspotController::class, 'destroy'])->name('destroy');
+    });
+
+    // Monitor Routes (Admin & Operator)
+    Route::prefix('monitor')->name('monitor.')->group(function () {
+        Route::get('/dhcp-leases', [MonitorController::class, 'dhcpLeases'])->name('dhcp-leases');
+        Route::get('/static-users', [MonitorController::class, 'staticUsers'])->name('static-users');
+        Route::get('/simple-queues', [MonitorController::class, 'simpleQueues'])->name('simple-queues');
+        Route::get('/simple-queues-json', [MonitorController::class, 'getSimpleQueuesJson'])->name('simple-queues-json');
+    });
+
     // CUSTOMER MANAGEMENT (Accessible by Admin & Operator)
+    Route::post('/customers/destroy-all', [CustomerController::class, 'destroyAll'])->name('customers.destroyAll');
     Route::resource('customers', CustomerController::class);
 });
+
+Route::post('/payment/webhook', [SubscriptionController::class, 'webhook'])->name('payment.webhook');

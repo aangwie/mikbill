@@ -15,6 +15,8 @@
                 name: '',
                 email: '',
                 role: 'operator',
+                is_activated: false,
+                is_verified: false,
                 passwordPlaceholder: '******',
 
                 openAddModal() {
@@ -26,18 +28,22 @@
                     this.name = '';
                     this.email = '';
                     this.role = 'operator';
+                    this.is_activated = false;
+                    this.is_verified = false;
                     this.passwordPlaceholder = '******';
                 },
 
                 openEditModal(user) {
                     this.showModal = true;
                     this.editMode = true;
-                    this.formAction = '/users/' + user.id; // Assuming standard resource route
-                    this.formMethod = 'POST'; // Laravel method spoofing handled inside form
+                    this.formAction = '/users/' + user.id; 
+                    this.formMethod = 'POST'; 
                     this.userId = user.id;
                     this.name = user.name;
                     this.email = user.email;
                     this.role = user.role;
+                    this.is_activated = !!user.is_activated;
+                    this.is_verified = !!user.email_verified_at;
                     this.passwordPlaceholder = 'Kosongkan jika tidak diganti';
                 }
             }">
@@ -92,12 +98,40 @@
                                     {{ $user->email }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    @if($user->role == 'admin')
-                                        <span
-                                            class="inline-flex items-center rounded-full bg-rose-50 dark:bg-rose-900/30 px-2 py-1 text-xs font-medium text-rose-700 dark:text-rose-400 ring-1 ring-inset ring-rose-600/20 dark:ring-rose-500/30">ADMINISTRATOR</span>
+                                    @if($user->role == 'superadmin')
+                                        <span class="inline-flex items-center rounded-full bg-purple-50 dark:bg-purple-900/30 px-2 py-1 text-xs font-medium text-purple-700 dark:text-purple-400 ring-1 ring-inset ring-purple-600/20 dark:ring-purple-500/30">SUPERADMIN</span>
+                                    @elseif($user->role == 'admin')
+                                        <span class="inline-flex items-center rounded-full bg-rose-50 dark:bg-rose-900/30 px-2 py-1 text-xs font-medium text-rose-700 dark:text-rose-400 ring-1 ring-inset ring-rose-600/20 dark:ring-rose-500/30">ADMINISTRATOR</span>
                                     @else
-                                        <span
-                                            class="inline-flex items-center rounded-full bg-green-50 dark:bg-green-900/30 px-2 py-1 text-xs font-medium text-green-700 dark:text-green-400 ring-1 ring-inset ring-green-600/20 dark:ring-green-500/30">OPERATOR</span>
+                                        <span class="inline-flex items-center rounded-full bg-green-50 dark:bg-green-900/30 px-2 py-1 text-xs font-medium text-green-700 dark:text-green-400 ring-1 ring-inset ring-green-600/20 dark:ring-green-500/30">OPERATOR</span>
+                                    @endif
+
+                                    <div class="mt-1 space-y-1">
+                                        <!-- Email Status -->
+                                        @if($user->email_verified_at)
+                                            <span class="inline-flex items-center text-[10px] font-bold text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 px-1.5 py-0.5 rounded">
+                                                <i class="fas fa-envelope mr-1"></i> EMAIL VERIFIKASI
+                                            </span>
+                                        @else
+                                            <span class="inline-flex items-center text-[10px] font-bold text-amber-500 bg-amber-50 dark:bg-amber-900/20 px-1.5 py-0.5 rounded">
+                                                <i class="fas fa-envelope mr-1"></i> BELUM VERIFIKASI
+                                            </span>
+                                        @endif
+
+                                        <!-- Router Status -->
+                                        @if($user->is_activated)
+                                            <span class="inline-flex items-center text-[10px] font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-1.5 py-0.5 rounded">
+                                                <i class="fas fa-microchip mr-1"></i> ROUTER AKTIF
+                                            </span>
+                                        @else
+                                            <span class="inline-flex items-center text-[10px] font-bold text-red-500 bg-red-50 dark:bg-red-900/20 px-1.5 py-0.5 rounded">
+                                                <i class="fas fa-microchip mr-1"></i> ROUTER NONAKTIF
+                                            </span>
+                                        @endif
+                                    </div>
+                                    
+                                    @if(auth()->user()->isSuperAdmin() && $user->parent)
+                                        <div class="text-[10px] text-slate-400 mt-1 uppercase tracking-tighter">Under: {{ $user->parent->name }}</div>
                                     @endif
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">
@@ -112,14 +146,14 @@
                                         </button>
 
                                         @if(auth()->user()->id != $user->id)
-                                            <form action="{{ route('users.destroy', $user->id) }}" method="POST" class="d-inline"
-                                                onsubmit="return confirm('Yakin hapus user {{ $user->name }}?');">
+                                            <button type="button" 
+                                                onclick="confirmDelete('{{ $user->id }}', '{{ addslashes($user->name) }}', '{{ $user->role }}')"
+                                                class="text-red-600 hover:text-red-700 dark:hover:text-red-400 p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                                title="Hapus">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                            <form id="delete-form-{{ $user->id }}" action="{{ route('users.destroy', $user->id) }}" method="POST" style="display: none;">
                                                 @csrf @method('DELETE')
-                                                <button
-                                                    class="text-red-600 hover:text-red-700 dark:hover:text-red-400 p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                                                    title="Hapus">
-                                                    <i class="fas fa-trash-alt"></i>
-                                                </button>
                                             </form>
                                         @else
                                             <button class="text-slate-300 cursor-not-allowed p-1.5" disabled title="Akun Sendiri"><i
@@ -133,6 +167,67 @@
                 </table>
             </div>
         </div>
+
+@push('scripts')
+<script>
+    function confirmDelete(id, name, role) {
+        console.log("Attempting to delete user:", {id, name, role});
+        
+        let title = "Hapus User?";
+        let text = "Apakah Anda yakin ingin menghapus " + name + "?";
+        let confirmButtonText = "Ya, Hapus";
+
+        if (role === 'admin') {
+            title = "HAPUS ADMINISTRATOR?";
+            text = "PERINGATAN: Menghapus Admin akan menghapus SELURUH data terkait (Pelanggan, Tagihan, Pengaturan Router, dsb). Ini tidak dapat dibatalkan!";
+            confirmButtonText = "Lanjut ke Konfirmasi Akhir";
+        }
+
+        Swal.fire({
+            title: title,
+            text: text,
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#d33",
+            cancelButtonColor: "#3085d6",
+            confirmButtonText: confirmButtonText,
+            cancelButtonText: "Batal"
+        }).then((result) => {
+            if (result.isConfirmed) {
+                if (role === 'admin') {
+                    // Double confirmation for Admin
+                    Swal.fire({
+                        title: "KONFIRMASI TERAKHIR",
+                        text: "Semua data layanan admin " + name + " akan segera DIHAPUS PERMANEN. Benar-benar ingin lanjut?",
+                        icon: "error",
+                        showCancelButton: true,
+                        confirmButtonColor: "#ff0000",
+                        cancelButtonColor: "#3085d6",
+                        confirmButtonText: "SAYA YAKIN, HAPUS SEMUA DATA",
+                        cancelButtonText: "Batalkan"
+                    }).then((finalResult) => {
+                        if (finalResult.isConfirmed) {
+                            var form = document.getElementById('delete-form-' + id);
+                            if(form) {
+                                form.submit();
+                            } else {
+                                console.error("Form not found: delete-form-" + id);
+                            }
+                        }
+                    });
+                } else {
+                    var form = document.getElementById('delete-form-' + id);
+                    if(form) {
+                        form.submit();
+                    } else {
+                        console.error("Form not found: delete-form-" + id);
+                    }
+                }
+            }
+        });
+    }
+</script>
+@endpush
 
         <!-- Modal (Alpine) -->
         <div x-show="showModal" class="relative z-50" style="display:none;">
@@ -177,16 +272,72 @@
                                         class="block w-full rounded-md border-0 py-1.5 text-slate-900 dark:text-white dark:bg-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 dark:ring-slate-600 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6"
                                         :placeholder="passwordPlaceholder">
                                 </div>
+                                
+                                @if(auth()->user()->isSuperAdmin())
                                 <div>
                                     <label class="block text-sm font-medium text-slate-900 dark:text-white mb-1">Role / Hak
                                         Akses</label>
                                     <select name="role" x-model="role"
                                         class="block w-full rounded-md border-0 py-1.5 text-slate-900 dark:text-white dark:bg-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 dark:ring-slate-600 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6"
                                         required>
-                                        <option value="operator">Operator (Hanya Billing)</option>
-                                        <option value="admin">Administrator (Full Akses)</option>
+                                        <option value="operator">Operator (Staff)</option>
+                                        <option value="admin">Administrator (Tenant Owner)</option>
+                                        <option value="superadmin">Superadmin (Global access)</option>
                                     </select>
                                 </div>
+
+                                <div x-show="role == 'operator'">
+                                    <label class="block text-sm font-medium text-slate-900 dark:text-white mb-1">Assign to Admin</label>
+                                    <select name="parent_id"
+                                        class="block w-full rounded-md border-0 py-1.5 text-slate-900 dark:text-white dark:bg-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 dark:ring-slate-600 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6">
+                                        <option value="">-- Tanpa Admin (Global) --</option>
+                                        @foreach($admins as $admin)
+                                            <option value="{{ $admin->id }}">{{ $admin->name }} ({{ $admin->email }})</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+
+                                @endif
+
+                                <div class="space-y-4">
+                                    <div class="p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg border border-slate-200 dark:border-slate-600">
+                                        <div class="flex items-center justify-between">
+                                            <div>
+                                                <p class="text-sm font-bold text-slate-900 dark:text-white">Status Verifikasi Email</p>
+                                                <p class="text-xs text-slate-500 dark:text-slate-400">Izinkan pengguna untuk login ke dashboard.</p>
+                                            </div>
+                                            @if(auth()->user()->isSuperAdmin())
+                                            <label class="relative inline-flex items-center cursor-pointer">
+                                                <input type="checkbox" name="is_verified" value="1" x-model="is_verified" class="sr-only peer">
+                                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-emerald-600"></div>
+                                            </label>
+                                            @else
+                                                <div class="text-xs font-bold" :class="is_verified ? 'text-emerald-500' : 'text-amber-500'" x-text="is_verified ? 'TERVERIFIKASI' : 'BELUM VERIFIKASI'"></div>
+                                            @endif
+                                        </div>
+                                    </div>
+
+                                    <div class="p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg border border-slate-200 dark:border-slate-600">
+                                        <div class="flex items-center justify-between">
+                                            <div>
+                                                <p class="text-sm font-bold text-slate-900 dark:text-white">Aktivasi Fitur Router</p>
+                                                <p class="text-xs text-slate-500 dark:text-slate-400">Berikan akses untuk menambah dan mengelola router.</p>
+                                            </div>
+                                            <label class="relative inline-flex items-center cursor-pointer">
+                                                <input type="checkbox" name="is_activated" value="1" x-model="is_activated" class="sr-only peer">
+                                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                @if(!auth()->user()->isSuperAdmin())
+                                    <input type="hidden" name="role" value="operator">
+                                    <div class="p-3 bg-slate-50 dark:bg-slate-700 rounded-lg">
+                                        <p class="text-xs text-slate-500 uppercase font-bold">Role Otomatis</p>
+                                        <p class="text-sm text-slate-700 dark:text-slate-300">Operator</p>
+                                    </div>
+                                @endif
                             </div>
 
                             <div class="bg-slate-50 dark:bg-slate-700/50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">

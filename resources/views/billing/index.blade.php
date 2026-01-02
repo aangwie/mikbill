@@ -7,9 +7,9 @@
 @section('content')
 
     <div x-data="{ 
-            showCreateModal: false, 
-            showGenerateModal: false 
-        }">
+                    showCreateModal: false, 
+                    showGenerateModal: false 
+                }">
 
         <!-- Filter Bar -->
         <div class="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -22,7 +22,8 @@
                     <p class="text-xs text-slate-500 dark:text-slate-400">Tampilkan berdasarkan periode</p>
                 </div>
             </div>
-            <form action="{{ route('billing.index') }}" method="GET" class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            <form action="{{ route('billing.index') }}" method="GET"
+                class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                 <select name="month"
                     class="block w-full sm:w-40 rounded-md border-0 py-1.5 text-slate-900 dark:text-white dark:bg-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 dark:ring-slate-600 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6">
                     @for ($i = 1; $i <= 12; $i++)
@@ -132,9 +133,11 @@
                                 </td>
                                 <td class="px-4 py-3 align-middle">
                                     <div class="font-medium text-slate-900 dark:text-white">
-                                        {{ $inv->customer->name ?? 'Deleted User' }}</div>
+                                        {{ $inv->customer->name ?? 'Deleted User' }}
+                                    </div>
                                     <div class="text-xs text-slate-500 dark:text-slate-400">
-                                        {{ $inv->customer->internet_number ?? '-' }}</div>
+                                        {{ $inv->customer->internet_number ?? '-' }}
+                                    </div>
                                 </td>
                                 <td
                                     class="px-4 py-3 align-middle hidden sm:table-cell text-sm text-slate-600 dark:text-slate-300">
@@ -276,25 +279,26 @@
                 <div class="flex min-h-full items-center justify-center p-4">
                     <div class="relative transform overflow-hidden rounded-2xl bg-white dark:bg-slate-800 text-left shadow-xl transition-all sm:w-full sm:max-w-lg"
                         @click.away="showGenerateModal = false">
-                        <form action="{{ route('billing.generate') }}" method="POST">
-                            @csrf
-                            <div class="bg-white dark:bg-slate-800 px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
-                                <div
-                                    class="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-primary-100 dark:bg-primary-900/50 mb-4">
-                                    <i class="fas fa-magic text-primary-600 dark:text-primary-400 text-xl"></i>
-                                </div>
-                                <h3 class="text-xl font-bold leading-6 text-center text-slate-900 dark:text-white mb-2">
-                                    Generate Tagihan
-                                    Massal</h3>
-                                <p class="text-sm text-center text-slate-500 dark:text-slate-400 mb-6">Sistem akan membuat
-                                    tagihan otomatis
-                                    untuk seluruh pelanggan aktif yang belum memiliki tagihan pada periode yang dipilih.</p>
+                        <div class="bg-white dark:bg-slate-800 px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
+                            <div
+                                class="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-primary-100 dark:bg-primary-900/50 mb-4">
+                                <i class="fas fa-magic text-primary-600 dark:text-primary-400 text-xl"></i>
+                            </div>
+                            <h3 class="text-xl font-bold leading-6 text-center text-slate-900 dark:text-white mb-2">
+                                Generate Tagihan Massal</h3>
+                            <p id="genDesc" class="text-sm text-center text-slate-500 dark:text-slate-400 mb-6">Sistem akan
+                                membuat
+                                tagihan otomatis
+                                untuk pelanggan aktif **Anda**.
+                            </p>
 
+                            <!-- Initial Form -->
+                            <div id="genInitial" class="space-y-4">
                                 <div class="grid grid-cols-2 gap-4">
                                     <div>
                                         <label
                                             class="block text-sm font-medium text-slate-900 dark:text-slate-300">Bulan</label>
-                                        <select name="month"
+                                        <select id="genMonth"
                                             class="mt-1 block w-full rounded-md border-0 py-1.5 text-slate-900 dark:text-white dark:bg-slate-700 ring-1 ring-inset ring-slate-300 dark:ring-slate-600 sm:text-sm">
                                             @for($i = 1; $i <= 12; $i++)
                                                 <option value="{{ $i }}" {{ date('n') == $i ? 'selected' : '' }}>{{ $i }}</option>
@@ -304,22 +308,58 @@
                                     <div>
                                         <label
                                             class="block text-sm font-medium text-slate-900 dark:text-slate-300">Tahun</label>
-                                        <select name="year"
+                                        <select id="genYear"
                                             class="mt-1 block w-full rounded-md border-0 py-1.5 text-slate-900 dark:text-white dark:bg-slate-700 ring-1 ring-inset ring-slate-300 dark:ring-slate-600 sm:text-sm">
                                             <option value="{{ date('Y') }}">{{ date('Y') }}</option>
                                             <option value="{{ date('Y') + 1 }}">{{ date('Y') + 1 }}</option>
                                         </select>
                                     </div>
                                 </div>
-                            </div>
-                            <div class="bg-slate-50 dark:bg-slate-700/50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
-                                <button type="submit"
-                                    class="inline-flex w-full justify-center rounded-md bg-primary-600 px-3 py-2 text-sm font-bold text-white shadow-sm hover:bg-primary-500 sm:ml-3 sm:w-auto">Mulai
+                                <div class="mt-4">
+                                    <label class="block text-sm font-medium text-slate-900 dark:text-slate-300">Jatuh Tempo
+                                        (Tanggal Tagihan)</label>
+                                    <input type="date" id="genDueDate" value="{{ date('Y-m-d') }}" required
+                                        class="mt-1 block w-full rounded-md border-0 py-1.5 text-slate-900 dark:text-white dark:bg-slate-700 ring-1 ring-inset ring-slate-300 dark:ring-slate-600 focus:ring-2 focus:ring-primary-600 sm:text-sm sm:leading-6">
+                                </div>
+                                <button type="button" onclick="startGenerate()"
+                                    class="mt-6 inline-flex w-full justify-center rounded-md bg-primary-600 px-3 py-2 text-sm font-bold text-white shadow-sm hover:bg-primary-500 w-full">Mulai
                                     Generate</button>
-                                <button type="button" @click="showGenerateModal = false"
-                                    class="mt-3 inline-flex w-full justify-center rounded-md bg-white dark:bg-slate-700 px-3 py-2 text-sm font-semibold text-slate-900 dark:text-slate-200 shadow-sm ring-1 ring-inset ring-slate-300 dark:ring-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600 sm:mt-0 sm:w-auto">Batal</button>
                             </div>
-                        </form>
+
+                            <!-- Progress UI -->
+                            <div id="genProgress" style="display:none;" class="mt-6 space-y-4">
+                                <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2.5">
+                                    <div id="genProgressBar"
+                                        class="bg-primary-600 h-2.5 rounded-full transition-all duration-300"
+                                        style="width: 0%"></div>
+                                </div>
+                                <div class="text-xs text-center text-slate-500 dark:text-slate-400 font-mono"
+                                    id="genStatusText">Menghubungkan...</div>
+                                <ul id="genLog"
+                                    class="h-48 overflow-y-auto text-left text-xs bg-slate-50 dark:bg-slate-900 p-3 rounded-lg border border-slate-200 dark:border-slate-700 space-y-1 text-slate-600 dark:text-slate-400">
+                                </ul>
+                            </div>
+
+                            <!-- Done UI -->
+                            <div id="genDone" style="display:none;" class="mt-6">
+                                <div class="text-center py-4">
+                                    <div
+                                        class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/50 mb-4">
+                                        <i class="fas fa-check text-green-600 dark:text-green-400 text-xl"></i>
+                                    </div>
+                                    <p class="text-sm font-medium text-slate-900 dark:text-white">Proses Selesai!</p>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1" id="genSummaryText"></p>
+                                </div>
+                                <button onclick="location.reload()"
+                                    class="mt-4 inline-flex w-full justify-center rounded-md bg-green-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-500 w-full">
+                                    Selesai & Refresh
+                                </button>
+                            </div>
+                        </div>
+                        <div class="bg-slate-50 dark:bg-slate-700/50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+                            <button type="button" @click="showGenerateModal = false" id="btnCancelGen"
+                                class="mt-3 inline-flex w-full justify-center rounded-md bg-white dark:bg-slate-700 px-3 py-2 text-sm font-semibold text-slate-900 dark:text-slate-200 shadow-sm ring-1 ring-inset ring-slate-300 dark:ring-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600 sm:mt-0 sm:w-auto">Batal</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -358,5 +398,98 @@
             // Init Select2 inside modal
             $('.select2-modal').select2({ width: '100%' });
         });
+
+        async function startGenerate() {
+            const month = $('#genMonth').val();
+            const year = $('#genYear').val();
+            const dueDate = $('#genDueDate').val();
+            const log = $('#genLog');
+
+            if (!dueDate) {
+                alert('Pilih tanggal jatuh tempo!');
+                return;
+            }
+
+            // UI Switch
+            $('#genInitial').hide();
+            $('#genDesc').hide();
+            $('#genProgress').show();
+            $('#btnCancelGen').hide();
+            log.empty().append('<li><span class="text-blue-500">[INFO]</span> Mengambil daftar pelanggan...</li>');
+
+            try {
+                // 1. Get List
+                const listResp = await fetch(`{{ route('billing.list') }}?month=${month}&year=${year}`);
+                const listData = await listResp.json();
+                const customers = listData.customers;
+                const total = customers.length;
+
+                if (total === 0) {
+                    log.append('<li><span class="text-yellow-500">[WARN]</span> Tidak ada pelanggan aktif ditemukan.</li>');
+                    $('#genStatusText').text('Tidak ada data.');
+                    $('#btnCancelGen').show();
+                    return;
+                }
+
+                log.append(`<li><span class="text-blue-500">[INFO]</span> Ditemukan ${total} pelanggan. Memulai proses...</li>`);
+
+                let created = 0;
+                let skipped = 0;
+                let error = 0;
+
+                // 2. Process One by One
+                for (let i = 0; i < total; i++) {
+                    const customer = customers[i];
+                    const progress = Math.round(((i + 1) / total) * 100);
+
+                    $('#genProgressBar').css('width', progress + '%');
+                    $('#genStatusText').text(`Memproses ${i + 1}/${total} (${progress}%)`);
+
+                    try {
+                        const res = await fetch(`{{ route('billing.process') }}`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                            },
+                            body: JSON.stringify({
+                                customer_id: customer.id,
+                                month,
+                                year,
+                                due_date: dueDate
+                            })
+                        });
+
+                        const data = await res.json();
+                        if (data.status === 'created') {
+                            created++;
+                            log.append(`<li><span class="text-green-500">[OK]</span> ${customer.name}: Tagihan dibuat.</li>`);
+                        } else if (data.status === 'skipped') {
+                            skipped++;
+                            log.append(`<li><span class="text-slate-400">[SKIP]</span> ${customer.name}: Sudah ada tagihan.</li>`);
+                        } else {
+                            error++;
+                            log.append(`<li><span class="text-red-500">[ERR]</span> ${customer.name}: Gagal memproses.</li>`);
+                        }
+                    } catch (e) {
+                        error++;
+                        log.append(`<li><span class="text-red-500">[ERR]</span> ${customer.name}: Error koneksi.</li>`);
+                    }
+
+                    // Auto scroll log
+                    log.scrollTop(log[0].scrollHeight);
+                }
+
+                // 3. Finalize
+                $('#genProgress').hide();
+                $('#genDone').show();
+                $('#genSummaryText').text(`Selesai: ${created} dibuat, ${skipped} dilewati, ${error} gagal.`);
+
+            } catch (err) {
+                log.append(`<li><span class="text-red-500">[FATAL]</span> Sistem error: ${err.message}</li>`);
+                $('#genStatusText').text('Gagal!');
+                $('#btnCancelGen').show();
+            }
+        }
     </script>
 @endpush
