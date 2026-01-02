@@ -60,9 +60,9 @@
                     <span class="text-xl font-bold text-[#352f99] dark:text-white tracking-tight"><a href="{{ config('app.url') }}">BillNesia</a></span>
                 </div>
                 <div class="hidden md:flex items-center gap-8">
-                    <a href="{{ route('frontend.index') }}#cek-tagihan" class="text-sm font-medium text-[#352f99] dark:text-white font-bold transition-colors">Cek Tagihan</a>
+                    <a href="{{ route('frontend.index') }}cek-tagihan" class="text-sm font-medium text-[#352f99] dark:text-white font-bold transition-colors">Cek Tagihan</a>
                     <a href="{{ route('frontend.pricing') }}" class="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-[#352f99] transition-colors">Harga</a>
-                    <a href="#" class="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-[#352f99] transition-colors">Tentang Kami</a>
+                    <a href="{{ route('frontend.about') }}" class="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-[#352f99] transition-colors">Tentang Kami</a>
                 </div>
                 <div class="flex items-center gap-4">
                     <!-- Theme Toggle -->
