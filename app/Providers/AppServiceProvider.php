@@ -19,11 +19,19 @@ class AppServiceProvider extends ServiceProvider
         // LOGIKA FAVICON GLOBAL
         // Cek dulu apakah tabel companies sudah ada (agar tidak error saat migrate fresh)
         if (Schema::hasTable('companies')) {
-            $company = Company::first();
+            // Kita ambil company milik user yang punya role superadmin
+            $company = Company::whereHas('admin', function ($q) {
+                $q->where('role', 'superadmin');
+            })->first();
+
+            // Jika tidak ada (mungkin belum set), ambil yang pertama saja
+            if (!$company) {
+                $company = Company::first();
+            }
 
             // Jika ada logo di database, pakai itu. Jika tidak, pakai default laravel (favicon.ico)
             $faviconUrl = ($company && $company->logo_path)
-                ? asset('uploads/' . $company->logo_path)  // <-- Perhatikan 'uploads/'
+                ? asset('uploads/' . $company->logo_path)
                 : asset('favicon.ico');
 
             // Bagikan variable $global_favicon dan $company ke semua view

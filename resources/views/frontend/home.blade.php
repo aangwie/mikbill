@@ -54,10 +54,16 @@
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div class="flex h-16 justify-between items-center">
                 <div class="flex items-center gap-2">
-                    <div class="bg-[#352f99] text-white p-1.5 rounded-lg shadow-sm">
-                        <i class="fas fa-wifi text-sm"></i>
-                    </div>
-                    <span class="text-xl font-bold text-[#352f99] dark:text-white tracking-tight"><a href="{{ config('app.url') }}">BillNesia</a></span>
+                    @if($company && $company->logo_path)
+                        <img src="{{ asset('uploads/' . $company->logo_path) }}" alt="Logo" class="h-8 w-auto rounded">
+                    @else
+                        <div class="bg-primary-600 text-white p-1.5 rounded-lg shadow-sm">
+                            <i class="fas fa-wifi text-sm"></i>
+                        </div>
+                    @endif
+                    <span class="text-xl font-bold text-primary-900 dark:text-white tracking-tight">
+                        <a href="{{ config('app.url') }}">{{ $company->name ?? 'BillNesia' }}</a>
+                    </span>
                 </div>
                 <div class="hidden md:flex items-center gap-8">
                     <a href="{{ route('frontend.index') }}#cek-tagihan" class="text-sm font-medium {{ request()->routeIs('frontend.index') ? 'text-[#352f99] dark:text-white font-bold' : 'text-slate-600 dark:text-slate-300' }} hover:text-[#352f99] transition-colors">Cek Tagihan</a>
