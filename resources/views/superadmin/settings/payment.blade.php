@@ -34,6 +34,12 @@
                                 <span
                                     class="px-4 py-1.5 rounded-lg text-xs font-bold uppercase transition-all peer-checked:bg-white dark:peer-checked:bg-slate-700 peer-checked:shadow-sm text-slate-500 peer-checked:text-slate-900 dark:peer-checked:text-white">Midtrans</span>
                             </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="docs" value="true" @click="tab = 'docs'" class="sr-only peer">
+                                <span
+                                    :class="tab === 'docs' ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white' : 'text-slate-500'"
+                                    class="px-4 py-1.5 rounded-lg text-xs font-bold uppercase transition-all">Panduan</span>
+                            </label>
                         </div>
                         <label class="relative inline-flex items-center cursor-pointer">
                             <input type="checkbox" name="is_active" value="1" {{ $setting->is_active ? 'checked' : '' }}
@@ -134,6 +140,53 @@
                             (Webhook):</p>
                         <code
                             class="text-sm text-primary-600 dark:text-primary-400 select-all">{{ route('payment.webhook') }}</code>
+                    </div>
+                </div>
+
+                <!-- Documentation Section -->
+                <div x-show="tab === 'docs'" x-transition:enter="transition ease-out duration-300"
+                    x-transition:enter-start="opacity-0 transform translate-y-2" class="space-y-6">
+                    <div
+                        class="bg-blue-50 dark:bg-blue-900/20 p-6 rounded-2xl border border-blue-100 dark:border-blue-900/30">
+                        <h4 class="text-blue-900 dark:text-blue-100 font-bold mb-4 flex items-center gap-2">
+                            <i class="fas fa-book"></i> Panduan Konfigurasi Midtrans
+                        </h4>
+                        <div class="space-y-4 text-sm text-blue-800 dark:text-blue-200 leading-relaxed">
+                            <p>Untuk mengaktifkan pembayaran otomatis melalui Midtrans, silakan masukkan URL berikut pada
+                                Dashboard Midtrans Anda (Menu: <b>Settings > Payment</b>):</p>
+
+                            <div class="space-y-3">
+                                <div>
+                                    <p class="font-bold text-xs uppercase mb-1">Payment Notification URL (Webhook):</p>
+                                    <code
+                                        class="bg-white dark:bg-slate-800 px-3 py-2 rounded-lg block border border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 break-all select-all">{{ route('payment.webhook') }}</code>
+                                </div>
+
+                                <div>
+                                    <p class="font-bold text-xs uppercase mb-1">Finish Redirect URL:</p>
+                                    <code
+                                        class="bg-white dark:bg-slate-800 px-3 py-2 rounded-lg block border border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 break-all select-all">{{ route('payment.finish') }}</code>
+                                </div>
+
+                                <div>
+                                    <p class="font-bold text-xs uppercase mb-1">Unfinish Redirect URL:</p>
+                                    <code
+                                        class="bg-white dark:bg-slate-800 px-3 py-2 rounded-lg block border border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 break-all select-all">{{ route('payment.unfinish') }}</code>
+                                </div>
+
+                                <div>
+                                    <p class="font-bold text-xs uppercase mb-1">Error Redirect URL:</p>
+                                    <code
+                                        class="bg-white dark:bg-slate-800 px-3 py-2 rounded-lg block border border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 break-all select-all">{{ route('payment.error') }}</code>
+                                </div>
+                            </div>
+
+                            <p
+                                class="mt-4 p-3 bg-amber-50 dark:bg-amber-900/20 border-l-4 border-amber-400 text-amber-800 dark:text-amber-200 italic">
+                                <b>Catatan:</b> Pastikan URL di atas dapat diakses secara publik (tidak di localhost) agar
+                                Midtrans dapat mengirimkan notifikasi pembayaran.
+                            </p>
+                        </div>
                     </div>
                 </div>
 

@@ -199,3 +199,6 @@ Route::middleware(['auth'])->group(function () {
 });
 
 Route::post('/payment/webhook', [SubscriptionController::class, 'webhook'])->name('payment.webhook');
+Route::get('/payment/finish', [SubscriptionController::class, 'paymentFinish'])->name('payment.finish');
+Route::get('/payment/unfinish', [SubscriptionController::class, 'paymentUnfinish'])->name('payment.unfinish');
+Route::get('/payment/error', [SubscriptionController::class, 'paymentError'])->name('payment.error');

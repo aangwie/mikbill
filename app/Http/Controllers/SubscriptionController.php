@@ -6,7 +6,7 @@ use App\Models\Plan;
 use App\Models\PaymentSetting;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Xendit\Xendit;
+use Xendit\Configuration;
 use Xendit\Invoice\InvoiceApi;
 use Xendit\Invoice\CreateInvoiceRequest;
 
@@ -57,7 +57,7 @@ class SubscriptionController extends Controller
 
     private function checkoutXendit($setting, $user, $plan, $amount, $description, $external_id, $cycle)
     {
-        Xendit::setApiKey($setting->xendit_api_key);
+        Configuration::setApiKey($setting->xendit_api_key);
         $apiInstance = new InvoiceApi();
 
         $create_invoice_request = new CreateInvoiceRequest([
@@ -168,6 +168,21 @@ class SubscriptionController extends Controller
         }
 
         return response()->json(['status' => 'No provider detected'], 400);
+    }
+
+    public function paymentFinish(Request $request)
+    {
+        return redirect()->route('plans.public')->with('success', 'Pembayaran berhasil! Paket Anda akan segera diaktifkan otomatis.');
+    }
+
+    public function paymentUnfinish(Request $request)
+    {
+        return redirect()->route('plans.public')->with('warning', 'Pembayaran belum diselesaikan. Silakan cek kembali tagihan Anda.');
+    }
+
+    public function paymentError(Request $request)
+    {
+        return redirect()->route('plans.public')->with('error', 'Terjadi kesalahan saat memproses pembayaran. Silakan coba lagi.');
     }
 
     private function activatePlan($userId, $planId, $cycle)
