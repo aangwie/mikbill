@@ -124,7 +124,12 @@ class SubscriptionController extends Controller
                 'user_id' => $user->id,
                 'plan_id' => $plan->id,
                 'cycle' => $cycle
-            ])
+            ]),
+            'callbacks' => [
+                'finish' => route('payment.finish'),
+                'unfinish' => route('payment.unfinish'),
+                'error' => route('payment.error'),
+            ]
         ];
 
         try {
