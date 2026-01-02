@@ -72,8 +72,8 @@ class SubscriptionController extends Controller
                 'given_names' => $user->name,
                 'email' => $user->email
             ],
-            'success_redirect_url' => route('plans.public'),
-            'failure_redirect_url' => route('plans.public'),
+            'success_redirect_url' => route('payment.finish'),
+            'failure_redirect_url' => route('payment.error'),
             'currency' => 'IDR',
             'metadata' => [
                 'user_id' => $user->id,
@@ -181,7 +181,7 @@ class SubscriptionController extends Controller
 
     public function paymentFinish(Request $request)
     {
-        return redirect()->route('plans.public')->with('success', 'Pembayaran berhasil! Paket Anda akan segera diaktifkan otomatis.');
+        return redirect()->route('router.index')->with('success', 'Pembayaran berhasil! Paket Anda telah diaktifkan otomatis.');
     }
 
     public function paymentUnfinish(Request $request)
@@ -199,7 +199,15 @@ class SubscriptionController extends Controller
         if ($userId && $planId) {
             $user = User::find($userId);
             if ($user) {
+                $days = 30;
+                if ($cycle === 'semester')
+                    $days = 180;
+                if ($cycle === 'annual')
+                    $days = 365;
+
                 $user->plan_id = $planId;
+                $user->plan_expires_at = now()->addDays($days);
+                $user->is_activated = true;
                 $user->save();
             }
         }

@@ -182,6 +182,15 @@
                             </div>
 
                             <p
+                                class="mt-4 p-3 bg-green-50 dark:bg-green-900/20 border-l-4 border-green-400 text-green-800 dark:text-green-200">
+                                <i class="fas fa-check-circle mr-1"></i> <b>Alur Berhasil:</b><br>
+                                Ketika pembayaran berhasil, sistem akan otomatis:<br>
+                                1. Mengaktifkan paket user (Status: Aktif).<br>
+                                2. Menghitung masa berlaku (Bulanan: 30 hari, 6 Bulan: 180 hari, Tahunan: 365 hari).<br>
+                                3. Mengarahkan user kembali ke halaman <b>Pengaturan Mikrotik</b>.
+                            </p>
+
+                            <p
                                 class="mt-4 p-3 bg-amber-50 dark:bg-amber-900/20 border-l-4 border-amber-400 text-amber-800 dark:text-amber-200 italic">
                                 <b>Catatan:</b> Pastikan URL di atas dapat diakses secara publik (tidak di localhost) agar
                                 Midtrans dapat mengirimkan notifikasi pembayaran.
