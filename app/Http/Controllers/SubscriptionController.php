@@ -137,6 +137,10 @@ class SubscriptionController extends Controller
 
     public function webhook(Request $request)
     {
+        if ($request->isMethod('get')) {
+            return response()->json(['message' => 'BillNesia Webhook Endpoint is Active. Use POST for notifications.'], 200);
+        }
+
         $setting = PaymentSetting::first();
         if (!$setting)
             return response()->json(['message' => 'No settings'], 404);
