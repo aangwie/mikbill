@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Invoice;
 use App\Models\Customer;
 use App\Models\Company;
+use App\Models\Plan;
+use App\Models\SiteSetting;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf; // Tambahkan ini
 
@@ -14,6 +16,27 @@ class FrontendController extends Controller
     public function index()
     {
         return view('frontend.home');
+    }
+
+    // 1.1 Tampilkan Halaman Paket
+    public function pricing()
+    {
+        $plans = Plan::all();
+        return view('frontend.pricing', compact('plans'));
+    }
+
+    // 1.2 Tampilkan Halaman Tentang Kami
+    public function about()
+    {
+        $setting = SiteSetting::first();
+        return view('frontend.about', compact('setting'));
+    }
+
+    // 1.3 Tampilkan Halaman Syarat & Ketentuan
+    public function terms()
+    {
+        $setting = SiteSetting::first();
+        return view('frontend.terms', compact('setting'));
     }
 
     // 2. Proses Cek Tagihan

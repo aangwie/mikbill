@@ -20,6 +20,7 @@ use App\Http\Controllers\HotspotController;
 use App\Http\Controllers\PlanController;
 use App\Http\Controllers\PaymentSettingController;
 use App\Http\Controllers\SubscriptionController;
+use App\Http\Controllers\SiteSettingController;
 
 
 /*
@@ -30,6 +31,9 @@ use App\Http\Controllers\SubscriptionController;
 
 // Halaman Depan (Cek Tagihan)
 Route::get('/', [FrontendController::class, 'index'])->name('frontend.index');
+Route::get('/paket', [FrontendController::class, 'pricing'])->name('frontend.pricing');
+Route::get('/tentang-kami', [FrontendController::class, 'about'])->name('frontend.about');
+Route::get('/syarat-ketentuan', [FrontendController::class, 'terms'])->name('frontend.terms');
 Route::post('/check-bill', [FrontendController::class, 'check'])->name('frontend.check');
 Route::get('/invoice/{id}/download', [FrontendController::class, 'downloadInvoice'])->name('frontend.invoice');
 
@@ -163,8 +167,11 @@ Route::middleware(['auth'])->group(function () {
             Route::resource('plans', PlanController::class);
 
             // PAYMENT SETTINGS
-            Route::get('/payment/setting', [PaymentSettingController::class, 'index'])->name('payment.index');
-            Route::post('/payment/setting', [PaymentSettingController::class, 'update'])->name('payment.update');
+            Route::get('/settings/payment', [PaymentSettingController::class, 'index'])->name('payment.index');
+            Route::post('/settings/payment', [PaymentSettingController::class, 'update'])->name('payment.update');
+
+            Route::get('/settings/site', [SiteSettingController::class, 'index'])->name('site.index');
+            Route::post('/settings/site', [SiteSettingController::class, 'update'])->name('site.update');
         });
 
         Route::resource('users', UserController::class);

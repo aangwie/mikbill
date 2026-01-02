@@ -59,6 +59,11 @@
                     </div>
                     <span class="text-xl font-bold text-[#352f99] dark:text-white tracking-tight"><a href="{{ config('app.url') }}">BillNesia</a></span>
                 </div>
+                <div class="hidden md:flex items-center gap-8">
+                    <a href="{{ route('frontend.index') }}#cek-tagihan" class="text-sm font-medium text-[#352f99] dark:text-white font-bold transition-colors">Cek Tagihan</a>
+                    <a href="{{ route('frontend.pricing') }}" class="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-[#352f99] transition-colors">Harga</a>
+                    <a href="#" class="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-[#352f99] transition-colors">Tentang Kami</a>
+                </div>
                 <div class="flex items-center gap-4">
                     <!-- Theme Toggle -->
                     <button @click="toggleTheme()" type="button"
@@ -81,7 +86,7 @@
     </nav>
 
     <!-- Hero Section -->
-    <div
+    <div id="cek-tagihan"
         class="relative isolate overflow-hidden bg-slate-50 dark:bg-[#352f99] py-16 sm:py-24 transition-colors duration-300">
         <!-- Background Pattern -->
         <div class="absolute inset-0 -z-10 h-full w-full object-cover">
@@ -261,8 +266,11 @@
     <footer
         class="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-white/5 mt-auto py-8 transition-colors duration-300">
         <div class="mx-auto max-w-7xl px-6 text-center">
-            <p class="text-xs leading-5 text-slate-500 dark:text-indigo-200">&copy; {{ date('Y') }} Managed Service
-                Provider. Developed by
+            <div class="flex justify-center gap-6 mb-4">
+                <a href="{{ route('frontend.about') }}" class="text-sm text-slate-500 hover:text-[#352f99]">Tentang Kami</a>
+                <a href="{{ route('frontend.terms') }}" class="text-sm text-slate-500 hover:text-[#352f99]">Syarat & Ketentuan</a>
+            </div>
+            <p class="text-xs leading-5 text-slate-500 dark:text-indigo-200">&copy; {{ date('Y') }} BillNesia. Developed by
                 Aangwi.</p>
         </div>
     </footer>

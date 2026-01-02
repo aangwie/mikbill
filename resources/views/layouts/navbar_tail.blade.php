@@ -242,6 +242,11 @@
                                                 <i class="fas fa-credit-card mr-3 text-gray-400 group-hover:text-[#352f99]"></i>
                                                 Pengaturan Pembayaran
                                             </a>
+                                            <a href="{{ route('site.index') }}"
+                                                class="group flex items-center px-4 py-2 text-sm text-gray-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-[#352f99]">
+                                                <i class="fas fa-cog mr-3 text-gray-400 group-hover:text-[#352f99]"></i>
+                                                Pengaturan Situs
+                                            </a>
                                             <a href="{{ route('system.index') }}"
                                                 class="group flex items-center px-4 py-2 text-sm text-[#352f99] bg-indigo-50 hover:bg-indigo-100">
                                                 <i class="fas fa-sync mr-3 text-[#352f99]"></i> Update Aplikasi
