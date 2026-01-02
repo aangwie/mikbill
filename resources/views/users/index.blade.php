@@ -74,7 +74,12 @@
                                 Email Login</th>
                             <th scope="col"
                                 class="px-6 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                                Role</th>
+                                Role & Akses</th>
+                            @if(auth()->user()->isSuperAdmin())
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                Informasi Paket</th>
+                            @endif
                             <th scope="col"
                                 class="px-6 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                 Terdaftar</th>
@@ -134,6 +139,27 @@
                                         <div class="text-[10px] text-slate-400 mt-1 uppercase tracking-tighter">Under: {{ $user->parent->name }}</div>
                                     @endif
                                 </td>
+
+                                @if(auth()->user()->isSuperAdmin())
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    @if($user->role === 'admin')
+                                        @if($user->plan)
+                                            <div class="text-xs font-bold text-slate-900 dark:text-white">{{ $user->plan->name }}</div>
+                                            <div class="text-[10px] text-slate-500 dark:text-slate-400">
+                                                Berakhir: {{ $user->plan_expires_at ? $user->plan_expires_at->format('d/m/Y') : '-' }}
+                                            </div>
+                                            @if($user->plan_expires_at && $user->plan_expires_at->isPast())
+                                                <span class="text-[10px] text-red-500 font-bold uppercase">Sudah Kadaluarsa</span>
+                                            @endif
+                                        @else
+                                            <span class="text-[10px] text-slate-400 italic">Tanpa Paket</span>
+                                        @endif
+                                    @else
+                                        <span class="text-[10px] text-slate-400">-</span>
+                                    @endif
+                                </td>
+                                @endif
+
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">
                                     {{ $user->created_at->format('d M Y') }}
                                 </td>
@@ -146,6 +172,17 @@
                                         </button>
 
                                         @if(auth()->user()->id != $user->id)
+                                            @if(auth()->user()->isSuperAdmin() && $user->role === 'admin')
+                                                <form action="{{ route('users.suspend', $user->id) }}" method="POST" class="inline">
+                                                    @csrf
+                                                    <button type="submit" 
+                                                        class="{{ $user->is_activated ? 'text-red-500 hover:text-red-700 hover:bg-red-50' : 'text-emerald-500 hover:text-emerald-700 hover:bg-emerald-50' }} p-1.5 rounded-lg transition-colors"
+                                                        title="{{ $user->is_activated ? 'Suspend Paket' : 'Aktifkan Paket' }}">
+                                                        <i class="fas {{ $user->is_activated ? 'fa-user-slash' : 'fa-user-check' }}"></i>
+                                                    </button>
+                                                </form>
+                                            @endif
+
                                             <button type="button" 
                                                 onclick="confirmDelete('{{ $user->id }}', '{{ addslashes($user->name) }}', '{{ $user->role }}')"
                                                 class="text-red-600 hover:text-red-700 dark:hover:text-red-400 p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"

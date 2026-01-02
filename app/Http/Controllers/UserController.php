@@ -22,7 +22,7 @@ class UserController extends Controller
     public function index()
     {
         $user = Auth::user();
-        $query = User::orderBy('created_at', 'desc');
+        $query = User::with('plan')->orderBy('created_at', 'desc');
 
         if ($user->isAdmin()) {
             // Admin bisa lihat dirinya sendiri dan operator miliknya
@@ -199,5 +199,20 @@ class UserController extends Controller
             DB::rollBack();
             return back()->with('error', 'Terjadi kesalahan saat menghapus user: ' . $e->getMessage());
         }
+    }
+    public function suspendSubscription(Request $request, $id)
+    {
+        if (!Auth::user()->isSuperAdmin()) {
+            abort(403);
+        }
+
+        $user = User::findOrFail($id);
+
+        // Toggle activation
+        $user->is_activated = !$user->is_activated;
+        $user->save();
+
+        $status = $user->is_activated ? 'diaktifkan' : 'dinonaktifkan';
+        return back()->with('success', "Paket dan akses user {$user->name} berhasil {$status}.");
     }
 }
