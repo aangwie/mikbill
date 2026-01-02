@@ -173,6 +173,7 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/settings/site', [SiteSettingController::class, 'index'])->name('site.index');
             Route::post('/settings/site', [SiteSettingController::class, 'update'])->name('site.update');
             Route::post('/users/{id}/suspend', [UserController::class, 'suspendSubscription'])->name('users.suspend');
+            Route::post('/users/{id}/remove-plan', [UserController::class, 'removeSubscription'])->name('users.removePlan');
         });
 
         Route::resource('users', UserController::class);

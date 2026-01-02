@@ -215,4 +215,20 @@ class UserController extends Controller
         $status = $user->is_activated ? 'diaktifkan' : 'dinonaktifkan';
         return back()->with('success', "Paket dan akses user {$user->name} berhasil {$status}.");
     }
+
+    public function removeSubscription(Request $request, $id)
+    {
+        if (!Auth::user()->isSuperAdmin()) {
+            abort(403);
+        }
+
+        $user = User::findOrFail($id);
+
+        $user->plan_id = null;
+        $user->plan_expires_at = null;
+        $user->is_activated = false;
+        $user->save();
+
+        return back()->with('success', "Paket user {$user->name} berhasil dihapus/direset.");
+    }
 }

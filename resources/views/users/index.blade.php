@@ -171,8 +171,26 @@
                                             <i class="fas fa-edit"></i>
                                         </button>
 
-                                        @if(auth()->user()->id != $user->id)
-                                            @if(auth()->user()->isSuperAdmin() && $user->role === 'admin')
+                                            @if(auth()->user()->isSuperAdmin() && $user->role === 'admin' && $user->plan_id)
+                                                <form action="{{ route('users.suspend', $user->id) }}" method="POST" class="inline">
+                                                    @csrf
+                                                    <button type="submit" 
+                                                        class="{{ $user->is_activated ? 'text-red-500 hover:text-red-700 hover:bg-red-50' : 'text-emerald-500 hover:text-emerald-700 hover:bg-emerald-50' }} p-1.5 rounded-lg transition-colors"
+                                                        title="{{ $user->is_activated ? 'Suspend Paket' : 'Aktifkan Paket' }}">
+                                                        <i class="fas {{ $user->is_activated ? 'fa-user-slash' : 'fa-user-check' }}"></i>
+                                                    </button>
+                                                </form>
+
+                                                <button type="button" 
+                                                    onclick="confirmRemovePlan('{{ $user->id }}', '{{ addslashes($user->name) }}')"
+                                                    class="text-slate-500 hover:text-red-600 p-1.5 hover:bg-red-50 rounded-lg transition-colors"
+                                                    title="Hapus/Reset Paket">
+                                                    <i class="fas fa-box-open"></i>
+                                                </button>
+                                                <form id="remove-plan-form-{{ $user->id }}" action="{{ route('users.removePlan', $user->id) }}" method="POST" style="display: none;">
+                                                    @csrf
+                                                </form>
+                                            @elseif(auth()->user()->isSuperAdmin() && $user->role === 'admin')
                                                 <form action="{{ route('users.suspend', $user->id) }}" method="POST" class="inline">
                                                     @csrf
                                                     <button type="submit" 
@@ -207,6 +225,26 @@
 
 @push('scripts')
 <script>
+    function confirmRemovePlan(id, name) {
+        Swal.fire({
+            title: "Hapus Paket?",
+            text: "Apakah Anda yakin ingin menghapus/reset paket aktif untuk " + name + "? Ini akan membatalkan akses fitur router mereka.",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#d33",
+            cancelButtonColor: "#3085d6",
+            confirmButtonText: "Ya, Reset Paket",
+            cancelButtonText: "Batal"
+        }).then((result) => {
+            if (result.isConfirmed) {
+                var form = document.getElementById('remove-plan-form-' + id);
+                if(form) {
+                    form.submit();
+                }
+            }
+        });
+    }
+
     function confirmDelete(id, name, role) {
         console.log("Attempting to delete user:", {id, name, role});
         
