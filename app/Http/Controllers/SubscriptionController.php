@@ -9,6 +9,9 @@ use Illuminate\Http\Request;
 use Xendit\Configuration;
 use Xendit\Invoice\InvoiceApi;
 use Xendit\Invoice\CreateInvoiceRequest;
+use Midtrans\Config;
+use Midtrans\Snap;
+use Midtrans\Notification;
 
 class SubscriptionController extends Controller
 {
@@ -89,10 +92,10 @@ class SubscriptionController extends Controller
 
     private function checkoutMidtrans($setting, $user, $plan, $amount, $description, $external_id, $cycle)
     {
-        \Midtrans\Config::$serverKey = $setting->midtrans_server_key;
-        \Midtrans\Config::$isProduction = (bool) $setting->midtrans_is_production;
-        \Midtrans\Config::$isSanitized = true;
-        \Midtrans\Config::$is3ds = true;
+        Config::$serverKey = $setting->midtrans_server_key;
+        Config::$isProduction = (bool) $setting->midtrans_is_production;
+        Config::$isSanitized = true;
+        Config::$is3ds = true;
 
         $params = [
             'transaction_details' => [
@@ -125,7 +128,7 @@ class SubscriptionController extends Controller
         ];
 
         try {
-            $snapUrl = \Midtrans\Snap::createTransaction($params)->redirect_url;
+            $snapUrl = Snap::createTransaction($params)->redirect_url;
             return redirect($snapUrl);
         } catch (\Exception $e) {
             return back()->with('error', 'Gagal membuat tagihan Midtrans: ' . $e->getMessage());
@@ -154,16 +157,22 @@ class SubscriptionController extends Controller
 
         // Midtrans Webhook Detection
         if (isset($data['transaction_status']) && isset($data['order_id'])) {
-            // Verify signature for security (simplified here)
-            // \Midtrans\Config::$serverKey = $setting->midtrans_server_key;
-            // $notif = new \Midtrans\Notification(); 
-            // but let's just check the data for now as per simple requirement
+            // Verify signature for security
+            Config::$serverKey = $setting->midtrans_server_key;
+            Config::$isProduction = (bool) $setting->midtrans_is_production;
 
-            $status = $data['transaction_status'];
-            if ($status == 'settlement' || $status == 'capture') {
-                $meta = json_decode($data['custom_field1'] ?? '{}', true);
-                $this->activatePlan($meta['user_id'] ?? null, $meta['plan_id'] ?? null, $meta['cycle'] ?? null);
+            try {
+                $notif = new Notification();
+                $status = $notif->transaction_status;
+
+                if ($status == 'settlement' || $status == 'capture') {
+                    $meta = json_decode($data['custom_field1'] ?? '{}', true);
+                    $this->activatePlan($meta['user_id'] ?? null, $meta['plan_id'] ?? null, $meta['cycle'] ?? null);
+                }
+            } catch (\Exception $e) {
+                return response()->json(['message' => 'Notification Error: ' . $e->getMessage()], 500);
             }
+
             return response()->json(['status' => 'Midtrans processed']);
         }
 
