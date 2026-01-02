@@ -55,7 +55,7 @@ class AuthController extends Controller
             $activationUrl = route('activate.user', ['token' => $user->activation_token]);
 
             Mail::raw("Halo {$user->name},\n\nTerima kasih telah mendaftar di MikBill System.\n\nKlik link di bawah ini untuk mengaktifkan akun anda:\n{$activationUrl}\n\nSetelah login, Anda dapat melengkapi profil. Namun, fitur manajemen router akan diaktifkan secara manual oleh Superadmin setelah verifikasi akun Anda selesai.\n\nSalam,\nMikBill Team", function ($message) use ($user) {
-                $message->to($user->email)->subject('Verifikasi Email ' . config('app.name'));
+                $message->to($user->email)->subject('Verifikasi Email Pay BillNesia');
             });
 
             // Notifikasi Superadmin
@@ -120,7 +120,7 @@ class AuthController extends Controller
             $this->applyMailConfig();
             $url = route('password.reset', ['token' => $token, 'email' => $user->email]);
             Mail::raw("Anda menerima email ini karena ada permintaan reset password untuk akun Anda.\n\nSilakan klik link berikut untuk mereset password:\n{$url}\n\nLink ini akan kadaluarsa dalam 60 menit.\n\nJika Anda tidak merasa meminta reset password, abaikan email ini.", function ($message) use ($user) {
-                $message->to($user->email)->subject('Permintaan Reset Password - ' . config('app.name'));
+                $message->to($user->email)->subject('Permintaan Reset Password - Pay BillNesia');
             });
             // Notifikasi Superadmin
             // The original snippet had an `if ($status == Password::RESET_LINK_SENT)` which is not applicable here
