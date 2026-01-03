@@ -56,8 +56,22 @@
                             </div>
 
                             <div>
-                                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Jumlah
-                                    Voucher</label>
+                                @php
+                                    $user = auth()->user();
+                                    $admin = $user->isAdmin() ? $user : $user->parent;
+                                    $plan = $admin->plan;
+                                    $maxV = $plan ? $plan->max_vouchers : 0;
+                                    $currentV = count($managedUsers);
+                                @endphp
+                                <div class="flex justify-between items-center mb-1">
+                                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">Jumlah
+                                        Voucher</label>
+                                    @if($maxV > 0)
+                                        <span class="text-[10px] font-bold px-1.5 py-0.5 rounded {{ $currentV >= $maxV ? 'bg-rose-100 text-rose-600' : 'bg-indigo-100 text-indigo-600' }}">
+                                            Limit: {{ $currentV }}/{{ $maxV }}
+                                        </span>
+                                    @endif
+                                </div>
                                 <input type="number" name="quantity" value="{{ old('quantity', 10) }}" min="1" max="100"
                                     required
                                     class="w-full rounded-lg border-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:text-white text-sm focus:ring-[#352f99] focus:border-[#352f99] disabled:bg-slate-50 disabled:text-slate-400">

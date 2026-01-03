@@ -59,6 +59,20 @@ class HotspotController extends Controller
         $profile = $request->profile;
         $period = $request->period;
 
+        // Check Plan Limit
+        $user = auth()->user();
+        $admin = $user->isAdmin() ? $user : $user->parent;
+        $plan = $admin->plan;
+
+        if ($plan && $plan->max_vouchers > 0) {
+            $existingUsers = $this->mikrotik->getHotspotUsers();
+            $currentCount = count($existingUsers);
+
+            if (($currentCount + $quantity) > $plan->max_vouchers) {
+                return redirect()->route('hotspot.generate')->with('error', "Batas pembuatan voucher tercapai. Paket Anda memperbolehkan maksimal {$plan->max_vouchers} voucher (Saat ini: {$currentCount}).");
+            }
+        }
+
         // Comment format is REM:1d, REM:1w, REM:1m
         // Expiration will be set on first login by cleanup command
         $comment = "REM:" . $period;

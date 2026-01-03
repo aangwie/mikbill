@@ -48,6 +48,10 @@
                                 <span>Maksimal <strong>{{ $plan->max_customers }}</strong> Pelanggan</span>
                             </div>
                             <div class="flex items-center text-sm text-slate-600 dark:text-slate-400">
+                                <i class="fas fa-ticket-alt w-5 text-amber-500"></i>
+                                <span>Maksimal <strong>{{ $plan->max_vouchers }}</strong> Voucher</span>
+                            </div>
+                            <div class="flex items-center text-sm text-slate-600 dark:text-slate-400">
                                 <i
                                     class="fab fa-whatsapp w-5 {{ $plan->wa_gateway ? 'text-green-500' : 'text-slate-300' }}"></i>
                                 <span>WhatsApp Gateway:
@@ -118,6 +122,17 @@
                                                 class="block text-sm font-medium text-slate-700 dark:text-slate-300">Maks.
                                                 Pelanggan</label>
                                             <input type="number" name="max_customers" x-model="currentPlan.max_customers"
+                                                required
+                                                class="mt-1 block w-full rounded-md border-slate-300 dark:bg-slate-700 dark:border-slate-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                                        </div>
+                                    </div>
+
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label
+                                                class="block text-sm font-medium text-slate-700 dark:text-slate-300">Maks.
+                                                Hotspot Voucher</label>
+                                            <input type="number" name="max_vouchers" x-model="currentPlan.max_vouchers"
                                                 required
                                                 class="mt-1 block w-full rounded-md border-slate-300 dark:bg-slate-700 dark:border-slate-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
                                         </div>

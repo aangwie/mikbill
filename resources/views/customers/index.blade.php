@@ -7,13 +7,13 @@
 @section('content')
 
     <div x-data="{ 
-                                        showAddModal: false, 
-                                        showEditModal: false, 
-                                        showImportModal: false, 
-                                        showSyncModal: false,
-                                        showDeleteAllModal: false,
-                                        deleteMethod: '0'
-                                    }" @open-edit-modal.window="showEditModal = true">
+                                            showAddModal: false, 
+                                            showEditModal: false, 
+                                            showImportModal: false, 
+                                            showSyncModal: false,
+                                            showDeleteAllModal: false,
+                                            deleteMethod: '0'
+                                        }" @open-edit-modal.window="showEditModal = true">
 
         <!-- Toolbar -->
         <div class="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -751,10 +751,19 @@
                 data: { _token: $('meta[name="csrf-token"]').attr('content'), secret: item },
                 success: function (res) {
                     let badge = res.status === 'created' ? '<span class="text-green-600 font-bold">[NEW]</span>' : '<span class="text-blue-600 font-bold">[UPD]</span>';
-                    $('#syncLog').prepend('<li>' + badge + ' ' + res.name + '</li>');
+                    $(`#syncLog`).prepend(`<li>` + badge + ` ` + res.name + `</li>`);
                     processQueue(secrets, total, index + 1);
                 },
-                error: function () { processQueue(secrets, total, index + 1); }
+                error: function (xhr) {
+                    let res = xhr.responseJSON;
+                    if (res && res.stop) {
+                        $(`#syncLog`).prepend(`<li class="text-rose-600 font-bold">[STOP] ` + res.message + `</li>`);
+                        $(`#syncStatusText`).text(`Sinkronisasi Terhenti: ` + res.message).addClass(`text-rose-600`);
+                        $(`#syncDone`).show();
+                        return;
+                    }
+                    processQueue(secrets, total, index + 1);
+                }
             });
         }
 

@@ -191,12 +191,30 @@ class CustomerController extends Controller
         }
     }
 
-    // Tahap B: Proses simpan per-item (dipanggil berulang oleh JS)
     public function syncProcessItem(Request $request)
     {
         $secret = $request->secret;
+        if (!$secret || !isset($secret['name'])) {
+            return response()->json(['status' => 'error', 'message' => 'Invalid data'], 400);
+        }
 
-        $customer = Customer::where('pppoe_username', $secret['name'])->first();
+        $user = auth()->user();
+        $admin = $user->isAdmin() ? $user : $user->parent;
+        $plan = $admin->plan;
+
+        $customer = Customer::where('admin_id', $admin->id)->where('pppoe_username', $secret['name'])->first();
+
+        // Check Plan Limit (Total Pelanggan)
+        if ($plan && $plan->max_customers > 0 && !$customer) {
+            $currentCount = Customer::where('admin_id', $admin->id)->count();
+            if ($currentCount >= $plan->max_customers) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => "Limit pelanggan ({$plan->max_customers}) tercapai. Sinkronisasi dihentikan.",
+                    'stop' => true
+                ], 403);
+            }
+        }
 
         if ($customer) {
             // Logic Update (Sama seperti sebelumnya)
