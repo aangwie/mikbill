@@ -46,36 +46,52 @@
 </head>
 
 <body
-    class="h-full font-sans antialiased text-slate-800 dark:text-slate-100 bg-slate-50 dark:bg-slate-900 transition-colors duration-300">
+    class="h-full font-sans antialiased text-slate-800 dark:text-slate-100 bg-slate-50 dark:bg-slate-900 transition-all duration-300">
 
     <div class="min-h-full flex flex-col">
-        <!-- Navigation -->
+        <!-- Navbar -->
         <nav
-            class="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-white/5 sticky top-0 z-50">
+            class="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md sticky top-0 z-50 border-b border-slate-200 dark:border-white/10 shadow-sm transition-colors duration-300">
             <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 <div class="flex h-16 justify-between items-center">
                     <div class="flex items-center gap-2">
-                        <div class="bg-primary-600 p-2 rounded-lg">
-                            <i class="fas fa-wifi text-white text-lg"></i>
-                        </div>
-                        <span class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Bill<span
-                                class="text-primary-600">Nesia</span></span>
+                        @if($company && $company->logo_path)
+                            <img src="{{ asset('uploads/' . $company->logo_path) }}" alt="Logo" class="h-8 w-auto rounded">
+                        @else
+                            <div class="bg-primary-600 text-white p-1.5 rounded-lg shadow-sm">
+                                <i class="fas fa-wifi text-sm"></i>
+                            </div>
+                        @endif
+                        <span class="text-xl font-bold text-primary-900 dark:text-white tracking-tight">
+                            <a href="{{ config('app.url') }}">{{ $company->name ?? 'BillNesia' }}</a>
+                        </span>
+                    </div>
+                    <div class="hidden md:flex items-center gap-8">
+                        <a href="{{ route('frontend.index') }}#cek-tagihan"
+                            class="text-sm font-medium {{ request()->routeIs('frontend.index') ? 'text-[#352f99] dark:text-white font-bold' : 'text-slate-600 dark:text-slate-300' }} hover:text-[#352f99] transition-colors">Cek
+                            Tagihan</a>
+                        <a href="{{ route('frontend.pricing') }}"
+                            class="text-sm font-medium {{ request()->routeIs('frontend.pricing') ? 'text-[#352f99] dark:text-white font-bold' : 'text-slate-600 dark:text-slate-300' }} hover:text-[#352f99] transition-colors">Harga</a>
+                        <a href="{{ route('frontend.about') }}"
+                            class="text-sm font-medium {{ request()->routeIs('frontend.about') ? 'text-[#352f99] dark:text-white font-bold' : 'text-slate-600 dark:text-slate-300' }} hover:text-[#352f99] transition-colors">Tentang
+                            Kami</a>
                     </div>
                     <div class="flex items-center gap-4">
-                        <button @click="toggleTheme()"
-                            class="p-2 text-slate-500 hover:text-primary-600 transition-colors">
-                            <i class="fas" :class="darkMode ? 'fa-sun' : 'fa-moon'"></i>
+                        <!-- Theme Toggle -->
+                        <button @click="toggleTheme()" type="button"
+                            class="rounded-full p-2 text-slate-500 hover:text-[#352f99] dark:text-slate-300 dark:hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-[#352f99]">
+                            <i class="fas fa-sun text-lg" x-show="!darkMode"></i>
+                            <i class="fas fa-moon text-lg" x-show="darkMode" style="display: none;"></i>
                         </button>
-                        @auth
-                            <a href="{{ url('/dashboard') }}"
-                                class="text-sm font-semibold text-slate-700 dark:text-slate-200 hover:text-primary-600">Dashboard</a>
-                        @else
-                            <a href="{{ route('login') }}"
-                                class="text-sm font-semibold text-slate-700 dark:text-slate-200 hover:text-primary-600">Log
-                                in</a>
-                            <a href="{{ route('register') }}"
-                                class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-primary-500 transition-all">Daftar</a>
-                        @endauth
+
+                        <a href="{{ route('register') }}"
+                            class="hidden sm:inline-flex items-center justify-center rounded-full bg-white dark:bg-emerald-500/10 px-4 py-2 text-sm font-medium text-slate-700 dark:text-emerald-400 border border-slate-200 dark:border-emerald-500/20 hover:bg-slate-50 dark:hover:bg-emerald-500/20 transition-all">
+                            Daftar
+                        </a>
+                        <a href="{{ route('login') }}"
+                            class="group inline-flex items-center justify-center rounded-full bg-[#352f99] px-4 py-2 text-sm font-medium text-white hover:bg-indigo-800 transition-all shadow-md shadow-indigo-500/20">
+                            Login Admin <i class="fas fa-arrow-right ml-2 opacity-50 group-hover:opacity-100"></i>
+                        </a>
                     </div>
                 </div>
             </div>
@@ -83,10 +99,10 @@
 
         <!-- Main Content -->
         <main class="flex-1">
-            <div class="bg-white dark:bg-slate-900 py-24 sm:py-32">
-                <div class="mx-auto max-w-7xl px-6 lg:px-8">
+            <div class="bg-white dark:bg-slate-900 py-24 sm:py-32 transition-colors duration-300 px-6">
+                <div class="mx-auto max-w-7xl">
                     <div class="mx-auto max-w-4xl text-center">
-                        <h2 class="text-base font-semibold leading-7 text-primary-600 dark:text-primary-400">Harga</h2>
+                        <h2 class="text-base font-semibold leading-7 text-[#352f99] dark:text-indigo-400">Harga</h2>
                         <p class="mt-2 text-4xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-5xl">
                             Pilih Paket yang Sesuai dengan Kebutuhan Anda</p>
                         <p class="mt-6 text-lg leading-8 text-slate-600 dark:text-slate-400">Solusi terbaik untuk
@@ -100,10 +116,10 @@
                                 class="text-sm font-semibold transition-colors">Bulanan</span>
                             <button
                                 @click="cycle = cycle === 'monthly' ? 'semester' : (cycle === 'semester' ? 'annual' : 'monthly')"
-                                class="relative flex h-6 w-11 flex-none cursor-pointer rounded-full bg-slate-200 dark:bg-slate-700 p-1 transition-colors duration-200 ease-in-out focus:outline-none ring-1 ring-inset ring-slate-900/5 dark:ring-white/10">
+                                class="relative flex h-6 w-11 flex-none cursor-pointer rounded-full bg-slate-200 dark:bg-slate-700 p-1 transition-colors duration-200 ease-in-out">
                                 <span
                                     :class="cycle === 'monthly' ? 'translate-x-0' : (cycle === 'semester' ? 'translate-x-[1.25rem]' : 'translate-x-[1.25rem]')"
-                                    class="h-4 w-4 transform rounded-full bg-white shadow-sm ring-1 ring-slate-900/5 transition duration-200 ease-in-out"></span>
+                                    class="h-4 w-4 transform rounded-full bg-white shadow-sm transition duration-200 ease-in-out"></span>
                             </button>
                             <div class="flex flex-col">
                                 <span
@@ -116,10 +132,10 @@
                         </div>
 
                         <!-- Pricing Cards -->
-                        <div class="mt-10 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3 w-full">
+                        <div class="mt-10 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3 w-full max-w-7xl">
                             @foreach($plans as $p)
                                 <div
-                                    class="flex flex-col justify-between rounded-3xl bg-white dark:bg-slate-800 p-8 ring-1 ring-slate-200 dark:ring-slate-700 xl:p-10 hover:ring-primary-500 dark:hover:ring-primary-500 transition-all duration-300 shadow-sm hover:shadow-xl">
+                                    class="flex flex-col justify-between rounded-3xl bg-white dark:bg-slate-800 p-8 ring-1 ring-slate-200 dark:ring-slate-700 xl:p-10 hover:ring-[#352f99] dark:hover:ring-[#352f99] transition-all duration-300 shadow-sm hover:shadow-xl">
                                     <div>
                                         <h3 class="text-xl font-bold leading-7 text-slate-900 dark:text-white">
                                             {{ $p->name }}</h3>
@@ -133,34 +149,34 @@
                                         <ul role="list"
                                             class="mt-8 space-y-3 text-sm leading-6 text-slate-600 dark:text-slate-400">
                                             <li class="flex gap-x-3 items-center">
-                                                <i class="fas fa-check text-primary-500"></i>
+                                                <i class="fas fa-check text-emerald-500"></i>
                                                 <span>Maks. <strong>{{ $p->max_routers }}</strong> Mikrotik Router</span>
                                             </li>
                                             <li class="flex gap-x-3 items-center">
-                                                <i class="fas fa-check text-primary-500"></i>
+                                                <i class="fas fa-check text-emerald-500"></i>
                                                 <span>Maks. <strong>{{ $p->max_vouchers }}</strong> Voucher Hotspot</span>
                                             </li>
                                             <li class="flex gap-x-3 items-center">
-                                                <i class="fas fa-check text-primary-500"></i>
+                                                <i class="fas fa-check text-emerald-500"></i>
                                                 <span>Maks. <strong>{{ $p->max_customers }}</strong> Pelanggan
                                                     Database</span>
                                             </li>
                                             <li
                                                 class="flex gap-x-3 items-center {{ $p->wa_gateway ? '' : 'opacity-50 line-through' }}">
                                                 <i
-                                                    class="fas {{ $p->wa_gateway ? 'fa-check text-primary-500' : 'fa-times text-slate-400' }}"></i>
+                                                    class="fas {{ $p->wa_gateway ? 'fa-check text-emerald-500' : 'fa-times text-slate-400' }}"></i>
                                                 <span>WhatsApp Gateway</span>
                                             </li>
                                             <li
                                                 class="flex gap-x-3 items-center {{ $p->customer_support ? '' : 'opacity-50 line-through' }}">
                                                 <i
-                                                    class="fas {{ $p->customer_support ? 'fa-check text-primary-500' : 'fa-times text-slate-400' }}"></i>
+                                                    class="fas {{ $p->customer_support ? 'fa-check text-emerald-500' : 'fa-times text-slate-400' }}"></i>
                                                 <span>Layanan Customer Support</span>
                                             </li>
                                         </ul>
                                     </div>
                                     <a href="{{ route('register', ['plan' => $p->id]) }}"
-                                        class="mt-8 block rounded-xl bg-primary-600 px-3 py-4 text-center text-sm font-bold leading-6 text-white shadow-lg shadow-primary-500/25 hover:bg-primary-500 hover:-translate-y-1 transition-all">Mulai
+                                        class="mt-8 block rounded-xl bg-[#352f99] px-3 py-4 text-center text-sm font-bold leading-6 text-white shadow-lg shadow-indigo-500/25 hover:bg-indigo-700 hover:-translate-y-1 transition-all">Mulai
                                         Sekarang</a>
                                 </div>
                             @endforeach
@@ -171,16 +187,17 @@
         </main>
 
         <!-- Footer -->
-        <footer class="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-white/5 mt-auto py-8">
+        <footer
+            class="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-white/5 mt-auto py-8 transition-colors duration-300">
             <div class="mx-auto max-w-7xl px-6 text-center">
                 <div class="flex justify-center gap-6 mb-4">
-                    <a href="{{ route('frontend.about') }}"
-                        class="text-sm text-slate-500 hover:text-primary-600 transition-colors">Tentang Kami</a>
-                    <a href="{{ route('frontend.terms') }}"
-                        class="text-sm text-slate-500 hover:text-primary-600 transition-colors">Syarat & Ketentuan</a>
+                    <a href="{{ route('frontend.about') }}" class="text-sm text-slate-500 hover:text-[#352f99]">Tentang
+                        Kami</a>
+                    <a href="{{ route('frontend.terms') }}" class="text-sm text-slate-500 hover:text-[#352f99]">Syarat &
+                        Ketentuan</a>
                 </div>
-                <p class="text-xs leading-5 text-slate-500 dark:text-indigo-200">&copy; {{ date('Y') }} BillNesia. All
-                    rights reserved.</p>
+                <p class="text-xs leading-5 text-slate-500 dark:text-indigo-200">&copy; {{ date('Y') }} BillNesia.
+                    Developed by Aangwi.</p>
             </div>
         </footer>
     </div>
