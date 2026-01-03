@@ -25,7 +25,10 @@ class PlanController extends Controller
             'price_annual' => 'required|numeric|min:0',
         ]);
 
-        Plan::create($request->all() + ['wa_gateway' => $request->has('wa_gateway')]);
+        Plan::create($request->all() + [
+            'wa_gateway' => $request->has('wa_gateway'),
+            'customer_support' => $request->has('customer_support')
+        ]);
 
         return back()->with('success', 'Paket berhasil ditambahkan.');
     }
@@ -42,7 +45,10 @@ class PlanController extends Controller
             'price_annual' => 'required|numeric|min:0',
         ]);
 
-        $plan->update($request->all() + ['wa_gateway' => $request->has('wa_gateway')]);
+        $plan->update($request->all() + [
+            'wa_gateway' => $request->has('wa_gateway'),
+            'customer_support' => $request->has('customer_support')
+        ]);
 
         return back()->with('success', 'Paket berhasil diperbarui.');
     }

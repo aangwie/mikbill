@@ -57,6 +57,12 @@
                                 <span>WhatsApp Gateway:
                                     <strong>{{ $plan->wa_gateway ? 'Tersedia' : 'Tidak Tersedia' }}</strong></span>
                             </div>
+                            <div class="flex items-center text-sm text-slate-600 dark:text-slate-400">
+                                <i
+                                    class="fas fa-headset w-5 {{ $plan->customer_support ? 'text-blue-500' : 'text-slate-300' }}"></i>
+                                <span>Customer Support:
+                                    <strong>{{ $plan->customer_support ? 'Tersedia' : 'Tidak Tersedia' }}</strong></span>
+                            </div>
                         </div>
 
                         <div class="border-t border-slate-100 dark:border-slate-700 pt-4">
@@ -138,13 +144,24 @@
                                         </div>
                                     </div>
 
-                                    <div class="flex items-center gap-2">
-                                        <input type="checkbox" name="wa_gateway" id="wa_gateway"
-                                            :checked="currentPlan.wa_gateway == 1" value="1"
-                                            class="rounded border-slate-300 text-primary-600 shadow-sm focus:ring-primary-500">
-                                        <label for="wa_gateway"
-                                            class="text-sm font-medium text-slate-700 dark:text-slate-300">WhatsApp Gateway
-                                            (Include)</label>
+                                    <div
+                                        class="flex items-center gap-4 py-2 border-y border-slate-100 dark:border-slate-700">
+                                        <div class="flex items-center gap-2">
+                                            <input type="checkbox" name="wa_gateway" id="wa_gateway"
+                                                :checked="currentPlan.wa_gateway == 1" value="1"
+                                                class="rounded border-slate-300 text-primary-600 shadow-sm focus:ring-primary-500">
+                                            <label for="wa_gateway"
+                                                class="text-sm font-medium text-slate-700 dark:text-slate-300">WA
+                                                Gateway</label>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <input type="checkbox" name="customer_support" id="customer_support"
+                                                :checked="currentPlan.customer_support == 1" value="1"
+                                                class="rounded border-slate-300 text-primary-600 shadow-sm focus:ring-primary-500">
+                                            <label for="customer_support"
+                                                class="text-sm font-medium text-slate-700 dark:text-slate-300">Customer
+                                                Support</label>
+                                        </div>
                                     </div>
 
                                     <div class="grid grid-cols-3 gap-4">
