@@ -81,6 +81,19 @@ class FrontendController extends Controller
             ->where('admin_id', $adminId)
             ->first();
 
+        // Fallback 1: Jika Company spesifik tidak ketemu, cari punya Superadmin
+        if (!$company) {
+            $company = Company::withoutGlobalScope(\App\Scopes\TenantScope::class)
+                ->whereHas('admin', function ($q) {
+                    $q->where('role', 'superadmin');
+                })->first();
+        }
+
+        // Fallback 2: Ambil Company pertama yang ada di DB
+        if (!$company) {
+            $company = Company::withoutGlobalScope(\App\Scopes\TenantScope::class)->first();
+        }
+
         // Convert Logo to Base64 for PDF
         $logoBase64 = null;
         if ($company && !empty($company->logo_path)) {
