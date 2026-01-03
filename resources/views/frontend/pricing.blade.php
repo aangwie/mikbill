@@ -141,6 +141,10 @@
                                 </li>
                                 <li class="flex gap-x-3">
                                     <i class="fas fa-check text-primary-500 mt-1"></i>
+                                    <span>Maks. <strong>{{ $p->max_vouchers }}</strong> Voucher Hotspot</span>
+                                </li>
+                                <li class="flex gap-x-3">
+                                    <i class="fas fa-check text-primary-500 mt-1"></i>
                                     <span>Maks. <strong>{{ $p->max_customers }}</strong> Pelanggan Database</span>
                                 </li>
                                 <li class="flex gap-x-3 {{ $p->wa_gateway ? '' : 'opacity-50 line-through' }}">

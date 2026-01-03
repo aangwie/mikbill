@@ -36,6 +36,14 @@
                                 <i class="fas fa-check text-[10px]"></i>
                             </div>
                             <span class="text-sm text-slate-600 dark:text-slate-300">Maks.
+                                <strong>{{ $p->max_vouchers }}</strong> Voucher Hotspot</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div
+                                class="h-6 w-6 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-primary-600 dark:text-primary-400">
+                                <i class="fas fa-check text-[10px]"></i>
+                            </div>
+                            <span class="text-sm text-slate-600 dark:text-slate-300">Maks.
                                 <strong>{{ $p->max_customers }}</strong> Pelanggan Database</span>
                         </div>
                         <div class="flex items-center gap-3">
