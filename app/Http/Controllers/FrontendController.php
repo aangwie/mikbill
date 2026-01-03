@@ -73,8 +73,12 @@ class FrontendController extends Controller
     public function downloadInvoice($id)
     {
         $invoice = Invoice::with('customer')->findOrFail($id);
+
+        // Determine Admin ID (Fallback to customer's admin_id if invoice doesn't have it)
+        $adminId = $invoice->admin_id ?? $invoice->customer->admin_id;
+
         $company = Company::withoutGlobalScope(\App\Scopes\TenantScope::class)
-            ->where('admin_id', $invoice->admin_id)
+            ->where('admin_id', $adminId)
             ->first();
 
         // Convert Logo to Base64 for PDF
