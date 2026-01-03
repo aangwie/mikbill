@@ -9,7 +9,7 @@ class PlanController extends Controller
 {
     public function index()
     {
-        $plans = Plan::all();
+        $plans = Plan::withCount('users')->get();
         return view('superadmin.plans.index', compact('plans'));
     }
 
@@ -69,7 +69,7 @@ class PlanController extends Controller
 
     public function publicIndex()
     {
-        $plans = Plan::all();
+        $plans = Plan::withCount('users')->get();
         $company = \App\Models\Company::first();
         return view('router.plans', compact('plans', 'company'));
     }

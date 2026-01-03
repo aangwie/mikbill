@@ -21,7 +21,7 @@ class FrontendController extends Controller
     // 1.1 Tampilkan Halaman Paket
     public function pricing()
     {
-        $plans = Plan::where('is_active', true)->get();
+        $plans = Plan::where('is_active', true)->withCount('users')->get();
         return view('frontend.pricing', compact('plans'));
     }
 

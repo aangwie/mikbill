@@ -88,12 +88,33 @@
                                 class="flex-1 py-2 text-xs font-bold rounded-lg transition-all">TAHUNAN</button>
                         </div>
 
-                        <div class="flex items-baseline justify-center gap-1 mb-8">
+                        <div class="flex items-baseline justify-center gap-1 mb-6">
                             <span class="text-3xl font-bold text-slate-900 dark:text-white"
                                 x-text="'Rp' + (cycle === 'monthly' ? '{{ number_format($p->price_monthly, 0, ',', '.') }}' : (cycle === 'semester' ? '{{ number_format($p->price_semester, 0, ',', '.') }}' : '{{ number_format($p->price_annual, 0, ',', '.') }}'))"></span>
                             <span class="text-slate-500 text-sm"
                                 x-text="'/' + (cycle === 'monthly' ? 'bln' : (cycle === 'semester' ? '6 bln' : 'thn'))"></span>
                         </div>
+
+                        @if(!is_null($p->stock_limit))
+                            @php
+                                $used_stock = $p->users()->count();
+                                $remaining = max(0, $p->stock_limit - $used_stock);
+                            @endphp
+                            <div class="mb-6">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Kuota Terpakai</span>
+                                    <span class="text-[10px] font-bold uppercase tracking-wider {{ $remaining > 5 ? 'text-primary-600' : 'text-rose-500' }}">
+                                        {{ $used_stock }}/{{ $p->stock_limit }} Slot
+                                    </span>
+                                </div>
+                                <div class="h-1.5 w-full bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                                    <div class="h-full {{ $remaining > 5 ? 'bg-primary-500' : 'bg-rose-500' }} rounded-full" style="width: {{ $p->stock_limit > 0 ? ($used_stock / $p->stock_limit) * 100 : 0 }}%"></div>
+                                </div>
+                                @if($remaining <= 5 && $remaining > 0)
+                                    <p class="text-[9px] text-rose-500 mt-1 font-medium italic">Segera amankan, tinggal {{ $remaining }} slot lagi!</p>
+                                @endif
+                            </div>
+                        @endif
 
                         <form action="{{ route('plans.checkout') }}" method="POST">
                             @csrf

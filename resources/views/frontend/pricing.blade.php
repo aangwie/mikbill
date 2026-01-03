@@ -78,9 +78,40 @@
                                     </li>
                                 </ul>
                             </div>
-                            <a href="{{ route('register', ['plan' => $p->id]) }}"
-                                class="mt-8 block rounded-xl bg-[#352f99] px-3 py-4 text-center text-sm font-bold leading-6 text-white shadow-lg shadow-indigo-500/25 hover:bg-indigo-700 hover:-translate-y-1 transition-all">Mulai
-                                Sekarang</a>
+
+                            <div class="mt-8">
+                                @if(!is_null($p->stock_limit))
+                                    @php
+                                        $used_stock = $p->users()->count();
+                                        $remaining = max(0, $p->stock_limit - $used_stock);
+                                    @endphp
+                                    <div class="mb-4 flex items-center gap-2">
+                                        <div class="h-2 flex-1 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                                            <div class="h-full bg-indigo-500 rounded-full"
+                                                style="width: {{ $p->stock_limit > 0 ? ($used_stock / $p->stock_limit) * 100 : 0 }}%">
+                                            </div>
+                                        </div>
+                                        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                                            @if($remaining > 0)
+                                                {{ $remaining }} Slot Tersisa
+                                            @else
+                                                STOK HABIS
+                                            @endif
+                                        </span>
+                                    </div>
+                                @endif
+
+                                @if(!is_null($p->stock_limit) && $p->users()->count() >= $p->stock_limit)
+                                    <button disabled
+                                        class="w-full block rounded-xl bg-slate-100 dark:bg-slate-800 px-3 py-4 text-center text-sm font-bold leading-6 text-slate-400 cursor-not-allowed border border-slate-200 dark:border-slate-700">
+                                        Stok Habis
+                                    </button>
+                                @else
+                                    <a href="{{ route('register', ['plan' => $p->id]) }}"
+                                        class="block rounded-xl bg-[#352f99] px-3 py-4 text-center text-sm font-bold leading-6 text-white shadow-lg shadow-indigo-500/25 hover:bg-indigo-700 hover:-translate-y-1 transition-all">Mulai
+                                        Sekarang</a>
+                                @endif
+                            </div>
                         </div>
                     @endforeach
                 </div>
