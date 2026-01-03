@@ -138,7 +138,8 @@
                                     class="flex flex-col justify-between rounded-3xl bg-white dark:bg-slate-800 p-8 ring-1 ring-slate-200 dark:ring-slate-700 xl:p-10 hover:ring-[#352f99] dark:hover:ring-[#352f99] transition-all duration-300 shadow-sm hover:shadow-xl">
                                     <div>
                                         <h3 class="text-xl font-bold leading-7 text-slate-900 dark:text-white">
-                                            {{ $p->name }}</h3>
+                                            {{ $p->name }}
+                                        </h3>
                                         <div
                                             class="mt-4 flex items-baseline gap-x-2 border-b border-slate-100 dark:border-slate-700 pb-6">
                                             <span class="text-4xl font-bold tracking-tight text-slate-900 dark:text-white"
@@ -204,4 +205,3 @@
 </body>
 
 </html>
-bitumen
