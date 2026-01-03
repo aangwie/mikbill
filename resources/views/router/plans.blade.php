@@ -78,13 +78,13 @@
                     <div x-data="{ cycle: 'monthly' }" class="mt-auto">
                         <div class="flex p-1 bg-slate-100 dark:bg-slate-900/50 rounded-xl mb-6">
                             <button @click="cycle = 'monthly'" :class="cycle === 'monthly' ? 'bg-white dark:bg-slate-700 shadow-sm text-primary-600 dark:text-primary-400' :
-                                                    'text-slate-500 hover:text-slate-700'"
+                                                            'text-slate-500 hover:text-slate-700'"
                                 class="flex-1 py-2 text-xs font-bold rounded-lg transition-all">BULANAN</button>
                             <button @click="cycle = 'semester'" :class="cycle === 'semester' ? 'bg-white dark:bg-slate-700 shadow-sm text-primary-600 dark:text-primary-400' :
-                                                    'text-slate-500 hover:text-slate-700'"
+                                                            'text-slate-500 hover:text-slate-700'"
                                 class="flex-1 py-2 text-xs font-bold rounded-lg transition-all">6 BULAN</button>
                             <button @click="cycle = 'annual'" :class="cycle === 'annual' ? 'bg-white dark:bg-slate-700 shadow-sm text-primary-600 dark:text-primary-400' :
-                                                    'text-slate-500 hover:text-slate-700'"
+                                                            'text-slate-500 hover:text-slate-700'"
                                 class="flex-1 py-2 text-xs font-bold rounded-lg transition-all">TAHUNAN</button>
                         </div>
 
@@ -99,9 +99,15 @@
                             @csrf
                             <input type="hidden" name="plan_id" value="{{ $p->id }}">
                             <input type="hidden" name="cycle" :value="cycle">
-                            <button type="submit" {{ Auth::user()->plan_id == $p->id ? 'disabled' : '' }}
-                                class="w-full py-4 px-6 rounded-2xl font-bold tracking-wide transition-all duration-300 {{ Auth::user()->plan_id == $p->id ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-primary-600 text-white shadow-lg shadow-primary-500/25 hover:bg-primary-500 hover:-translate-y-1' }}">
-                                {{ Auth::user()->plan_id == $p->id ? 'PAKET AKTIF' : 'PILIH PAKET' }}
+                            <button type="submit" {{ Auth::user()->plan_id == $p->id || !$p->is_active ? 'disabled' : '' }}
+                                class="w-full py-4 px-6 rounded-2xl font-bold tracking-wide transition-all duration-300 {{ Auth::user()->plan_id == $p->id || !$p->is_active ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-primary-600 text-white shadow-lg shadow-primary-500/25 hover:bg-primary-500 hover:-translate-y-1' }}">
+                                @if(Auth::user()->plan_id == $p->id)
+                                    PAKET AKTIF
+                                @elseif(!$p->is_active)
+                                    TIDAK TERSEDIA
+                                @else
+                                    PILIH PAKET
+                                @endif
                             </button>
                         </form>
                     </div>
