@@ -81,7 +81,7 @@ class BillingController extends Controller
 
         $admins = [];
         if ($user->role == 'superadmin') {
-            $admins = User::where('role', 'admin')->get(['id', 'name']);
+            $admins = User::whereIn('role', ['admin', 'superadmin'])->get(['id', 'name', 'role']);
         }
 
         return view('billing.index', compact('invoices', 'customers', 'month', 'year', 'total_bill', 'paid_bill', 'unpaid_bill', 'admins'));

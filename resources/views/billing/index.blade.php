@@ -303,7 +303,7 @@
                                             class="mt-1 block w-full rounded-md border-0 py-1.5 text-slate-900 dark:text-white dark:bg-slate-700 ring-1 ring-inset ring-slate-300 dark:ring-slate-600 sm:text-sm">
                                             <option value="">-- Pilih Admin --</option>
                                             @foreach($admins as $admin)
-                                                <option value="{{ $admin->id }}">{{ $admin->name }}</option>
+                                                <option value="{{ $admin->id }}">{{ $admin->name }}{{ $admin->id == auth()->id() ? ' (Self)' : '' }}</option>
                                             @endforeach
                                         </select>
                                     </div>
