@@ -78,13 +78,13 @@
                     <div x-data="{ cycle: 'monthly' }" class="mt-auto">
                         <div class="flex p-1 bg-slate-100 dark:bg-slate-900/50 rounded-xl mb-6">
                             <button @click="cycle = 'monthly'" :class="cycle === 'monthly' ? 'bg-white dark:bg-slate-700 shadow-sm text-primary-600 dark:text-primary-400' :
-                                            'text-slate-500 hover:text-slate-700'"
+                                                    'text-slate-500 hover:text-slate-700'"
                                 class="flex-1 py-2 text-xs font-bold rounded-lg transition-all">BULANAN</button>
                             <button @click="cycle = 'semester'" :class="cycle === 'semester' ? 'bg-white dark:bg-slate-700 shadow-sm text-primary-600 dark:text-primary-400' :
-                                            'text-slate-500 hover:text-slate-700'"
+                                                    'text-slate-500 hover:text-slate-700'"
                                 class="flex-1 py-2 text-xs font-bold rounded-lg transition-all">6 BULAN</button>
                             <button @click="cycle = 'annual'" :class="cycle === 'annual' ? 'bg-white dark:bg-slate-700 shadow-sm text-primary-600 dark:text-primary-400' :
-                                            'text-slate-500 hover:text-slate-700'"
+                                                    'text-slate-500 hover:text-slate-700'"
                                 class="flex-1 py-2 text-xs font-bold rounded-lg transition-all">TAHUNAN</button>
                         </div>
 
@@ -95,7 +95,7 @@
                                 x-text="'/' + (cycle === 'monthly' ? 'bln' : (cycle === 'semester' ? '6 bln' : 'thn'))"></span>
                         </div>
 
-                        <form action="{{ route('subscriptions.store') }}" method="POST">
+                        <form action="{{ route('plans.checkout') }}" method="POST">
                             @csrf
                             <input type="hidden" name="plan_id" value="{{ $p->id }}">
                             <input type="hidden" name="cycle" :value="cycle">
@@ -121,4 +121,3 @@
         @endif
     </div>
 @endsection
-bitumen

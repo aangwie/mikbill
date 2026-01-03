@@ -110,25 +110,26 @@
                     </div>
 
                     <div x-data="{ cycle: 'monthly' }" class="mt-16 flex flex-col items-center">
-                        <!-- Cycle Toggle -->
-                        <div class="flex items-center gap-x-4">
-                            <span :class="cycle === 'monthly' ? 'text-slate-900 dark:text-white' : 'text-slate-500'"
-                                class="text-sm font-semibold transition-colors">Bulanan</span>
-                            <button
-                                @click="cycle = cycle === 'monthly' ? 'semester' : (cycle === 'semester' ? 'annual' : 'monthly')"
-                                class="relative flex h-6 w-11 flex-none cursor-pointer rounded-full bg-slate-200 dark:bg-slate-700 p-1 transition-colors duration-200 ease-in-out">
-                                <span
-                                    :class="cycle === 'monthly' ? 'translate-x-0' : (cycle === 'semester' ? 'translate-x-[1.25rem]' : 'translate-x-[1.25rem]')"
-                                    class="h-4 w-4 transform rounded-full bg-white shadow-sm transition duration-200 ease-in-out"></span>
+                        <!-- Cycle Selection (Radio Group) -->
+                        <div
+                            class="inline-flex p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-inner">
+                            <button @click="cycle = 'monthly'"
+                                :class="cycle === 'monthly' ? 'bg-white dark:bg-[#352f99] shadow-md text-[#352f99] dark:text-white scale-105' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'"
+                                class="px-8 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 transform">
+                                Bulanan
                             </button>
-                            <div class="flex flex-col">
+                            <button @click="cycle = 'semester'"
+                                :class="cycle === 'semester' ? 'bg-white dark:bg-[#352f99] shadow-md text-[#352f99] dark:text-white scale-105' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'"
+                                class="px-8 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 transform">
+                                6 Bulan
+                            </button>
+                            <button @click="cycle = 'annual'"
+                                :class="cycle === 'annual' ? 'bg-white dark:bg-[#352f99] shadow-md text-[#352f99] dark:text-white scale-105' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'"
+                                class="px-8 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 transform relative">
+                                12 Bulan
                                 <span
-                                    :class="cycle === 'semester' ? 'text-slate-900 dark:text-white' : 'text-slate-500'"
-                                    class="text-sm font-semibold transition-colors">6 Bulan</span>
-                                <span :class="cycle === 'annual' ? 'text-slate-900 dark:text-white' : 'text-slate-500'"
-                                    class="text-sm font-semibold transition-colors">12 Bulan <span
-                                        class="text-green-500 text-[10px] ml-1">Hemat!</span></span>
-                            </div>
+                                    class="absolute -top-1.5 -right-1.5 bg-green-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full shadow-sm animate-pulse">HEMAT!</span>
+                            </button>
                         </div>
 
                         <!-- Pricing Cards -->
