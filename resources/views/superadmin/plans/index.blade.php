@@ -21,7 +21,14 @@
                     class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden flex flex-col">
                     <div class="p-6 flex-1">
                         <div class="flex justify-between items-start mb-4">
-                            <h3 class="text-xl font-bold text-slate-900 dark:text-white">{{ $plan->name }}</h3>
+                            <div class="flex items-center gap-2">
+                                <h3 class="text-xl font-bold text-slate-900 dark:text-white">{{ $plan->name }}</h3>
+                                @if($plan->is_active)
+                                    <span class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">Aktif</span>
+                                @else
+                                    <span class="inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-600/10">Non-Aktif</span>
+                                @endif
+                            </div>
                             <div class="flex gap-2">
                                 <button @click="showModal = true; editMode = true; currentPlan = {{ json_encode($plan) }}"
                                     class="p-1.5 text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-md transition-colors">
@@ -161,6 +168,16 @@
                                             <label for="customer_support"
                                                 class="text-sm font-medium text-slate-700 dark:text-slate-300">Customer
                                                 Support</label>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="py-2 border-b border-slate-100 dark:border-slate-700 mb-4">
+                                        <div class="flex items-center gap-2">
+                                            <input type="checkbox" name="is_active" id="is_active"
+                                                :checked="currentPlan.is_active == 1 || !editMode" value="1"
+                                                class="rounded border-slate-300 text-primary-600 shadow-sm focus:ring-primary-500">
+                                            <label for="is_active"
+                                                class="text-sm font-medium text-slate-700 dark:text-slate-300">Status Aktif</label>
                                         </div>
                                     </div>
 

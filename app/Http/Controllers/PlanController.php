@@ -27,7 +27,8 @@ class PlanController extends Controller
 
         Plan::create($request->all() + [
             'wa_gateway' => $request->has('wa_gateway'),
-            'customer_support' => $request->has('customer_support')
+            'customer_support' => $request->has('customer_support'),
+            'is_active' => $request->has('is_active')
         ]);
 
         return back()->with('success', 'Paket berhasil ditambahkan.');
@@ -47,7 +48,8 @@ class PlanController extends Controller
 
         $plan->update($request->all() + [
             'wa_gateway' => $request->has('wa_gateway'),
-            'customer_support' => $request->has('customer_support')
+            'customer_support' => $request->has('customer_support'),
+            'is_active' => $request->has('is_active')
         ]);
 
         return back()->with('success', 'Paket berhasil diperbarui.');
