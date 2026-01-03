@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Invoice;
 use App\Models\Customer;
 use App\Models\Company;
+use App\Models\User;
 use App\Services\MikrotikService;
 use App\Services\WhatsappService; // 1. Import Service WA
 use Illuminate\Http\Request;
@@ -78,7 +79,12 @@ class BillingController extends Controller
         }
         $customers = $customerQuery->get();
 
-        return view('billing.index', compact('invoices', 'customers', 'month', 'year', 'total_bill', 'paid_bill', 'unpaid_bill'));
+        $admins = [];
+        if ($user->role == 'superadmin') {
+            $admins = User::where('role', 'admin')->get(['id', 'name']);
+        }
+
+        return view('billing.index', compact('invoices', 'customers', 'month', 'year', 'total_bill', 'paid_bill', 'unpaid_bill', 'admins'));
     }
 
     public function generate(Request $request)
@@ -141,6 +147,8 @@ class BillingController extends Controller
             $query->where('operator_id', $user->id);
         } elseif ($user->role == 'admin') {
             $query->where('admin_id', $user->id);
+        } elseif ($user->role == 'superadmin' && $request->has('admin_id')) {
+            $query->where('admin_id', $request->admin_id);
         }
 
         $customers = $query->get(['id', 'name', 'monthly_price', 'admin_id']);
@@ -171,6 +179,10 @@ class BillingController extends Controller
         }
         if (Auth::user()->role == 'admin' && $customer->admin_id != Auth::user()->id) {
             return response()->json(['status' => 'error', 'message' => 'Unauthorized'], 403);
+        }
+        // Superadmin is allowed to process any if needed, or we could add a validation for selected admin_id here if passed.
+        if (Auth::user()->role == 'superadmin' && $request->has('admin_id') && $customer->admin_id != $request->admin_id) {
+            return response()->json(['status' => 'error', 'message' => 'Admin ID mismatch'], 403);
         }
 
         $exists = Invoice::where('customer_id', $customer->id)

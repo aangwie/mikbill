@@ -7,9 +7,9 @@
 @section('content')
 
     <div x-data="{ 
-                    showCreateModal: false, 
-                    showGenerateModal: false 
-                }">
+                        showCreateModal: false, 
+                        showGenerateModal: false 
+                    }">
 
         <!-- Filter Bar -->
         <div class="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -89,7 +89,7 @@
                     class="inline-flex items-center rounded-lg bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 shadow-sm hover:bg-slate-50 dark:hover:bg-slate-600 transition-all">
                     <i class="fas fa-plus mr-2"></i> Buat Manual
                 </button>
-                @if(auth()->user()->role == 'admin')
+                @if(auth()->user()->role == 'admin' || auth()->user()->role == 'superadmin')
                     <button @click="showGenerateModal = true"
                         class="inline-flex items-center rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 transition-all">
                         <i class="fas fa-magic mr-2"></i> Generate Massal
@@ -289,11 +289,25 @@
                             <p id="genDesc" class="text-sm text-center text-slate-500 dark:text-slate-400 mb-6">Sistem akan
                                 membuat
                                 tagihan otomatis
-                                untuk pelanggan aktif **Anda**.
+                                untuk pelanggan aktif @if(auth()->user()->role == 'superadmin') **Admin yang terpilih**
+                                @else **Anda** @endif.
                             </p>
 
                             <!-- Initial Form -->
                             <div id="genInitial" class="space-y-4">
+                                @if(auth()->user()->role == 'superadmin')
+                                    <div class="mb-4">
+                                        <label class="block text-sm font-medium text-slate-900 dark:text-slate-300">Pilih
+                                            Admin</label>
+                                        <select id="genAdminId"
+                                            class="mt-1 block w-full rounded-md border-0 py-1.5 text-slate-900 dark:text-white dark:bg-slate-700 ring-1 ring-inset ring-slate-300 dark:ring-slate-600 sm:text-sm">
+                                            <option value="">-- Pilih Admin --</option>
+                                            @foreach($admins as $admin)
+                                                <option value="{{ $admin->id }}">{{ $admin->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                @endif
                                 <div class="grid grid-cols-2 gap-4">
                                     <div>
                                         <label
@@ -400,12 +414,20 @@
         });
 
         async function startGenerate() {
+            const adminId = $('#genAdminId').val();
             const month = $('#genMonth').val();
             const year = $('#genYear').val();
             const dueDate = $('#genDueDate').val();
             const log = $('#genLog');
 
-            if (!dueDate) {
+            @if(auth()->user()->role == 'superadmin')
+                if (!adminId) {
+                    alert('Pilih Admin terlebih dahulu!');
+                    return;
+                }
+            @endif
+
+                if (!dueDate) {
                 alert('Pilih tanggal jatuh tempo!');
                 return;
             }
@@ -419,7 +441,8 @@
 
             try {
                 // 1. Get List
-                const listResp = await fetch(`{{ route('billing.list') }}?month=${month}&year=${year}`);
+                const adminIdParam = adminId ? `&admin_id=${adminId}` : '';
+                const listResp = await fetch(`{{ route('billing.list') }}?month=${month}&year=${year}${adminIdParam}`);
                 const listData = await listResp.json();
                 const customers = listData.customers;
                 const total = customers.length;
@@ -454,6 +477,7 @@
                             },
                             body: JSON.stringify({
                                 customer_id: customer.id,
+                                admin_id: adminId, // Send admin_id for superadmin check
                                 month,
                                 year,
                                 due_date: dueDate
