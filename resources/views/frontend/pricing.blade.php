@@ -102,7 +102,6 @@
             <div class="bg-white dark:bg-slate-900 py-24 sm:py-32 transition-colors duration-300 px-6">
                 <div class="mx-auto max-w-7xl">
                     <div class="mx-auto max-w-4xl text-center">
-                        <h2 class="text-base font-semibold leading-7 text-[#352f99] dark:text-indigo-400">Harga</h2>
                         <p class="mt-2 text-4xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-5xl">
                             Pilih Paket yang Sesuai dengan Kebutuhan Anda</p>
                         <p class="mt-6 text-lg leading-8 text-slate-600 dark:text-slate-400">Solusi terbaik untuk
