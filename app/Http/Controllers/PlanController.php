@@ -23,6 +23,7 @@ class PlanController extends Controller
             'price_monthly' => 'required|numeric|min:0',
             'price_semester' => 'required|numeric|min:0',
             'price_annual' => 'required|numeric|min:0',
+            'stock_limit' => 'nullable|integer|min:0'
         ]);
 
         Plan::create($request->all() + [
@@ -44,6 +45,7 @@ class PlanController extends Controller
             'price_monthly' => 'required|numeric|min:0',
             'price_semester' => 'required|numeric|min:0',
             'price_annual' => 'required|numeric|min:0',
+            'stock_limit' => 'nullable|integer|min:0'
         ]);
 
         $plan->update($request->all() + [

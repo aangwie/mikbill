@@ -70,6 +70,16 @@
                                 <span>Customer Support:
                                     <strong>{{ $plan->customer_support ? 'Tersedia' : 'Tidak Tersedia' }}</strong></span>
                             </div>
+                            <div class="flex items-center text-sm text-slate-600 dark:text-slate-400">
+                                <i class="fas fa-boxes w-5 text-purple-500"></i>
+                                <span>Stok:
+                                    @if(is_null($plan->stock_limit))
+                                        <strong>Unlimited</strong>
+                                    @else
+                                        <strong>{{ $plan->stock_limit }}</strong> (Sisa: <strong>{{ max(0, $plan->stock_limit - $plan->users()->count()) }}</strong>)
+                                    @endif
+                                </span>
+                            </div>
                         </div>
 
                         <div class="border-t border-slate-100 dark:border-slate-700 pt-4">
@@ -147,6 +157,11 @@
                                                 Hotspot Voucher</label>
                                             <input type="number" name="max_vouchers" x-model="currentPlan.max_vouchers"
                                                 required
+                                                class="mt-1 block w-full rounded-md border-slate-300 dark:bg-slate-700 dark:border-slate-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">Batas Stok (Kosongkan jika Unlimited)</label>
+                                            <input type="number" name="stock_limit" x-model="currentPlan.stock_limit"
                                                 class="mt-1 block w-full rounded-md border-slate-300 dark:bg-slate-700 dark:border-slate-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
                                         </div>
                                     </div>

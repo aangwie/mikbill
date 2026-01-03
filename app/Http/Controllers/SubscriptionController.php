@@ -24,6 +24,11 @@ class SubscriptionController extends Controller
 
         $user = auth()->user();
         $plan = Plan::find($request->plan_id);
+
+        if (!is_null($plan->stock_limit) && $plan->users()->count() >= $plan->stock_limit) {
+            return back()->with('error', 'Maaf, stok paket ini sudah habis.');
+        }
+
         $setting = PaymentSetting::where('is_active', true)->first();
 
         if (!$setting) {
