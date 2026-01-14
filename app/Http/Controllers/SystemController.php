@@ -71,14 +71,12 @@ class SystemController extends Controller
             try {
                 $log[] = ">>> INITIALIZING GIT...";
                 $this->runCommandSafe('git init');
-
                 $remoteUrl = "https://{$githubToken}@github.com/{$githubRepo}.git";
                 $this->runCommandSafe("git remote add origin {$remoteUrl}");
                 $this->runCommandSafe('git fetch origin');
                 $this->runCommandSafe("git checkout -f origin/{$branch}");
                 $this->runCommandSafe("git branch -M {$branch}");
                 $this->runCommandSafe("git reset --hard origin/{$branch}");
-
                 $log[] = "Git repository initialized successfully!";
             } catch (\Exception $e) {
                 return back()->with([
@@ -96,38 +94,47 @@ class SystemController extends Controller
                 $this->runCommandSafe("git remote set-url origin {$remoteUrl}");
             }
 
-            // 1. GIT FETCH & RESET (more reliable than pull)
-            $fetchOutput = $this->runCommandSafe("git fetch origin {$branch} 2>&1");
-            $log[] = ">>> GIT FETCH:\n" . $fetchOutput;
+            // 1. GIT FETCH
+            $log[] = ">>> FETCHING REMOTE DATA...";
+            $this->runCommandSafe("git fetch origin {$branch} 2>&1");
 
-            // Check if there are changes
+            // 2. COMPARE VERSIONS
+            $localInfo = $this->runCommandSafe('git log -1 --format="%h - %s (%cd)" --date=short HEAD');
+            $remoteInfo = $this->runCommandSafe("git log -1 --format=\"%h - %s (%cd)\" --date=short origin/{$branch}");
+
             $localHash = trim($this->runCommandSafe('git rev-parse HEAD'));
             $remoteHash = trim($this->runCommandSafe("git rev-parse origin/{$branch}"));
+
+            $log[] = "--------------------------------------------------";
+            $log[] = "LOCAL  : " . $localInfo;
+            $log[] = "REMOTE : " . $remoteInfo;
+            $log[] = "--------------------------------------------------";
 
             if ($localHash === $remoteHash) {
                 return back()->with([
                     'status' => 'info',
                     'message' => 'Sistem Anda sudah menggunakan versi terbaru.',
-                    'log' => implode("\n\n", $log) . "\n\nLocal: {$localHash}\nRemote: {$remoteHash}"
+                    'log' => implode("\n", $log)
                 ]);
             }
 
-            // Reset to remote version
+            $log[] = ">>> UPDATE AVAILABLE. STARTING PROCESS...";
+
+            // 3. RESET TO REMOTE (Force Pull)
             $resetOutput = $this->runCommandSafe("git reset --hard origin/{$branch} 2>&1");
             $log[] = ">>> GIT RESET:\n" . $resetOutput;
 
-            // 2. MIGRATE DATABASE
-            $migrateOutput = $this->runCommandSafe('php artisan migrate --force 2>&1');
-            $log[] = ">>> MIGRATION:\n" . $migrateOutput;
+            // 4. MIGRATION & OPTIMIZATION
+            $log[] = ">>> MIGRATING DATABASE...";
+            $log[] = $this->runCommandSafe('php artisan migrate --force 2>&1');
 
-            // 3. OPTIMIZE (Bersihkan Cache)
-            $optimizeOutput = $this->runCommandSafe('php artisan optimize:clear 2>&1');
-            $log[] = ">>> OPTIMIZE:\n" . $optimizeOutput;
+            $log[] = ">>> CLEARING CACHE...";
+            $log[] = $this->runCommandSafe('php artisan optimize:clear 2>&1');
 
-            // 4. Composer install (if needed)
+            // 5. COMPOSER
             if (file_exists(base_path('composer.json'))) {
-                $composerOutput = $this->runCommandSafe('composer install --no-dev --optimize-autoloader 2>&1');
-                $log[] = ">>> COMPOSER:\n" . $composerOutput;
+                $log[] = ">>> UPDATING DEPENDENCIES...";
+                $log[] = $this->runCommandSafe('composer install --no-dev --optimize-autoloader 2>&1');
             }
 
             $status = 'success';
@@ -142,7 +149,7 @@ class SystemController extends Controller
         return back()->with([
             'status' => $status,
             'message' => $message,
-            'log' => implode("\n\n", $log)
+            'log' => implode("\n", $log)
         ]);
     }
 
