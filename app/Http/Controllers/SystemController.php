@@ -12,8 +12,25 @@ class SystemController extends Controller
     {
         // Check if git is available
         $currentVersion = $this->getVersion();
+        $setting = \App\Models\SiteSetting::first();
 
-        return view('system.update', compact('currentVersion'));
+        return view('system.update', compact('currentVersion', 'setting'));
+    }
+
+    public function saveToken(Request $request)
+    {
+        $request->validate([
+            'github_token' => 'required|string|starts_with:github_pat_',
+        ]);
+
+        $setting = \App\Models\SiteSetting::first();
+        if (!$setting) {
+            $setting = \App\Models\SiteSetting::create([]);
+        }
+
+        $setting->update(['github_token' => $request->github_token]);
+
+        return back()->with('success', 'Token GitHub berhasil disimpan.');
     }
 
     private function getVersion()
@@ -32,7 +49,11 @@ class SystemController extends Controller
     public function update(Request $request)
     {
         $log = [];
-        $githubToken = env('GITHUB_TOKEN');
+
+        // Get Token from DB first, then Env
+        $setting = \App\Models\SiteSetting::first();
+        $githubToken = $setting ? $setting->github_token : env('GITHUB_TOKEN');
+
         $githubRepo = env('GITHUB_REPO', 'aangwie/mikbill'); // default repo
         $branch = env('GITHUB_BRANCH', 'main');
 
@@ -41,8 +62,8 @@ class SystemController extends Controller
             if (empty($githubToken)) {
                 return back()->with([
                     'status' => 'warning',
-                    'message' => 'Git tidak tersedia dan GITHUB_TOKEN belum diset.',
-                    'log' => "Project tidak memiliki .git folder.\n\nUntuk mengaktifkan auto-update, tambahkan ke file .env:\n\nGITHUB_TOKEN=your_personal_access_token\nGITHUB_REPO=username/repository\nGITHUB_BRANCH=main"
+                    'message' => 'Git tidak tersedia dan Token belum diset.',
+                    'log' => "Project tidak memiliki .git folder.\n\nHarap masukkan GitHub Personal Access Token (PAT) pada form di atas untuk melanjutkan."
                 ]);
             }
 

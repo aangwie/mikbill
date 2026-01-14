@@ -22,10 +22,33 @@
                     {{ $currentVersion ?? 'v1.0.0' }}
                 </div>
 
-                <p class="text-sm text-slate-400 mb-8">
-                    Pastikan Anda telah membackup database dan file konfigurasi sebelum melakukan update.
-                    Sumber: <a href="#" class="text-indigo-600 hover:text-indigo-500 font-medium">Repository GitHub</a>
+                Pastikan Anda telah membackup database dan file konfigurasi sebelum melakukan update.
+                Sumber: <a href="#" class="text-indigo-600 hover:text-indigo-500 font-medium">Repository GitHub</a>
                 </p>
+
+                <!-- GitHub Token Form -->
+                <div
+                    class="mb-8 max-w-lg mx-auto bg-slate-50 dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700">
+                    <form action="{{ route('system.saveToken') }}" method="POST" class="space-y-4">
+                        @csrf
+                        <div class="text-left">
+                            <label for="github_token"
+                                class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">GitHub Personal
+                                Access Token</label>
+                            <div class="relative rounded-md shadow-sm">
+                                <input type="password" name="github_token" id="github_token"
+                                    class="block w-full rounded-md border-slate-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-slate-900 dark:border-slate-600 dark:text-white dark:placeholder-slate-400"
+                                    placeholder="github_pat_..." value="{{ $setting->github_token ?? '' }}">
+                            </div>
+                            <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Token digunakan untuk autentikasi
+                                private repository.</p>
+                        </div>
+                        <button type="submit"
+                            class="w-full inline-flex justify-center rounded-md border border-transparent bg-slate-800 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 transition-all">
+                            <i class="fas fa-save mr-2 mt-0.5"></i> Simpan Token
+                        </button>
+                    </form>
+                </div>
 
                 <div class="flex flex-col sm:flex-row justify-center gap-4">
                     <form action="{{ route('system.update') }}" method="POST"
