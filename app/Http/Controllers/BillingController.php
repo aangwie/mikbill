@@ -237,6 +237,96 @@ class BillingController extends Controller
         return back()->with('success', 'Tagihan manual berhasil dibuat!');
     }
 
+
+
+    /**
+     * PROCESS PAYMENT VIA AJAX (MASS PAYMENT)
+     */
+    public function processPaymentAjax($id)
+    {
+        try {
+            $invoice = Invoice::with('customer')->findOrFail($id);
+
+            // Skip if already paid
+            if ($invoice->status == 'paid') {
+                return response()->json([
+                    'status' => 'skipped',
+                    'message' => 'Invoice sudah lunas.',
+                    'customer' => $invoice->customer->name
+                ]);
+            }
+
+            $customer = $invoice->customer;
+            $userPppoe = $customer->pppoe_username;
+
+            // Validasi Operator
+            if (Auth::user()->role == 'operator') {
+                if ($customer->operator_id != Auth::user()->id) {
+                    return response()->json(['status' => 'error', 'message' => 'Unauthorized'], 403);
+                }
+            }
+
+            // Update Database
+            $invoice->update(['status' => 'paid']);
+            $customer->update(['is_active' => true]);
+
+            // Eksekusi Mikrotik
+            $pesanMikrotik = "";
+            try {
+                if ($this->mikrotik->isConnected()) {
+                    $this->mikrotik->setSecretStatus($userPppoe, 'enabled');
+                    $this->mikrotik->kickUser($userPppoe);
+                    $pesanMikrotik = "Mikrotik: Enabled.";
+                } else {
+                    $pesanMikrotik = "Mikrotik: Gagal Konek.";
+                }
+            } catch (\Exception $e) {
+                // Log error but don't fail the payment
+                $pesanMikrotik = "Mikrotik Error.";
+            }
+
+            // --- KIRIM NOTIFIKASI WA (LUNAS) ---
+            $pesanWA = "";
+            try {
+                if (!empty($customer->phone)) {
+                    $tglBayar = Carbon::now()->locale('id')->isoFormat('D MMMM Y, HH:mm');
+                    $nominal = number_format($customer->monthly_price, 0, ',', '.');
+                    $periode = Carbon::parse($invoice->due_date)->locale('id')->isoFormat('MMMM Y');
+                    $linkDownload = route('frontend.invoice', $invoice->id);
+
+                    $text = "*PEMBAYARAN DITERIMA*\n\n";
+                    $text .= "Halo {$customer->name},\n";
+                    $text .= "Terima kasih, pembayaran tagihan internet Anda telah kami terima.\n\n";
+                    $text .= "📅 Tanggal Bayar: $tglBayar\n";
+                    $text .= "💰 Nominal: Rp $nominal\n";
+                    $text .= "🗓️ Periode Tagihan: $periode\n";
+                    $text .= "✅ Status: LUNAS\n\n";
+                    $text .= "📄 *Unduh Invoice (PDF):*\n";
+                    $text .= "$linkDownload\n\n";
+                    $text .= "Internet Anda sudah aktif kembali. Terima kasih atas kepercayaan Anda.";
+
+                    $waResult = $this->wa->send($customer->phone, $text);
+                    $pesanWA = $waResult['status'] ? "WA Terkirim." : "WA Gagal.";
+                }
+            } catch (\Exception $e) {
+                $pesanWA = "WA Error.";
+            }
+
+            return response()->json([
+                'status' => 'success',
+                'customer' => $customer->name,
+                'message' => "Sukses. $pesanMikrotik $pesanWA"
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage(),
+                'customer' => 'Unknown'
+            ], 500);
+        }
+    }
+
     /**
      * PROSES PEMBAYARAN (BAYAR & AKTIFKAN + KIRIM WA)
      */
@@ -368,6 +458,60 @@ class BillingController extends Controller
 
         $invoice->delete();
         return back()->with('success', 'Invoice berhasil dihapus.');
+    }
+
+    public function bulkDestroy(Request $request)
+    {
+        $request->validate([
+            'type' => 'required|in:selected,all',
+            'ids' => 'nullable|array',
+            'ids.*' => 'exists:invoices,id',
+            'month' => 'nullable|numeric',
+            'year' => 'nullable|numeric',
+        ]);
+
+        $user = Auth::user();
+        $count = 0;
+
+        if ($request->type == 'selected') {
+            if (!$request->ids) {
+                return back()->with('error', 'Tidak ada tagihan yang dipilih.');
+            }
+
+            $invoices = Invoice::whereIn('id', $request->ids)->get();
+            foreach ($invoices as $inv) {
+                // Permission Check
+                if ($user->role == 'operator' && $inv->customer->operator_id != $user->id)
+                    continue;
+                if ($user->role == 'admin' && $inv->admin_id != $user->id)
+                    continue;
+
+                $inv->delete();
+                $count++;
+            }
+
+        } else {
+            // Delete ALL for Month/Year
+            if (!$request->month || !$request->year) {
+                return back()->with('error', 'Parameter bulan/tahun tidak valid.');
+            }
+
+            $query = Invoice::whereMonth('due_date', $request->month)
+                ->whereYear('due_date', $request->year);
+
+            if ($user->role == 'operator') {
+                $query->whereHas('customer', function ($q) use ($user) {
+                    $q->where('operator_id', $user->id);
+                });
+            }
+
+            // Global Scope handles Admin/Superadmin generally, but explicit check doesn't hurt OR if using TenantScope
+            // Assuming TenantScope handles 'admin' filtering automatically.
+
+            $count = $query->delete();
+        }
+
+        return back()->with('success', "Berhasil menghapus $count tagihan.");
     }
 
     public function print($id)

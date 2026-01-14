@@ -7,9 +7,25 @@
 @section('content')
 
     <div x-data="{ 
-                        showCreateModal: false, 
-                        showGenerateModal: false 
-                    }">
+                                showCreateModal: false, 
+                                showGenerateModal: false,
+                                showPayModal: false,
+                                showDeleteModal: false,
+                                selectedInvoices: [],
+                                toggleAll() {
+                                    if (this.selectedInvoices.length === {{ count($invoices->where('status', 'unpaid')) }}) {
+                                        this.selectedInvoices = [];
+                                    } else {
+                                        this.selectedInvoices = [
+                                            @foreach($invoices as $inv)
+                                                @if($inv->status == 'unpaid')
+                                                    {{ $inv->id }},
+                                                @endif
+                                            @endforeach
+                                        ];
+                                    }
+                                }
+                            }">
 
         <!-- Filter Bar -->
         <div class="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -95,6 +111,18 @@
                         <i class="fas fa-magic mr-2"></i> Generate Massal
                     </button>
                 @endif
+                <button @click="showPayModal = true" x-show="selectedInvoices.length > 0"
+                    class="inline-flex items-center rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-500 transition-all ml-2"
+                    style="display: none;" x-transition>
+                    <i class="fas fa-check-double mr-2"></i> Bayar Sekaligus (<span
+                        x-text="selectedInvoices.length"></span>)
+                </button>
+
+                <button @click="showDeleteModal = true" x-show="selectedInvoices.length > 0"
+                    class="inline-flex items-center rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 transition-all ml-2"
+                    style="display: none;" x-transition>
+                    <i class="fas fa-trash-alt mr-2"></i> Hapus Tagihan (<span x-text="selectedInvoices.length"></span>)
+                </button>
             </div>
         </div>
 
@@ -104,30 +132,41 @@
             <div class="overflow-x-auto p-4">
                 <table id="tableBilling" class="w-full text-left border-collapse">
                     <thead>
-                        <tr>
-                            <th
-                                class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider py-3 px-4 bg-slate-50 dark:bg-slate-700/50 rounded-l-lg">
-                                No. Invoice</th>
-                            <th
-                                class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider py-3 px-4 bg-slate-50 dark:bg-slate-700/50">
-                                Pelanggan</th>
-                            <th
-                                class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider py-3 px-4 bg-slate-50 dark:bg-slate-700/50 hidden sm:table-cell">
-                                Bulan/Tahun</th>
-                            <th
-                                class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider py-3 px-4 bg-slate-50 dark:bg-slate-700/50">
-                                Total</th>
-                            <th
-                                class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider py-3 px-4 bg-slate-50 dark:bg-slate-700/50">
-                                Status</th>
-                            <th
-                                class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider py-3 px-4 bg-slate-50 dark:bg-slate-700/50 rounded-r-lg text-right">
-                                Aksi</th>
+                        <th
+                            class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider py-3 px-4 bg-slate-50 dark:bg-slate-700/50 rounded-l-lg">
+                            <input type="checkbox" @click="toggleAll()"
+                                :checked="selectedInvoices.length > 0 && selectedInvoices.length === {{ count($invoices->where('status', 'unpaid')) }}"
+                                class="rounded border-gray-300 text-primary-600 shadow-sm focus:ring-primary-600">
+                        </th>
+                        <th
+                            class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider py-3 px-4 bg-slate-50 dark:bg-slate-700/50">
+                            No. Invoice</th>
+                        <th
+                            class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider py-3 px-4 bg-slate-50 dark:bg-slate-700/50">
+                            Pelanggan</th>
+                        <th
+                            class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider py-3 px-4 bg-slate-50 dark:bg-slate-700/50 hidden sm:table-cell">
+                            Bulan/Tahun</th>
+                        <th
+                            class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider py-3 px-4 bg-slate-50 dark:bg-slate-700/50">
+                            Total</th>
+                        <th
+                            class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider py-3 px-4 bg-slate-50 dark:bg-slate-700/50">
+                            Status</th>
+                        <th
+                            class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider py-3 px-4 bg-slate-50 dark:bg-slate-700/50 rounded-r-lg text-right">
+                            Aksi</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
                         @foreach($invoices as $inv)
                             <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors group">
+                                <td class="px-4 py-3 align-middle font-mono text-sm text-slate-600 dark:text-slate-300">
+                                    @if($inv->status == 'unpaid')
+                                        <input type="checkbox" value="{{ $inv->id }}" x-model.number="selectedInvoices"
+                                            class="rounded border-gray-300 text-primary-600 shadow-sm focus:ring-primary-600">
+                                    @endif
+                                </td>
                                 <td class="px-4 py-3 align-middle font-mono text-sm text-slate-600 dark:text-slate-300">
                                     #INV-{{ str_pad($inv->id, 5, '0', STR_PAD_LEFT) }}
                                 </td>
@@ -303,7 +342,9 @@
                                             class="mt-1 block w-full rounded-md border-0 py-1.5 text-slate-900 dark:text-white dark:bg-slate-700 ring-1 ring-inset ring-slate-300 dark:ring-slate-600 sm:text-sm">
                                             <option value="">-- Pilih Admin --</option>
                                             @foreach($admins as $admin)
-                                                <option value="{{ $admin->id }}">{{ $admin->name }}{{ $admin->id == auth()->id() ? ' (Self)' : '' }}</option>
+                                                <option value="{{ $admin->id }}">
+                                                    {{ $admin->name }}{{ $admin->id == auth()->id() ? ' (Self)' : '' }}
+                                                </option>
                                             @endforeach
                                         </select>
                                     </div>
@@ -378,6 +419,156 @@
                 </div>
             </div>
         </div>
+
+
+        <!-- MODAL MASS PAYMENT (Alpine) -->
+        <div x-show="showPayModal" class="relative z-500" style="display:none;">
+            <div class="fixed inset-0 bg-slate-900/75 backdrop-blur-sm"></div>
+            <div class="fixed inset-0 z-10 overflow-y-auto">
+                <div class="flex min-h-full items-center justify-center p-4">
+                    <div class="relative transform overflow-hidden rounded-2xl bg-white dark:bg-slate-800 text-left shadow-xl transition-all sm:w-full sm:max-w-lg"
+                        @click.away="showPayModal = false">
+                        <div class="bg-white dark:bg-slate-800 px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
+                            <div
+                                class="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/50 mb-4">
+                                <i class="fas fa-check-double text-green-600 dark:text-green-400 text-xl"></i>
+                            </div>
+                            <h3 class="text-xl font-bold leading-6 text-center text-slate-900 dark:text-white mb-2">
+                                Pembayaran Massal</h3>
+                            <p id="payDesc" class="text-sm text-center text-slate-500 dark:text-slate-400 mb-6">
+                                Anda akan memproses pembayaran untuk <span class="font-bold flex-inline"
+                                    x-text="selectedInvoices.length"></span> tagihan terpilih.
+                            </p>
+
+                            <!-- Pay Initial UI -->
+                            <div id="payInitial">
+                                <button type="button" @click="startMassPayment(selectedInvoices)"
+                                    class="mt-4 inline-flex w-full justify-center rounded-md bg-green-600 px-3 py-2 text-sm font-bold text-white shadow-sm hover:bg-green-500 w-full">
+                                    Mulai Proses Pembayaran
+                                </button>
+                            </div>
+
+                            <!-- Pay Progress UI -->
+                            <div id="payProgress" style="display:none;" class="mt-6 space-y-4">
+                                <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2.5">
+                                    <div id="payProgressBar"
+                                        class="bg-green-600 h-2.5 rounded-full transition-all duration-300"
+                                        style="width: 0%"></div>
+                                </div>
+                                <div class="text-xs text-center text-slate-500 dark:text-slate-400 font-mono"
+                                    id="payStatusText">Menyiapkan...</div>
+                                <ul id="payLog"
+                                    class="h-48 overflow-y-auto text-left text-xs bg-slate-50 dark:bg-slate-900 p-3 rounded-lg border border-slate-200 dark:border-slate-700 space-y-1 text-slate-600 dark:text-slate-400">
+                                </ul>
+                            </div>
+
+                            <!-- Pay Done UI -->
+                            <div id="payDone" style="display:none;" class="mt-6">
+                                <div class="text-center py-4">
+                                    <div
+                                        class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/50 mb-4">
+                                        <i class="fas fa-check text-green-600 dark:text-green-400 text-xl"></i>
+                                    </div>
+                                    <p class="text-sm font-medium text-slate-900 dark:text-white">Proses Selesai!</p>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1" id="paySummaryText"></p>
+                                </div>
+                                <button onclick="location.reload()"
+                                    class="mt-4 inline-flex w-full justify-center rounded-md bg-green-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-500 w-full">
+                                    Selesai & Refresh
+                                </button>
+                            </div>
+
+                        </div>
+                        <div class="bg-slate-50 dark:bg-slate-700/50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+                            <button type="button" @click="showPayModal = false" id="btnCancelPay"
+                                class="mt-3 inline-flex w-full justify-center rounded-md bg-white dark:bg-slate-700 px-3 py-2 text-sm font-semibold text-slate-900 dark:text-slate-200 shadow-sm ring-1 ring-inset ring-slate-300 dark:ring-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600 sm:mt-0 sm:w-auto">Tutup</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL MASS DELETE (Alpine) -->
+        <div x-show="showDeleteModal" class="relative z-500" style="display:none;">
+            <div class="fixed inset-0 bg-slate-900/75 backdrop-blur-sm"></div>
+            <div class="fixed inset-0 z-10 overflow-y-auto">
+                <div class="flex min-h-full items-center justify-center p-4">
+                    <div class="relative transform overflow-hidden rounded-2xl bg-white dark:bg-slate-800 text-left shadow-xl transition-all sm:w-full sm:max-w-lg"
+                        @click.away="showDeleteModal = false">
+                        <div class="bg-white dark:bg-slate-800 px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
+                            <div
+                                class="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/50 mb-4">
+                                <i class="fas fa-trash-alt text-red-600 dark:text-red-400 text-xl"></i>
+                            </div>
+                            <h3 class="text-xl font-bold leading-6 text-center text-slate-900 dark:text-white mb-2">Hapus
+                                Tagihan Massal</h3>
+                            <p class="text-sm text-center text-slate-500 dark:text-slate-400 mb-6">Pilih metode penghapusan
+                                tagihan yang Anda inginkan. Tindakan ini tidak dapat dibatalkan.</p>
+
+                            <div class="space-y-4">
+                                <!-- Option 1: Delete Selected -->
+                                <form action="{{ route('billing.bulkDestroy') }}" method="POST">
+                                    @csrf
+                                    @method('DELETE')
+                                    <input type="hidden" name="type" value="selected">
+                                    @foreach($customers as $c)
+                                        <!-- We need to pass IDs, so we use JS to append selected IDs to this form or simpler: just loop IDs in hidden inputs -->
+                                    @endforeach
+                                    <!-- A more efficient way: use x-data to bind selectedInvoices to a hidden input array -->
+                                    <template x-for="id in selectedInvoices">
+                                        <input type="hidden" name="ids[]" :value="id">
+                                    </template>
+
+                                    <button type="submit" :disabled="selectedInvoices.length === 0"
+                                        class="w-full rounded-lg border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-900/20 px-4 py-4 text-left shadow-sm hover:bg-red-100 dark:hover:bg-red-900/30 transition-all group disabled:opacity-50 disabled:cursor-not-allowed">
+                                        <div class="flex items-center justify-between">
+                                            <div>
+                                                <p class="font-semibold text-red-700 dark:text-red-400">Hapus <span
+                                                        x-text="selectedInvoices.length"></span> Tagihan Terpilih</p>
+                                                <p class="text-xs text-red-600/70 dark:text-red-400/70 mt-1">Hanya menghapus
+                                                    item yang Anda centang.</p>
+                                            </div>
+                                            <i
+                                                class="fas fa-check-circle text-red-300 group-hover:text-red-500 transition-colors text-xl"></i>
+                                        </div>
+                                    </button>
+                                </form>
+
+                                <!-- Option 2: Delete All in Month -->
+                                <form action="{{ route('billing.bulkDestroy') }}" method="POST"
+                                    onsubmit="return confirm('PERINGATAN: Semua tagihan pada bulan ini akan dihapus permanen! Lanjutkan?');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <input type="hidden" name="type" value="all">
+                                    <input type="hidden" name="month" value="{{ $month }}">
+                                    <input type="hidden" name="year" value="{{ $year }}">
+
+                                    <button type="submit"
+                                        class="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-700 px-4 py-4 text-left shadow-sm hover:bg-slate-50 dark:hover:bg-slate-600 transition-all group">
+                                        <div class="flex items-center justify-between">
+                                            <div>
+                                                <p class="font-semibold text-slate-800 dark:text-white">Hapus Semua Tagihan
+                                                    Bulan Ini</p>
+                                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                                                    Bulan: {{ DateTime::createFromFormat('!m', $month)->format('F') }}
+                                                    {{ $year }}
+                                                </p>
+                                            </div>
+                                            <i
+                                                class="fas fa-calendar-times text-slate-300 group-hover:text-slate-500 transition-colors text-xl"></i>
+                                        </div>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                        <div class="bg-slate-50 dark:bg-slate-700/50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+                            <button type="button" @click="showDeleteModal = false"
+                                class="mt-3 inline-flex w-full justify-center rounded-md bg-white dark:bg-slate-700 px-3 py-2 text-sm font-semibold text-slate-900 dark:text-slate-200 shadow-sm ring-1 ring-inset ring-slate-300 dark:ring-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600 sm:mt-0 sm:w-auto">Batal</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
 @endsection
@@ -427,7 +618,7 @@
                 }
             @endif
 
-                if (!dueDate) {
+                        if (!dueDate) {
                 alert('Pilih tanggal jatuh tempo!');
                 return;
             }
@@ -514,6 +705,65 @@
                 $('#genStatusText').text('Gagal!');
                 $('#btnCancelGen').show();
             }
+        }
+
+        async function startMassPayment(invoiceIds) {
+            const log = $('#payLog');
+
+            // UI Switch
+            $('#payInitial').hide();
+            $('#payDesc').hide();
+            $('#payProgress').show();
+            $('#btnCancelPay').hide();
+            log.empty().append('<li><span class="text-blue-500">[INFO]</span> Memulai pembayaran massal...</li>');
+
+            const total = invoiceIds.length;
+            let success = 0;
+            let skipped = 0;
+            let error = 0;
+
+            for (let i = 0; i < total; i++) {
+                const invId = invoiceIds[i];
+                const progress = Math.round(((i + 1) / total) * 100);
+
+                $('#payProgressBar').css('width', progress + '%');
+                $('#payStatusText').text(`Memproses ${i + 1}/${total} (${progress}%)`);
+
+                try {
+                    const res = await fetch(`/billing/${invId}/pay-ajax`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        }
+                    });
+
+                    const data = await res.json();
+
+                    if (data.status === 'success') {
+                        success++;
+                        log.append(`<li><span class="text-green-500">[OK]</span> ${data.customer}: Lunas.</li>`);
+                    } else if (data.status === 'skipped') {
+                        skipped++;
+                        log.append(`<li><span class="text-yellow-500">[SKIP]</span> ${data.customer}: Sudah lunas.</li>`);
+                    } else {
+                        error++;
+                        log.append(`<li><span class="text-red-500">[ERR]</span> ${data.customer || 'Unknown'}: ${data.message}</li>`);
+                    }
+
+                } catch (e) {
+                    error++;
+                    log.append(`<li><span class="text-red-500">[ERR]</span> ID ${invId}: Koneksi Gagal.</li>`);
+                }
+
+                // Auto scroll log
+                log.scrollTop(log[0].scrollHeight);
+            }
+
+            // Finalize
+            $('#payProgress').hide();
+            $('#payDone').show();
+            $('#paySummaryText').text(`Selesai: ${success} Sukses, ${skipped} Dilewati, ${error} Gagal.`);
         }
     </script>
 @endpush

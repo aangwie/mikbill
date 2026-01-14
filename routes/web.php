@@ -89,6 +89,8 @@ Route::middleware(['auth'])->group(function () {
     // Billing
     Route::get('/billing', [BillingController::class, 'index'])->name('billing.index');
     Route::post('/billing/{id}/pay', [BillingController::class, 'processPayment'])->name('billing.pay');
+    Route::post('/billing/{id}/pay-ajax', [BillingController::class, 'processPaymentAjax'])->name('billing.payAjax');
+
     Route::post('/billing/{id}/cancel', [BillingController::class, 'cancelPayment'])->name('billing.cancel');
     Route::post('/billing/store', [BillingController::class, 'store'])->name('billing.store');
     Route::post('/billing/generate', [BillingController::class, 'generate'])->name('billing.generate');
@@ -96,6 +98,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/billing/generate-list', [BillingController::class, 'getList'])->name('billing.list');
     Route::post('/billing/generate-process', [BillingController::class, 'processItem'])->name('billing.process');
     Route::get('/billing/{id}/print', [BillingController::class, 'print'])->name('billing.print');
+    Route::delete('/billing/bulk-destroy', [BillingController::class, 'bulkDestroy'])->name('billing.bulkDestroy');
     Route::delete('/billing/{id}', [BillingController::class, 'destroy'])->name('billing.destroy');
 
     // Report
