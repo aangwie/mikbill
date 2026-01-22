@@ -22,7 +22,7 @@ class WhatsappController extends Controller
         $user = auth()->user();
         $plan = $user->plan;
 
-        if (!$user->isSuperAdmin()) {
+        if (!$user->isSuperAdmin() && !$user->isAdmin()) {
             if (!$plan || !$plan->wa_gateway) {
                 return redirect()->route('router.index')->with('warning', 'Layanan WhatsApp Gateway tidak tersedia di paket Anda. Silakan upgrade paket.');
             }
