@@ -67,6 +67,15 @@
                             <i class="fas fa-broom mr-2 text-amber-500"></i> Clear Cache
                         </button>
                     </form>
+
+                    <form action="{{ route('system.migrate') }}" method="POST"
+                        onsubmit="return confirm('Yakin ingin menjalankan migrasi database? Pastikan Anda sudah membackup database.');">
+                        @csrf
+                        <button type="submit"
+                            class="w-full sm:w-auto inline-flex items-center justify-center rounded-lg bg-white border border-slate-300 px-6 py-3 text-sm font-bold text-slate-700 shadow-sm hover:bg-slate-50 hover:text-slate-900 transition-all transform hover:-translate-y-0.5">
+                            <i class="fas fa-database mr-2 text-indigo-500"></i> Run Migration
+                        </button>
+                    </form>
                 </div>
             </div>
         </div>
