@@ -193,6 +193,11 @@
                                                 class="fas fa-file-invoice-dollar mr-3 text-gray-400 group-hover:text-[#352f99]"></i>
                                             Tagihan (Billing)
                                         </a>
+                                        <a href="{{ route('accounting.index') }}"
+                                            class="group flex items-center px-4 py-2 text-sm text-gray-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-[#352f99]">
+                                            <i class="fas fa-money-bill-wave mr-3 text-gray-400 group-hover:text-[#352f99]"></i>
+                                            Biaya & Pengeluaran
+                                        </a>
                                         <a href="{{ route('report.index') }}"
                                             class="group flex items-center px-4 py-2 text-sm text-gray-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-[#352f99]">
                                             <i class="fas fa-print mr-3 text-gray-400 group-hover:text-[#352f99]"></i>
@@ -469,6 +474,10 @@
                     <a href="{{ route('billing.index') }}"
                         class="block py-2 pl-3 pr-4 text-base font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-800">
                         <i class="fas fa-file-invoice-dollar w-6 text-center"></i> Tagihan
+                    </a>
+                    <a href="{{ route('accounting.index') }}"
+                        class="block py-2 pl-3 pr-4 text-base font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-800">
+                        <i class="fas fa-money-bill-wave w-6 text-center"></i> Pengeluaran
                     </a>
                     <a href="{{ route('report.index') }}"
                         class="block py-2 pl-3 pr-4 text-base font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-800">

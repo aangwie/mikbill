@@ -24,9 +24,7 @@ class AccountingController extends Controller
             ->whereYear('due_date', $year)
             ->get();
 
-        $totalRevenue = $invoices->sum(function ($inv) {
-            return $inv->customer->monthly_price;
-        });
+        $totalRevenue = $invoices->sum('price');
 
         // 2. HITUNG PENGELUARAN
         $expenses = Expense::whereMonth('transaction_date', $month)
@@ -87,7 +85,7 @@ class AccountingController extends Controller
             ->whereYear('due_date', $year)
             ->get();
 
-        $totalRevenue = $invoices->sum(fn($i) => $i->customer->monthly_price);
+        $totalRevenue = $invoices->sum('price');
 
         // Ambil Data Pengeluaran Detil
         $expenses = Expense::whereMonth('transaction_date', $month)

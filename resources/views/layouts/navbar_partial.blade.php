@@ -50,6 +50,8 @@
                                         class="fas fa-users me-2"></i> Data Pelanggan</a></li>
                             <li><a class="dropdown-item" href="{{ route('billing.index') }}"><i
                                         class="fas fa-file-invoice-dollar me-2"></i> Tagihan (Billing)</a></li>
+                            <li><a class="dropdown-item" href="{{ route('accounting.index') }}"><i
+                                        class="fas fa-money-bill-wave me-2"></i> Biaya & Pengeluaran</a></li>
                             <li><a class="dropdown-item" href="{{ route('report.index') }}"><i
                                         class="fas fa-print me-2"></i> Laporan Keuangan</a></li>
 
