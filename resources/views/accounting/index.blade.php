@@ -121,10 +121,10 @@
                             <tbody class="divide-y divide-slate-100">
                                 @foreach($expenses as $exp)
                                     <tr class="hover:bg-slate-50 transition-colors">
-                                        <td class="px-4 py-3 align-middle text-sm text-slate-600 whitespace-nowrap">
+                                        <td class="px-4 py-3 align-middle text-sm text-black whitespace-nowrap">
                                             {{ $exp->transaction_date->format('d/m/Y') }}
                                         </td>
-                                        <td class="px-4 py-3 align-middle text-sm text-slate-900">{{ $exp->description }}</td>
+                                        <td class="px-4 py-3 align-middle text-sm text-black">{{ $exp->description }}</td>
                                         <td
                                             class="px-4 py-3 align-middle text-sm font-bold text-rose-600 text-right whitespace-nowrap">
                                             Rp {{ number_format($exp->amount, 0, ',', '.') }}</td>
@@ -169,25 +169,25 @@
                             @csrf
                             <div class="space-y-4">
                                 <div>
-                                    <label class="block text-sm font-medium text-slate-900 mb-1">Tanggal</label>
+                                    <label class="block text-sm font-medium text-black mb-1">Tanggal</label>
                                     <input type="date" name="transaction_date"
-                                        class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-rose-600 sm:text-sm sm:leading-6"
+                                        class="block w-full rounded-md border-0 py-1.5 text-black shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-rose-600 sm:text-sm sm:leading-6"
                                         value="{{ date('Y-m-d') }}" required>
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-medium text-slate-900 mb-1">Keterangan</label>
+                                    <label class="block text-sm font-medium text-black mb-1">Keterangan</label>
                                     <textarea name="description" rows="3"
-                                        class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-rose-600 sm:text-sm sm:leading-6"
+                                        class="block w-full rounded-md border-0 py-1.5 text-black shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-rose-600 sm:text-sm sm:leading-6"
                                         placeholder="Beli peralatan, bayar listrik..." required></textarea>
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-medium text-slate-900 mb-1">Nominal (Rp)</label>
+                                    <label class="block text-sm font-medium text-black mb-1">Nominal (Rp)</label>
                                     <div class="relative rounded-md shadow-sm">
                                         <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                            <span class="text-slate-500 sm:text-sm">Rp</span>
+                                            <span class="text-black sm:text-sm">Rp</span>
                                         </div>
                                         <input type="number" name="amount"
-                                            class="block w-full rounded-md border-0 py-1.5 pl-10 text-slate-900 ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-rose-600 sm:text-sm sm:leading-6"
+                                            class="block w-full rounded-md border-0 py-1.5 pl-10 text-black ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-rose-600 sm:text-sm sm:leading-6"
                                             placeholder="0" required>
                                     </div>
                                 </div>
@@ -289,6 +289,11 @@
 
 @push('styles')
     <link rel="stylesheet" href="https://cdn.datatables.net/2.1.8/css/dataTables.tailwindcss.css">
+    <style>
+        #tableExpenses td, .text-black, label, input, textarea {
+            color: #000000 !important;
+        }
+    </style>
 @endpush
 
 @push('scripts')
