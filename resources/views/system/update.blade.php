@@ -80,6 +80,53 @@
             </div>
         </div>
 
+        <!-- Database Tools Card -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden mb-8">
+            <div class="p-6 border-b border-slate-100 flex items-center gap-3">
+                <div class="p-2 bg-indigo-50 rounded-lg text-indigo-600">
+                    <i class="fas fa-database text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold text-slate-800">Database Tools</h3>
+                    <p class="text-xs text-slate-500">Backup and restore your database files.</p>
+                </div>
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <!-- Backup Section -->
+                    <div class="space-y-4">
+                        <h4 class="text-sm font-semibold text-slate-700 flex items-center">
+                            <i class="fas fa-download mr-2 text-indigo-500"></i> Backup Database
+                        </h4>
+                        <p class="text-xs text-slate-500 italic">Unduh salinan basis data Anda saat ini dalam format .sql.</p>
+                        <a href="{{ route('system.backup') }}" 
+                           class="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-bold text-white shadow-md hover:bg-indigo-500 transition-all">
+                            <i class="fas fa-file-export mr-2"></i> Download Backup (.sql)
+                        </a>
+                    </div>
+
+                    <!-- Restore Section -->
+                    <div class="space-y-4">
+                        <h4 class="text-sm font-semibold text-slate-700 flex items-center">
+                            <i class="fas fa-upload mr-2 text-amber-500"></i> Restore Database
+                        </h4>
+                        <form action="{{ route('system.restore') }}" method="POST" enctype="multipart/form-data" 
+                              onsubmit="return confirm('PERINGATAN: Restore akan menghapus data yang ada dan menggantinya dengan isi file backup. Lanjutkan?');">
+                            @csrf
+                            <div class="space-y-3">
+                                <input type="file" name="backup_file" required accept=".sql"
+                                       class="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 transition-all">
+                                <button type="submit" 
+                                        class="inline-flex items-center justify-center rounded-lg bg-amber-500 px-4 py-2 text-sm font-bold text-white shadow-md hover:bg-amber-400 transition-all">
+                                    <i class="fas fa-file-import mr-2"></i> Upload & Restore
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Log Terminal -->
         @if(session('log'))
             <div class="bg-slate-900 rounded-2xl shadow-lg border border-slate-800 overflow-hidden font-mono text-sm">

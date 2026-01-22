@@ -228,6 +228,98 @@ class SystemController extends Controller
     }
 
     /**
+     * Backup database and download as .sql
+     */
+    public function backup()
+    {
+        $database = env('DB_DATABASE');
+        $username = env('DB_USERNAME');
+        $password = env('DB_PASSWORD');
+        $host = env('DB_HOST', '127.0.0.1');
+        
+        $filename = "backup-" . $database . "-" . date('Y-m-d-H-i-s') . ".sql";
+        $path = storage_path('app/' . $filename);
+
+        // Path to mysqldump on XAMPP Windows
+        $mysqldump = 'C:\xampp\mysql\bin\mysqldump.exe';
+        if (!file_exists($mysqldump)) {
+            $mysqldump = 'mysqldump'; // Try fallback to PATH
+        }
+
+        // Use localhost instead of 127.0.0.1 for better Windows compatibility in some cases
+        $host = ($host == '127.0.0.1') ? 'localhost' : $host;
+        $passwordFlag = !empty($password) ? "--password=\"{$password}\"" : "";
+
+        $command = "\"{$mysqldump}\" --user={$username} {$passwordFlag} --host={$host} --protocol=tcp {$database} > \"{$path}\"";
+        
+        try {
+            $output = $this->runCommandSafe($command);
+            
+            if (file_exists($path) && filesize($path) > 0) {
+                return response()->download($path)->deleteFileAfterSend(true);
+            } else {
+                $errorLog = ">>> COMMAND:\n{$command}\n\n>>> OUTPUT:\n{$output}";
+                return back()->with([
+                    'status' => 'error',
+                    'message' => 'Gagal membuat file backup. Periksa koneksi database atau path mysqldump.',
+                    'log' => $errorLog
+                ]);
+            }
+        } catch (\Exception $e) {
+            return back()->with([
+                'status' => 'error',
+                'message' => 'Terjadi kesalahan saat backup.',
+                'log' => $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * Restore database from uploaded .sql file
+     */
+    public function restore(Request $request)
+    {
+        $request->validate([
+            'backup_file' => 'required|file|mimes:sql,txt',
+        ]);
+
+        $database = env('DB_DATABASE');
+        $username = env('DB_USERNAME');
+        $password = env('DB_PASSWORD');
+        $host = env('DB_HOST', '127.0.0.1');
+
+        $file = $request->file('backup_file');
+        $path = $file->storeAs('temp', 'restore-' . time() . '.sql');
+        $fullPath = storage_path('app/' . $path);
+
+        // Path to mysql on XAMPP Windows
+        $mysql = 'C:\xampp\mysql\bin\mysql.exe';
+        if (!file_exists($mysql)) {
+            $mysql = 'mysql'; // Try fallback to PATH
+        }
+
+        $command = "\"{$mysql}\" --user={$username} --password=\"{$password}\" --host={$host} {$database} < \"{$fullPath}\"";
+
+        try {
+            $output = $this->runCommandSafe($command);
+            @unlink($fullPath);
+
+            return back()->with([
+                'status' => 'success',
+                'message' => 'Database berhasil direstore!',
+                'log' => ">>> DATABASE RESTORE:\n" . ($output ?: "Berhasil diimport.")
+            ]);
+        } catch (\Exception $e) {
+            @unlink($fullPath);
+            return back()->with([
+                'status' => 'error',
+                'message' => 'Gagal melakukan restore database.',
+                'log' => $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
      * Run command without throwing exception
      */
     private function runCommandSafe($command)

@@ -164,6 +164,8 @@ Route::middleware(['auth'])->group(function () {
             Route::post('/system/update-token', [SystemController::class, 'saveToken'])->name('system.saveToken');
             Route::post('/system/clear-cache', [SystemController::class, 'clearCache'])->name('system.clear-cache');
             Route::post('/system/migrate', [SystemController::class, 'runMigration'])->name('system.migrate');
+            Route::get('/system/backup', [SystemController::class, 'backup'])->name('system.backup');
+            Route::post('/system/restore', [SystemController::class, 'restore'])->name('system.restore');
 
             // MAIL SETTINGS
             Route::get('/mail/setting', [MailSettingController::class, 'index'])->name('mail.index');
