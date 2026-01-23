@@ -21,18 +21,26 @@ class CustomerController extends Controller
     }
 
     // 1. Halaman Utama Manajemen Pelanggan
-    public function index()
+    public function index(Request $request)
     {
         $user = auth()->user();
+        $selectedAdmin = $request->input('admin_id');
 
-        $query = Customer::with('operator');
+        $query = Customer::with(['operator', 'admin']);
 
         if ($user->role == 'operator') {
             $query->where('operator_id', $user->id);
+        } elseif ($user->isSuperAdmin() && $selectedAdmin) {
+            $query->where('admin_id', $selectedAdmin);
         }
 
         $customers = $query->get();
         $operators = User::where('role', 'operator')->get();
+        
+        $admins = [];
+        if ($user->isSuperAdmin()) {
+            $admins = User::where('role', 'admin')->get();
+        }
 
         // Ambil profile dari Mikrotik untuk dropdown 'Tambah User'
         $profiles = [];
@@ -44,7 +52,7 @@ class CustomerController extends Controller
             // Abaikan error koneksi agar halaman tetap jalan
         }
 
-        return view('customers.index', compact('customers', 'profiles', 'operators'));
+        return view('customers.index', compact('customers', 'profiles', 'operators', 'admins', 'selectedAdmin'));
     }
 
     // 2. Simpan User Baru (Ke DB & Mikrotik)
