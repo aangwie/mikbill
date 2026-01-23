@@ -39,7 +39,7 @@ class CustomerController extends Controller
         
         $admins = [];
         if ($user->isSuperAdmin()) {
-            $admins = User::where('role', 'admin')->get();
+            $admins = User::whereIn('role', ['admin', 'superadmin'])->get();
         }
 
         // Ambil profile dari Mikrotik untuk dropdown 'Tambah User'
