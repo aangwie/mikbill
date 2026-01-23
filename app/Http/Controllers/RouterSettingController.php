@@ -9,12 +9,27 @@ use App\Models\Plan;
 
 class RouterSettingController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        // Ambil semua data router
-        $routers = RouterSetting::orderBy('is_active', 'desc')->get(); // Yang aktif ditaruh paling atas
+        $ownership = $request->input('ownership', 'semua');
+        $query = RouterSetting::orderBy('is_active', 'desc');
+
+        // Jika superadmin, beri opsi filter kepemilikan
+        if (auth()->user()->isSuperAdmin()) {
+            if ($ownership === 'superadmin') {
+                $query->whereHas('admin', function ($q) {
+                    $q->where('role', 'superadmin');
+                });
+            } elseif ($ownership === 'admin') {
+                $query->whereHas('admin', function ($q) {
+                    $q->where('role', 'admin')->orWhere('role', 'operator');
+                });
+            }
+        }
+
+        $routers = $query->with('admin')->get(); // Eager load admin info
         $plans = Plan::all();
-        return view('router.index', compact('routers', 'plans'));
+        return view('router.index', compact('routers', 'plans', 'ownership'));
     }
 
     // SIMPAN BARU / UPDATE

@@ -103,8 +103,19 @@
         <!-- Right Column: Table -->
         <div class="lg:col-span-2">
             <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm ring-1 ring-slate-900/5 dark:ring-slate-700/50 overflow-hidden">
-                <div class="border-b border-slate-200 dark:border-slate-700 px-4 py-5 sm:px-6 bg-slate-50/50 dark:bg-slate-900/50">
+                <div class="border-b border-slate-200 dark:border-slate-700 px-4 py-5 sm:px-6 bg-slate-50/50 dark:bg-slate-900/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <h3 class="text-base font-semibold leading-6 text-slate-900 dark:text-white">Daftar Konfigurasi Tersimpan</h3>
+                    @if(auth()->user()->isSuperAdmin())
+                        <form action="{{ route('router.index') }}" method="GET" class="flex items-center gap-2">
+                            <label for="ownership" class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Kepemilikan:</label>
+                            <select name="ownership" onchange="this.form.submit()" 
+                                class="block rounded-md border-0 py-1 text-slate-900 dark:text-white dark:bg-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 dark:ring-slate-600 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-xs">
+                                <option value="semua" {{ $ownership == 'semua' ? 'selected' : '' }}>Semua</option>
+                                <option value="superadmin" {{ $ownership == 'superadmin' ? 'selected' : '' }}>Superadmin</option>
+                                <option value="admin" {{ $ownership == 'admin' ? 'selected' : '' }}>Admin</option>
+                            </select>
+                        </form>
+                    @endif
                 </div>
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
@@ -138,6 +149,9 @@
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="text-sm font-bold text-slate-900 dark:text-white">{{ $r->label ?? '-' }}</div>
+                                        @if(auth()->user()->isSuperAdmin())
+                                            <div class="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-tight">Milik: {{ $r->admin->name ?? 'System' }} ({{ $r->admin->role ?? '-' }})</div>
+                                        @endif
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="text-sm text-slate-900 dark:text-white">{{ $r->host }}:{{ $r->port }}</div>
