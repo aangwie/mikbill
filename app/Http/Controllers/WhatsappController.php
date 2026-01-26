@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\WhatsappSetting;
 use App\Models\Customer;
 use App\Models\Invoice;
+use App\Models\User;
 use App\Services\WhatsappService;
 use Illuminate\Http\Request;
 
@@ -17,10 +18,11 @@ class WhatsappController extends Controller
         $this->waService = $waService;
     }
 
-    public function index()
+    public function index(Request $request)
     {
         $user = auth()->user();
         $plan = $user->plan;
+        $selectedAdminId = $request->input('admin_id');
 
         if (!$user->isSuperAdmin() && !$user->isAdmin()) {
             if (!$plan || !$plan->wa_gateway) {
@@ -37,12 +39,21 @@ class WhatsappController extends Controller
             ->first();
 
         // Ambil pelanggan yang punya Nomor HP saja
-        $customers = Customer::whereNotNull('phone')
-            ->where('phone', '!=', '')
-            ->orderBy('name', 'asc')
-            ->get();
+        $customerQuery = Customer::whereNotNull('phone')
+            ->where('phone', '!=', '');
 
-        return view('whatsapp.index', compact('setting', 'customers', 'globalAdsense'));
+        if ($user->role == 'superadmin' && $selectedAdminId) {
+            $customerQuery->where('admin_id', $selectedAdminId);
+        }
+
+        $customers = $customerQuery->orderBy('name', 'asc')->get();
+
+        $admins = [];
+        if ($user->role == 'superadmin') {
+            $admins = User::whereIn('role', ['admin', 'superadmin'])->get(['id', 'name', 'role']);
+        }
+
+        return view('whatsapp.index', compact('setting', 'customers', 'globalAdsense', 'admins', 'selectedAdminId'));
     }
 
     // Simpan Konfigurasi
@@ -228,23 +239,26 @@ class WhatsappController extends Controller
     public function getBroadcastTargets(Request $request)
     {
         $type = $request->type; // 'unpaid' atau 'all'
+        $adminId = $request->admin_id;
+        $user = auth()->user();
+
+        $query = Customer::whereNotNull('phone')
+            ->where('phone', '!=', '');
+
+        if ($user->role == 'superadmin' && $adminId) {
+            $query->where('admin_id', $adminId);
+        }
 
         if ($type == 'unpaid') {
             // Cari pelanggan yang punya invoice status != paid
             // Asumsi: Relasi customer -> invoices sudah ada
             // Atau query manual sederhana:
-            $targets = Customer::whereHas('invoices', function ($q) {
+            $query->whereHas('invoices', function ($q) {
                 $q->where('status', '!=', 'paid');
-            })
-                ->whereNotNull('phone')
-                ->get(['id', 'name', 'phone', 'monthly_price']); // Ambil monthly_price untuk variabel {tagihan}
-
-        } else {
-            // Semua Pelanggan
-            $targets = Customer::whereNotNull('phone')
-                ->where('phone', '!=', '')
-                ->get(['id', 'name', 'phone', 'monthly_price']);
+            });
         }
+
+        $targets = $query->get(['id', 'name', 'phone', 'monthly_price']);
 
         return response()->json($targets);
     }

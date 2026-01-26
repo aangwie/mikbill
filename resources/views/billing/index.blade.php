@@ -40,6 +40,17 @@
             </div>
             <form action="{{ route('billing.index') }}" method="GET"
                 class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                @if(auth()->user()->role == 'superadmin')
+                    <select name="admin_id"
+                        class="block w-full sm:w-48 rounded-md border-0 py-1.5 text-slate-900 dark:text-white dark:bg-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 dark:ring-slate-600 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6">
+                        <option value="">Semua Admin</option>
+                        @foreach($admins as $admin)
+                            <option value="{{ $admin->id }}" {{ $selectedAdminId == $admin->id ? 'selected' : '' }}>
+                                {{ $admin->name }}{{ $admin->id == auth()->id() ? ' (Self)' : '' }}
+                            </option>
+                        @endforeach
+                    </select>
+                @endif
                 <select name="month"
                     class="block w-full sm:w-40 rounded-md border-0 py-1.5 text-slate-900 dark:text-white dark:bg-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 dark:ring-slate-600 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6">
                     @for ($i = 1; $i <= 12; $i++)
