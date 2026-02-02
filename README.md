@@ -112,4 +112,24 @@ cd mikbill
 - **Jalankan Aplikasi Mikbill:** Buka cmd lalu ketik `php artisan serve`, akan terlihat host bisa di akses melalui port 8000 Misal `http://127.0.0.1:8000` atau `http://localhost:8000`
 
 ---
+
+## ⏰ Cron Job (Shared Hosting)
+
+Untuk menjalankan fitur otomatis (Isolir otomatis, Cleanup, dan **WhatsApp Terjadwal**), Anda perlu menambahkan Cron Job pada cPanel/Panel Hosting Anda:
+
+### 1. Laravel Scheduler (Direkomendasikan)
+Setup cron job setiap menit untuk menjalankan semua fitur terjadwal sekaligus:
+```bash
+* * * * * /usr/local/bin/php /home/username/public_html/artisan schedule:run >> /dev/null 2>&1
+```
+*(Sesuaikan `/usr/local/bin/php` dengan path PHP di hosting Anda dan `/home/username/public_html` dengan direktori root aplikasi).*
+
+### 2. Manual WhatsApp Process (Optional)
+Jika Anda hanya ingin menjalankan pemrosesan pesan WhatsApp secara manual/terpisah:
+```bash
+* * * * * /usr/local/bin/php /home/username/public_html/artisan whatsapp:process-scheduled >> /dev/null 2>&1
+```
+
+---
+
 Developed By : **Aang Wie**
