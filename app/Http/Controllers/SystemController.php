@@ -206,6 +206,31 @@ class SystemController extends Controller
     }
 
     /**
+     * Run database migrations manually
+     */
+    public function migrate()
+    {
+        $log = [];
+        try {
+            $log[] = ">>> RUNNING MIGRATIONS...";
+            $migrateOutput = $this->runCommandSafe('php artisan migrate --force 2>&1');
+            $log[] = $migrateOutput;
+
+            return back()->with([
+                'status' => 'success',
+                'message' => 'Database berhasil di-update!',
+                'log' => implode("\n", $log)
+            ]);
+        } catch (\Exception $e) {
+            return back()->with([
+                'status' => 'error',
+                'message' => 'Gagal menjalankan migrasi.',
+                'log' => $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
      * Run command without throwing exception
      */
     private function runCommandSafe($command)

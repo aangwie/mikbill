@@ -60,6 +60,15 @@
                         </button>
                     </form>
 
+                    <form action="{{ route('system.migrate') }}" method="POST"
+                        onsubmit="return confirm('Yakin ingin menjalankan migrasi database secara manual?');">
+                        @csrf
+                        <button type="submit"
+                            class="w-full sm:w-auto inline-flex items-center justify-center rounded-lg bg-slate-800 px-6 py-3 text-sm font-bold text-white shadow-sm hover:bg-slate-700 transition-all transform hover:-translate-y-0.5">
+                            <i class="fas fa-database mr-2 text-indigo-400"></i> Run Migration
+                        </button>
+                    </form>
+
                     <form action="{{ route('system.clear-cache') }}" method="POST">
                         @csrf
                         <button type="submit"

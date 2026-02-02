@@ -128,6 +128,10 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/whatsapp/broadcast/process', [WhatsappController::class, 'broadcastProcess'])->name('whatsapp.broadcast.process');
         // API Helper untuk Broadcast
         Route::get('/whatsapp/broadcast/targets', [WhatsappController::class, 'getBroadcastTargets'])->name('whatsapp.broadcast.targets');
+        Route::get('/whatsapp/customers', [WhatsappController::class, 'getCustomersForBroadcast'])->name('whatsapp.customers');
+        Route::post('/whatsapp/broadcast/schedule', [WhatsappController::class, 'scheduleBroadcast'])->name('whatsapp.broadcast.schedule');
+        Route::post('/whatsapp/broadcast/progress', [WhatsappController::class, 'updateBroadcastProgress'])->name('whatsapp.broadcast.progress');
+        Route::delete('/whatsapp/broadcast/schedule/{id}', [WhatsappController::class, 'destroyScheduled'])->name('whatsapp.broadcast.schedule.destroy');
         // Route Helper Gateway (Essential only)
         Route::post('/whatsapp/api-key', [WhatsappController::class, 'regenerateApiKey'])->name('whatsapp.apikey');
 
@@ -163,6 +167,7 @@ Route::middleware(['auth'])->group(function () {
             Route::post('/system/update', [SystemController::class, 'update'])->name('system.update');
             Route::post('/system/update-token', [SystemController::class, 'saveToken'])->name('system.saveToken');
             Route::post('/system/clear-cache', [SystemController::class, 'clearCache'])->name('system.clear-cache');
+            Route::post('/system/migrate', [SystemController::class, 'migrate'])->name('system.migrate');
 
             // MAIL SETTINGS
             Route::get('/mail/setting', [MailSettingController::class, 'index'])->name('mail.index');

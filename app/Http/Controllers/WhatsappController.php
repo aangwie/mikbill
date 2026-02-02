@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\WhatsappSetting;
 use App\Models\Customer;
 use App\Models\Invoice;
+use App\Models\ScheduledMessage;
 use App\Services\WhatsappService;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 
 class WhatsappController extends Controller
 {
@@ -42,7 +44,12 @@ class WhatsappController extends Controller
             ->orderBy('name', 'asc')
             ->get();
 
-        return view('whatsapp.index', compact('setting', 'customers', 'globalAdsense'));
+        // Fetch scheduled messages (history & queue)
+        $scheduledMessages = ScheduledMessage::orderBy('created_at', 'desc')
+            ->limit(50)
+            ->get();
+
+        return view('whatsapp.index', compact('setting', 'customers', 'globalAdsense', 'scheduledMessages'));
     }
 
     // Simpan Konfigurasi
@@ -227,27 +234,165 @@ class WhatsappController extends Controller
     // API: Ambil Daftar Target untuk Broadcast (Dipanggil AJAX)
     public function getBroadcastTargets(Request $request)
     {
-        $type = $request->type; // 'unpaid' atau 'all'
+        $type = $request->type; // 'unpaid', 'all', atau 'custom'
+        $customerIds = $request->customer_ids; // Array of customer IDs for custom selection
+        $whatsappAge = $request->whatsapp_age ?? '12+';
+
+        // Get max recipients based on WhatsApp age
+        $maxRecipients = ScheduledMessage::getMaxRecipients($whatsappAge);
 
         if ($type == 'unpaid') {
-            // Cari pelanggan yang punya invoice status != paid
-            // Asumsi: Relasi customer -> invoices sudah ada
-            // Atau query manual sederhana:
             $targets = Customer::whereHas('invoices', function ($q) {
                 $q->where('status', '!=', 'paid');
             })
                 ->whereNotNull('phone')
-                ->get(['id', 'name', 'phone', 'monthly_price']); // Ambil monthly_price untuk variabel {tagihan}
+                ->limit($maxRecipients)
+                ->get(['id', 'name', 'phone', 'monthly_price']);
 
+        } elseif ($type == 'custom' && !empty($customerIds)) {
+            // Custom selection - use provided customer IDs
+            $targets = Customer::whereIn('id', $customerIds)
+                ->whereNotNull('phone')
+                ->where('phone', '!=', '')
+                ->limit($maxRecipients)
+                ->get(['id', 'name', 'phone', 'monthly_price']);
         } else {
-            // Semua Pelanggan
+            // All customers
             $targets = Customer::whereNotNull('phone')
                 ->where('phone', '!=', '')
+                ->limit($maxRecipients)
                 ->get(['id', 'name', 'phone', 'monthly_price']);
         }
 
-        return response()->json($targets);
+        return response()->json([
+            'targets' => $targets,
+            'max_recipients' => $maxRecipients,
+            'total_available' => $targets->count()
+        ]);
     }
+
+    // API: Get customers for broadcast selection
+    public function getCustomersForBroadcast(Request $request)
+    {
+        $customers = Customer::whereNotNull('phone')
+            ->where('phone', '!=', '')
+            ->orderBy('name', 'asc')
+            ->get(['id', 'name', 'phone']);
+
+        return response()->json($customers);
+    }
+
+    // Schedule or immediately process broadcast
+    public function scheduleBroadcast(Request $request)
+    {
+        $request->validate([
+            'message' => 'required|string',
+            'selection_mode' => 'required|in:all,custom',
+            'whatsapp_age' => 'required|in:1-6,6-12,12+',
+            'schedule_mode' => 'required|in:now,scheduled',
+            'scheduled_at' => 'required_if:schedule_mode,scheduled|nullable|date',
+            'customer_ids' => 'required_if:selection_mode,custom|nullable|array',
+        ]);
+
+        $user = auth()->user();
+        $whatsappAge = $request->whatsapp_age;
+        $maxRecipients = ScheduledMessage::getMaxRecipients($whatsappAge);
+
+        // Get customer IDs based on selection mode
+        if ($request->selection_mode === 'custom') {
+            $customerIds = $request->customer_ids;
+        } else {
+            // All customers
+            $customerIds = Customer::whereNotNull('phone')
+                ->where('phone', '!=', '')
+                ->limit($maxRecipients)
+                ->pluck('id')
+                ->toArray();
+        }
+
+        // Enforce limit based on WhatsApp age
+        if (count($customerIds) > $maxRecipients) {
+            $customerIds = array_slice($customerIds, 0, $maxRecipients);
+        }
+
+        // Determine scheduled time
+        $scheduledAt = null;
+        if ($request->schedule_mode === 'scheduled' && $request->scheduled_at) {
+            $scheduledAt = Carbon::parse($request->scheduled_at);
+        }
+
+        // Create scheduled message record
+        $scheduledMessage = ScheduledMessage::create([
+            'admin_id' => $user->id,
+            'message' => $request->message,
+            'customer_ids' => $customerIds,
+            'whatsapp_age' => $whatsappAge,
+            'scheduled_at' => $scheduledAt,
+            'status' => $scheduledAt ? 'pending' : 'processing',
+            'total_count' => count($customerIds),
+        ]);
+
+        // If immediate send, return the customer list for AJAX processing
+        if (!$scheduledAt) {
+            $targets = Customer::whereIn('id', $customerIds)
+                ->whereNotNull('phone')
+                ->get(['id', 'name', 'phone', 'monthly_price']);
+
+            return response()->json([
+                'status' => true,
+                'mode' => 'immediate',
+                'scheduled_message_id' => $scheduledMessage->id,
+                'targets' => $targets,
+                'total' => count($customerIds),
+                'message' => 'Broadcast dimulai...'
+            ]);
+        }
+
+        // Scheduled for later
+        return response()->json([
+            'status' => true,
+            'mode' => 'scheduled',
+            'scheduled_message_id' => $scheduledMessage->id,
+            'scheduled_at' => $scheduledAt->format('d M Y H:i'),
+            'total' => count($customerIds),
+            'message' => 'Broadcast dijadwalkan untuk ' . $scheduledAt->format('d M Y H:i')
+        ]);
+    }
+
+    // Update scheduled message progress (called by AJAX during immediate broadcast)
+    public function updateBroadcastProgress(Request $request)
+    {
+        $request->validate([
+            'scheduled_message_id' => 'required|exists:scheduled_messages,id',
+            'success_count' => 'required|integer',
+            'failed_count' => 'required|integer',
+            'status' => 'required|in:processing,completed,failed',
+        ]);
+
+        $scheduledMessage = ScheduledMessage::find($request->scheduled_message_id);
+        $scheduledMessage->update([
+            'success_count' => $request->success_count,
+            'failed_count' => $request->failed_count,
+            'status' => $request->status,
+        ]);
+
+        return response()->json(['status' => true]);
+    }
+
+    public function destroyScheduled($id)
+    {
+        $message = ScheduledMessage::findOrFail($id);
+
+        // Security check: only allow owners or superadmins
+        if ($message->admin_id !== auth()->id() && !auth()->user()->isSuperAdmin()) {
+            return response()->json(['status' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        $message->delete();
+
+        return response()->json(['status' => true, 'message' => 'Jadwal pesan berhasil dihapus.']);
+    }
+
     public function regenerateApiKey()
     {
         $user = auth()->user();
