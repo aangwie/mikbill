@@ -206,7 +206,6 @@ class SystemController extends Controller
     }
 
     /**
-<<<<<<< HEAD
      * Run database migrations manually
      */
     public function migrate()
@@ -221,27 +220,11 @@ class SystemController extends Controller
                 'status' => 'success',
                 'message' => 'Database berhasil di-update!',
                 'log' => implode("\n", $log)
-=======
-     * Run database migration
-     */
-    public function runMigration()
-    {
-        try {
-            $output = $this->runCommandSafe('php artisan migrate --force 2>&1');
-
-            return back()->with([
-                'status' => 'success',
-                'message' => 'Database berhasil dimigrasi!',
-                'log' => ">>> DATABASE MIGRATION:\n" . $output
->>>>>>> 0beb2daa2c0d1279b6d90c25e1a6928a9cd9fe3c
             ]);
         } catch (\Exception $e) {
             return back()->with([
                 'status' => 'error',
-<<<<<<< HEAD
                 'message' => 'Gagal menjalankan migrasi.',
-=======
-                'message' => 'Gagal melakukan migrasi database.',
                 'log' => $e->getMessage()
             ]);
         }
@@ -256,7 +239,7 @@ class SystemController extends Controller
         $username = env('DB_USERNAME');
         $password = env('DB_PASSWORD');
         $host = env('DB_HOST', '127.0.0.1');
-        
+
         $filename = "backup-" . $database . "-" . date('Y-m-d-H-i-s') . ".sql";
         $path = storage_path('app/' . $filename);
 
@@ -271,10 +254,10 @@ class SystemController extends Controller
         $passwordFlag = !empty($password) ? "--password=\"{$password}\"" : "";
 
         $command = "\"{$mysqldump}\" --user={$username} {$passwordFlag} --host={$host} --protocol=tcp {$database} > \"{$path}\"";
-        
+
         try {
             $output = $this->runCommandSafe($command);
-            
+
             if (file_exists($path) && filesize($path) > 0) {
                 return response()->download($path)->deleteFileAfterSend(true);
             } else {
@@ -334,7 +317,6 @@ class SystemController extends Controller
             return back()->with([
                 'status' => 'error',
                 'message' => 'Gagal melakukan restore database.',
->>>>>>> 0beb2daa2c0d1279b6d90c25e1a6928a9cd9fe3c
                 'log' => $e->getMessage()
             ]);
         }

@@ -5,11 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\WhatsappSetting;
 use App\Models\Customer;
 use App\Models\Invoice;
-<<<<<<< HEAD
 use App\Models\ScheduledMessage;
-=======
 use App\Models\User;
->>>>>>> 0beb2daa2c0d1279b6d90c25e1a6928a9cd9fe3c
 use App\Services\WhatsappService;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
@@ -47,14 +44,6 @@ class WhatsappController extends Controller
         $customerQuery = Customer::whereNotNull('phone')
             ->where('phone', '!=', '');
 
-<<<<<<< HEAD
-        // Fetch scheduled messages (history & queue)
-        $scheduledMessages = ScheduledMessage::orderBy('created_at', 'desc')
-            ->limit(50)
-            ->get();
-
-        return view('whatsapp.index', compact('setting', 'customers', 'globalAdsense', 'scheduledMessages'));
-=======
         if ($user->role == 'superadmin' && $selectedAdminId) {
             $customerQuery->where('admin_id', $selectedAdminId);
         }
@@ -66,8 +55,12 @@ class WhatsappController extends Controller
             $admins = User::whereIn('role', ['admin', 'superadmin'])->get(['id', 'name', 'role']);
         }
 
-        return view('whatsapp.index', compact('setting', 'customers', 'globalAdsense', 'admins', 'selectedAdminId'));
->>>>>>> 0beb2daa2c0d1279b6d90c25e1a6928a9cd9fe3c
+        // Fetch scheduled messages (history & queue)
+        $scheduledMessages = ScheduledMessage::orderBy('created_at', 'desc')
+            ->limit(50)
+            ->get();
+
+        return view('whatsapp.index', compact('setting', 'customers', 'globalAdsense', 'scheduledMessages', 'admins', 'selectedAdminId'));
     }
 
     // Simpan Konfigurasi
@@ -252,46 +245,14 @@ class WhatsappController extends Controller
     // API: Ambil Daftar Target untuk Broadcast (Dipanggil AJAX)
     public function getBroadcastTargets(Request $request)
     {
-<<<<<<< HEAD
         $type = $request->type; // 'unpaid', 'all', atau 'custom'
         $customerIds = $request->customer_ids; // Array of customer IDs for custom selection
         $whatsappAge = $request->whatsapp_age ?? '12+';
+        $adminId = $request->admin_id;
+        $user = auth()->user();
 
         // Get max recipients based on WhatsApp age
         $maxRecipients = ScheduledMessage::getMaxRecipients($whatsappAge);
-
-        if ($type == 'unpaid') {
-            $targets = Customer::whereHas('invoices', function ($q) {
-                $q->where('status', '!=', 'paid');
-            })
-                ->whereNotNull('phone')
-                ->limit($maxRecipients)
-                ->get(['id', 'name', 'phone', 'monthly_price']);
-
-        } elseif ($type == 'custom' && !empty($customerIds)) {
-            // Custom selection - use provided customer IDs
-            $targets = Customer::whereIn('id', $customerIds)
-                ->whereNotNull('phone')
-                ->where('phone', '!=', '')
-                ->limit($maxRecipients)
-                ->get(['id', 'name', 'phone', 'monthly_price']);
-        } else {
-            // All customers
-            $targets = Customer::whereNotNull('phone')
-                ->where('phone', '!=', '')
-                ->limit($maxRecipients)
-                ->get(['id', 'name', 'phone', 'monthly_price']);
-        }
-
-        return response()->json([
-            'targets' => $targets,
-            'max_recipients' => $maxRecipients,
-            'total_available' => $targets->count()
-        ]);
-=======
-        $type = $request->type; // 'unpaid' atau 'all'
-        $adminId = $request->admin_id;
-        $user = auth()->user();
 
         $query = Customer::whereNotNull('phone')
             ->where('phone', '!=', '');
@@ -301,18 +262,21 @@ class WhatsappController extends Controller
         }
 
         if ($type == 'unpaid') {
-            // Cari pelanggan yang punya invoice status != paid
-            // Asumsi: Relasi customer -> invoices sudah ada
-            // Atau query manual sederhana:
             $query->whereHas('invoices', function ($q) {
                 $q->where('status', '!=', 'paid');
             });
+        } elseif ($type == 'custom' && !empty($customerIds)) {
+            $query->whereIn('id', $customerIds);
         }
 
-        $targets = $query->get(['id', 'name', 'phone', 'monthly_price']);
+        $targets = $query->limit($maxRecipients)
+            ->get(['id', 'name', 'phone', 'monthly_price']);
 
-        return response()->json($targets);
->>>>>>> 0beb2daa2c0d1279b6d90c25e1a6928a9cd9fe3c
+        return response()->json([
+            'targets' => $targets,
+            'max_recipients' => $maxRecipients,
+            'total_available' => $targets->count()
+        ]);
     }
 
     // API: Get customers for broadcast selection

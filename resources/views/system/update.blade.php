@@ -76,15 +76,6 @@
                             <i class="fas fa-broom mr-2 text-amber-500"></i> Clear Cache
                         </button>
                     </form>
-
-                    <form action="{{ route('system.migrate') }}" method="POST"
-                        onsubmit="return confirm('Yakin ingin menjalankan migrasi database? Pastikan Anda sudah membackup database.');">
-                        @csrf
-                        <button type="submit"
-                            class="w-full sm:w-auto inline-flex items-center justify-center rounded-lg bg-white border border-slate-300 px-6 py-3 text-sm font-bold text-slate-700 shadow-sm hover:bg-slate-50 hover:text-slate-900 transition-all transform hover:-translate-y-0.5">
-                            <i class="fas fa-database mr-2 text-indigo-500"></i> Run Migration
-                        </button>
-                    </form>
                 </div>
             </div>
         </div>
@@ -107,9 +98,10 @@
                         <h4 class="text-sm font-semibold text-slate-700 flex items-center">
                             <i class="fas fa-download mr-2 text-indigo-500"></i> Backup Database
                         </h4>
-                        <p class="text-xs text-slate-500 italic">Unduh salinan basis data Anda saat ini dalam format .sql.</p>
-                        <a href="{{ route('system.backup') }}" 
-                           class="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-bold text-white shadow-md hover:bg-indigo-500 transition-all">
+                        <p class="text-xs text-slate-500 italic">Unduh salinan basis data Anda saat ini dalam format .sql.
+                        </p>
+                        <a href="{{ route('system.backup') }}"
+                            class="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-bold text-white shadow-md hover:bg-indigo-500 transition-all">
                             <i class="fas fa-file-export mr-2"></i> Download Backup (.sql)
                         </a>
                     </div>
@@ -119,14 +111,14 @@
                         <h4 class="text-sm font-semibold text-slate-700 flex items-center">
                             <i class="fas fa-upload mr-2 text-amber-500"></i> Restore Database
                         </h4>
-                        <form action="{{ route('system.restore') }}" method="POST" enctype="multipart/form-data" 
-                              onsubmit="return confirm('PERINGATAN: Restore akan menghapus data yang ada dan menggantinya dengan isi file backup. Lanjutkan?');">
+                        <form action="{{ route('system.restore') }}" method="POST" enctype="multipart/form-data"
+                            onsubmit="return confirm('PERINGATAN: Restore akan menghapus data yang ada dan menggantinya dengan isi file backup. Lanjutkan?');">
                             @csrf
                             <div class="space-y-3">
                                 <input type="file" name="backup_file" required accept=".sql"
-                                       class="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 transition-all">
-                                <button type="submit" 
-                                        class="inline-flex items-center justify-center rounded-lg bg-amber-500 px-4 py-2 text-sm font-bold text-white shadow-md hover:bg-amber-400 transition-all">
+                                    class="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 transition-all">
+                                <button type="submit"
+                                    class="inline-flex items-center justify-center rounded-lg bg-amber-500 px-4 py-2 text-sm font-bold text-white shadow-md hover:bg-amber-400 transition-all">
                                     <i class="fas fa-file-import mr-2"></i> Upload & Restore
                                 </button>
                             </div>
