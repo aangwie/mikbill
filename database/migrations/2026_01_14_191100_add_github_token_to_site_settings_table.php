@@ -10,9 +10,11 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::table('site_settings', function (Blueprint $table) {
-            $table->string('github_token')->nullable()->after('terms_conditions');
-        });
+        if (!Schema::hasColumn('site_settings', 'github_token')) {
+            Schema::table('site_settings', function (Blueprint $table) {
+                $table->string('github_token')->nullable()->after('terms_conditions');
+            });
+        }
     }
 
     /**
@@ -20,8 +22,10 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::table('site_settings', function (Blueprint $table) {
-            $table->dropColumn('github_token');
-        });
+        if (Schema::hasColumn('site_settings', 'github_token')) {
+            Schema::table('site_settings', function (Blueprint $table) {
+                $table->dropColumn('github_token');
+            });
+        }
     }
 };
