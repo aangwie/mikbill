@@ -36,31 +36,27 @@ class RouterSettingController extends Controller
     public function store(Request $request)
     {
         $user = auth()->user();
+        $isSuperAdmin = $user->isSuperAdmin();
         $plan = $user->plan;
 
-        // Jika tidak punya paket (null), kita beri default limit atau paksa punya?
-        // Untuk amannya, jika null asumsikan starter (tapi lebih baik dibuat via seeder/default)
-        if (!$plan) {
-            return back()->with('error', 'Silakan hubungi Superadmin untuk aktivasi paket layanan Anda.');
-        }
-
-        if (!$request->id) { // Jika INSERT baru
-            $currentCount = RouterSetting::count();
-            if ($currentCount >= $plan->max_routers) {
-                return back()->with('error', "Limit Router Tercapai! Paket Anda (" . $plan->name . ") hanya mendukung maksimal " . $plan->max_routers . " router.");
+        // Skip plan and limit checks for superadmin
+        if (!$isSuperAdmin) {
+            // Jika tidak punya paket (null), kita beri default limit atau paksa punya?
+            if (!$plan) {
+                return back()->with('error', 'Silakan hubungi Superadmin untuk aktivasi paket layanan Anda.');
             }
-        }
 
-        $request->validate([
-            'label' => 'required',
-            'host' => 'required',
-            'username' => 'required',
-            'port' => 'required|numeric',
-        ]);
+            if (!$request->id) { // Jika INSERT baru
+                $currentCount = RouterSetting::count();
+                if ($currentCount >= $plan->max_routers) {
+                    return back()->with('error', "Limit Router Tercapai! Paket Anda (" . $plan->name . ") hanya mendukung maksimal " . $plan->max_routers . " router.");
+                }
+            }
 
-        // Restriction: Only activated users can add routers
-        if (!$request->id && !auth()->user()->is_activated) {
-            return back()->with('error', 'Akun Admin Anda belum diaktifkan oleh Superadmin untuk menambah router.');
+            // Restriction: Only activated users can add routers
+            if (!$request->id && !$user->is_activated) {
+                return back()->with('error', 'Akun Admin Anda belum diaktifkan oleh Superadmin untuk menambah router.');
+            }
         }
 
         $data = [
