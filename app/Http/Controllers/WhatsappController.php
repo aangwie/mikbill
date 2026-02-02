@@ -5,7 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\WhatsappSetting;
 use App\Models\Customer;
 use App\Models\Invoice;
+<<<<<<< HEAD
 use App\Models\ScheduledMessage;
+=======
+use App\Models\User;
+>>>>>>> 0beb2daa2c0d1279b6d90c25e1a6928a9cd9fe3c
 use App\Services\WhatsappService;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
@@ -19,12 +23,13 @@ class WhatsappController extends Controller
         $this->waService = $waService;
     }
 
-    public function index()
+    public function index(Request $request)
     {
         $user = auth()->user();
         $plan = $user->plan;
+        $selectedAdminId = $request->input('admin_id');
 
-        if (!$user->isSuperAdmin()) {
+        if (!$user->isSuperAdmin() && !$user->isAdmin()) {
             if (!$plan || !$plan->wa_gateway) {
                 return redirect()->route('router.index')->with('warning', 'Layanan WhatsApp Gateway tidak tersedia di paket Anda. Silakan upgrade paket.');
             }
@@ -39,17 +44,30 @@ class WhatsappController extends Controller
             ->first();
 
         // Ambil pelanggan yang punya Nomor HP saja
-        $customers = Customer::whereNotNull('phone')
-            ->where('phone', '!=', '')
-            ->orderBy('name', 'asc')
-            ->get();
+        $customerQuery = Customer::whereNotNull('phone')
+            ->where('phone', '!=', '');
 
+<<<<<<< HEAD
         // Fetch scheduled messages (history & queue)
         $scheduledMessages = ScheduledMessage::orderBy('created_at', 'desc')
             ->limit(50)
             ->get();
 
         return view('whatsapp.index', compact('setting', 'customers', 'globalAdsense', 'scheduledMessages'));
+=======
+        if ($user->role == 'superadmin' && $selectedAdminId) {
+            $customerQuery->where('admin_id', $selectedAdminId);
+        }
+
+        $customers = $customerQuery->orderBy('name', 'asc')->get();
+
+        $admins = [];
+        if ($user->role == 'superadmin') {
+            $admins = User::whereIn('role', ['admin', 'superadmin'])->get(['id', 'name', 'role']);
+        }
+
+        return view('whatsapp.index', compact('setting', 'customers', 'globalAdsense', 'admins', 'selectedAdminId'));
+>>>>>>> 0beb2daa2c0d1279b6d90c25e1a6928a9cd9fe3c
     }
 
     // Simpan Konfigurasi
@@ -234,6 +252,7 @@ class WhatsappController extends Controller
     // API: Ambil Daftar Target untuk Broadcast (Dipanggil AJAX)
     public function getBroadcastTargets(Request $request)
     {
+<<<<<<< HEAD
         $type = $request->type; // 'unpaid', 'all', atau 'custom'
         $customerIds = $request->customer_ids; // Array of customer IDs for custom selection
         $whatsappAge = $request->whatsapp_age ?? '12+';
@@ -269,6 +288,31 @@ class WhatsappController extends Controller
             'max_recipients' => $maxRecipients,
             'total_available' => $targets->count()
         ]);
+=======
+        $type = $request->type; // 'unpaid' atau 'all'
+        $adminId = $request->admin_id;
+        $user = auth()->user();
+
+        $query = Customer::whereNotNull('phone')
+            ->where('phone', '!=', '');
+
+        if ($user->role == 'superadmin' && $adminId) {
+            $query->where('admin_id', $adminId);
+        }
+
+        if ($type == 'unpaid') {
+            // Cari pelanggan yang punya invoice status != paid
+            // Asumsi: Relasi customer -> invoices sudah ada
+            // Atau query manual sederhana:
+            $query->whereHas('invoices', function ($q) {
+                $q->where('status', '!=', 'paid');
+            });
+        }
+
+        $targets = $query->get(['id', 'name', 'phone', 'monthly_price']);
+
+        return response()->json($targets);
+>>>>>>> 0beb2daa2c0d1279b6d90c25e1a6928a9cd9fe3c
     }
 
     // API: Get customers for broadcast selection

@@ -31,6 +31,7 @@ class BillingController extends Controller
         // 1. Ambil Filter Bulan & Tahun (Default: Bulan Ini)
         $month = $request->input('month', date('n'));
         $year = $request->input('year', date('Y'));
+        $selectedAdminId = $request->input('admin_id');
 
         // Query Tagihan dengan Filter
         $invoiceQuery = Invoice::with('customer')
@@ -42,6 +43,10 @@ class BillingController extends Controller
         if ($user->role == 'operator') {
             $invoiceQuery->whereHas('customer', function ($q) use ($user) {
                 $q->where('operator_id', $user->id);
+            });
+        } elseif ($user->role == 'superadmin' && $selectedAdminId) {
+            $invoiceQuery->whereHas('customer', function ($q) use ($selectedAdminId) {
+                $q->where('admin_id', $selectedAdminId);
             });
         }
 
@@ -84,7 +89,7 @@ class BillingController extends Controller
             $admins = User::whereIn('role', ['admin', 'superadmin'])->get(['id', 'name', 'role']);
         }
 
-        return view('billing.index', compact('invoices', 'customers', 'month', 'year', 'total_bill', 'paid_bill', 'unpaid_bill', 'admins'));
+        return view('billing.index', compact('invoices', 'customers', 'month', 'year', 'total_bill', 'paid_bill', 'unpaid_bill', 'admins', 'selectedAdminId'));
     }
 
     public function generate(Request $request)

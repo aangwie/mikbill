@@ -148,6 +148,20 @@
                         <form action="{{ route('whatsapp.send.customer') }}" method="POST">
                             @csrf
                             <div class="space-y-4">
+                                @if(auth()->user()->role == 'superadmin')
+                                <div>
+                                    <label class="block text-sm font-bold text-slate-900 mb-1">Filter Berdasarkan Admin</label>
+                                    <select id="multiAdminFilter"
+                                        class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                                        <option value="">Semua Admin</option>
+                                        @foreach($admins as $admin)
+                                            <option value="{{ $admin->id }}" {{ $selectedAdminId == $admin->id ? 'selected' : '' }}>
+                                                {{ $admin->name }}{{ $admin->id == auth()->id() ? ' (Self)' : '' }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                @endif
                                 <div>
                                     <label class="block text-sm font-bold text-slate-900 mb-1">Pilih Penerima</label>
                                     <select name="customer_ids[]" id="multiUserSelect"
@@ -191,6 +205,20 @@
                             </div>
                         </div>
                         <div class="space-y-4">
+                            @if(auth()->user()->role == 'superadmin')
+                            <div>
+                                <label class="block text-sm font-bold text-slate-900 mb-1">Filter Berdasarkan Admin</label>
+                                <select id="unpaidAdminFilter"
+                                    class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                                    <option value="">Semua Admin</option>
+                                    @foreach($admins as $admin)
+                                        <option value="{{ $admin->id }}" {{ $selectedAdminId == $admin->id ? 'selected' : '' }}>
+                                            {{ $admin->name }}{{ $admin->id == auth()->id() ? ' (Self)' : '' }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            @endif
                             <div>
                                 <label class="block text-sm font-bold text-slate-900 mb-1">Isi Pesan Template</label>
                                 <textarea id="msgUnpaid" rows="6"
@@ -625,6 +653,7 @@
         var scheduledMessageId = null;
 
         $(document).ready(function () {
+<<<<<<< HEAD
             // Initialize Select2 for Multi-Send tab
             $('#multiUserSelect').select2({
                 placeholder: "Cari pelanggan...",
@@ -674,6 +703,30 @@
             now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
             const minDateTime = now.toISOString().slice(0, 16);
             $('#scheduledAtInput').attr('min', minDateTime);
+=======
+            $('#multiUserSelect').select2({ placeholder: "Cari pelanggan...", allowClear: true, width: '100%' });
+
+            // Update Multi-Send targets when Admin filter changes
+            $('#multiAdminFilter').on('change', function() {
+                const adminId = $(this).val();
+                const userSelect = $('#multiUserSelect');
+                
+                userSelect.prop('disabled', true);
+                
+                $.get("{{ route('whatsapp.broadcast.targets') }}", { type: 'all', admin_id: adminId }, function(response) {
+                    userSelect.empty();
+                    response.forEach(function(target) {
+                        const option = new Option(target.name + ' (' + target.phone + ')', target.id, false, false);
+                        userSelect.append(option);
+                    });
+                    userSelect.trigger('change');
+                    userSelect.prop('disabled', false);
+                }).fail(function() {
+                    alert('Gagal mengambil data pelanggan.');
+                    userSelect.prop('disabled', false);
+                });
+            });
+>>>>>>> 0beb2daa2c0d1279b6d90c25e1a6928a9cd9fe3c
         });
 
         // Enhanced Broadcast Function
@@ -829,6 +882,7 @@
         // Original Broadcast Logic for Unpaid tab
         function prepareBroadcast(type) {
             messageToSend = type === 'unpaid' ? $('#msgUnpaid').val() : $('#msgAll').val();
+<<<<<<< HEAD
             if (!messageToSend.trim()) {
                 Swal.fire({
                     icon: 'error',
@@ -837,6 +891,12 @@
                 });
                 return;
             }
+=======
+            let adminId = type === 'unpaid' ? $('#unpaidAdminFilter').val() : '';
+            
+            if (!messageToSend.trim()) { alert("Pesan tidak boleh kosong!"); return; }
+            if (!confirm("Mulai broadcast " + type.toUpperCase() + "?")) return;
+>>>>>>> 0beb2daa2c0d1279b6d90c25e1a6928a9cd9fe3c
 
             Swal.fire({
                 title: 'Mulai Broadcast?',
@@ -861,6 +921,7 @@
             $('#statSuccess').text('0');
             $('#statFail').text('0');
 
+<<<<<<< HEAD
             $.get("{{ route('whatsapp.broadcast.targets') }}", { type: type }, function (response) {
                 queue = response.targets || response;
                 total = queue.length;
@@ -868,6 +929,11 @@
                     $('#logList').html('<div class="text-amber-400 text-center">Tidak ada target ditemukan.</div>');
                     return;
                 }
+=======
+            $.get("{{ route('whatsapp.broadcast.targets') }}", { type: type, admin_id: adminId }, function (response) {
+                queue = response; total = queue.length;
+                if (total === 0) { $('#logList').html('<div class="text-amber-400 text-center">Tidak ada target ditemukan.</div>'); return; }
+>>>>>>> 0beb2daa2c0d1279b6d90c25e1a6928a9cd9fe3c
                 $('#logList').html('');
                 current = 0;
                 successCount = 0;

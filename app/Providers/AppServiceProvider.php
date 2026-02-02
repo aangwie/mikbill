@@ -17,14 +17,20 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         // LOGIKA FAVICON GLOBAL
-        // Cek dulu apakah tabel companies sudah ada (agar tidak error saat migrate fresh)
-        if (Schema::hasTable('companies')) {
-            // Kita ambil company milik user yang punya role superadmin
-            $company = Company::whereHas('admin', function ($q) {
-                $q->where('role', 'superadmin');
-            })->first();
+        // Cek dulu apakah tabel companies sudah ada dan aplikasi tidak sedang berjalan di console (migrate, dsb)
+        // Agar tidak error saat migrate fresh atau saat kolom belum ada
+        if (!app()->runningInConsole() && Schema::hasTable('companies')) {
+            $company = null;
 
-            // Jika tidak ada (mungkin belum set), ambil yang pertama saja
+            // Cek apakah kolom admin_id sudah ada (karena ditambahkan lewat migrasi)
+            if (Schema::hasColumn('companies', 'admin_id')) {
+                // Kita ambil company milik user yang punya role superadmin
+                $company = Company::whereHas('admin', function ($q) {
+                    $q->where('role', 'superadmin');
+                })->first();
+            }
+
+            // Jika tidak ada (mungkin belum set atau kolom belum ada), ambil yang pertama saja
             if (!$company) {
                 $company = Company::first();
             }

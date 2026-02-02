@@ -17,8 +17,8 @@
 
         <!-- Toolbar -->
         <div class="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            @if(Auth::user()->role !== 'superadmin')
-                <div class="flex gap-2">
+            <div class="flex flex-wrap gap-2">
+                @if(Auth::user()->role !== 'superadmin')
                     <button @click="showAddModal = true"
                         class="inline-flex items-center rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 transition-all">
                         <i class="fas fa-plus mr-2"></i> Tambah Baru
@@ -27,8 +27,23 @@
                         class="inline-flex items-center rounded-lg bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 shadow-sm hover:bg-slate-50 dark:hover:bg-slate-600 transition-all">
                         <i class="fas fa-sync mr-2 text-slate-400"></i> Sinkron
                     </button>
-                </div>
-            @endif
+                @endif
+
+                @if(Auth::user()->isSuperAdmin())
+                    <form action="{{ route('customers.index') }}" method="GET" class="flex items-center gap-2">
+                        <select name="admin_id" onchange="this.form.submit()" 
+                            class="block w-48 rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white text-sm focus:ring-primary-500 transition-all shadow-sm">
+                            <option value="">-- Semua Admin --</option>
+                            @foreach($admins as $adm)
+                                <option value="{{ $adm->id }}" {{ $selectedAdmin == $adm->id ? 'selected' : '' }}>
+                                    {{ $adm->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </form>
+                @endif
+            </div>
+            
             <div class="flex gap-2">
                 @if(Auth::user()->role !== 'superadmin')
                     <button @click="showImportModal = true"
@@ -87,12 +102,19 @@
                                 </td>
                                 <td class="px-4 py-3 align-middle">
                                     <div class="font-medium text-slate-900 dark:text-white">{{ $c->name }}</div>
-                                    <div class="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1">
-                                        <i class="fas fa-user-circle"></i> {{ $c->pppoe_username }}
-                                        @if(!empty($c->notes))
-                                            <span class="ml-2 text-amber-500 cursor-help" title="{{ $c->notes }}">
-                                                <i class="fas fa-sticky-note"></i>
-                                            </span>
+                                    <div class="text-xs text-slate-500 dark:text-slate-400 flex flex-col gap-0.5">
+                                        <div class="flex items-center gap-1">
+                                            <i class="fas fa-user-circle"></i> {{ $c->pppoe_username }}
+                                            @if(!empty($c->notes))
+                                                <span class="ml-2 text-amber-500 cursor-help" title="{{ $c->notes }}">
+                                                    <i class="fas fa-sticky-note"></i>
+                                                </span>
+                                            @endif
+                                        </div>
+                                        @if(Auth::user()->isSuperAdmin())
+                                            <div class="text-[10px] text-primary-500 font-semibold uppercase tracking-tight">
+                                                Milik: {{ $c->admin->name ?? 'System' }}
+                                            </div>
                                         @endif
                                     </div>
                                 </td>
