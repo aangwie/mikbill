@@ -156,6 +156,9 @@
                             class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider py-3 px-4 bg-slate-50 dark:bg-slate-700/50">
                             Pelanggan</th>
                         <th
+                            class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider py-3 px-4 bg-slate-50 dark:bg-slate-700/50">
+                            Due Date</th>
+                        <th
                             class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider py-3 px-4 bg-slate-50 dark:bg-slate-700/50 hidden sm:table-cell">
                             Bulan/Tahun</th>
                         <th
@@ -189,6 +192,9 @@
                                         {{ $inv->customer->internet_number ?? '-' }}
                                     </div>
                                 </td>
+                                <td class="px-4 py-3 align-middle text-sm text-slate-600 dark:text-slate-300">
+                                    {{ \Carbon\Carbon::parse($inv->due_date)->isoFormat('DD/MM/YYYY') }}
+                                </td>
                                 <td
                                     class="px-4 py-3 align-middle hidden sm:table-cell text-sm text-slate-600 dark:text-slate-300">
                                     {{ \Carbon\Carbon::parse($inv->due_date)->isoFormat('MMMM Y') }}
@@ -201,12 +207,13 @@
                                 </td>
                                 <td class="px-4 py-3 align-middle">
                                     @if($inv->status == 'paid')
-                                        <span
-                                            class="inline-flex items-center rounded-full bg-green-50 dark:bg-green-900/30 px-2 py-1 text-xs font-medium text-green-700 dark:text-green-400 ring-1 ring-inset ring-green-600/20 dark:ring-green-500/30">Lunas</span>
+                                        <div class="flex items-center justify-center">
+                                            <span class="h-3 w-3 rounded-full bg-green-500" title="Lunas" alt="Lunas"></span>
+                                        </div>
                                     @else
-                                        <span
-                                            class="inline-flex items-center rounded-full bg-red-50 dark:bg-red-900/30 px-2 py-1 text-xs font-medium text-red-700 dark:text-red-400 ring-1 ring-inset ring-red-600/10 dark:ring-red-500/30">Belum
-                                            Bayar</span>
+                                        <div class="flex items-center justify-center">
+                                            <span class="h-3 w-3 rounded-full bg-red-500" title="Belum Bayar" alt="Belum Bayar"></span>
+                                        </div>
                                     @endif
                                 </td>
                                 <td class="px-4 py-3 align-middle text-right">
