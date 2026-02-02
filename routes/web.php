@@ -99,6 +99,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/billing/generate-process', [BillingController::class, 'processItem'])->name('billing.process');
     Route::get('/billing/{id}/print', [BillingController::class, 'print'])->name('billing.print');
     Route::delete('/billing/bulk-destroy', [BillingController::class, 'bulkDestroy'])->name('billing.bulkDestroy');
+    Route::post('/billing/bulk-update-due-date', [BillingController::class, 'bulkUpdateDueDate'])->name('billing.bulkUpdateDueDate');
     Route::delete('/billing/{id}', [BillingController::class, 'destroy'])->name('billing.destroy');
 
     // Report

@@ -543,4 +543,30 @@ class BillingController extends Controller
 
         return view('billing.invoice', compact('invoice', 'company', 'logoBase64'));
     }
+
+    public function bulkUpdateDueDate(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:invoices,id',
+            'due_date' => 'required|date',
+        ]);
+
+        $user = Auth::user();
+        $count = 0;
+
+        $invoices = Invoice::whereIn('id', $request->ids)->get();
+        foreach ($invoices as $inv) {
+            // Permission Check
+            if ($user->role == 'operator' && $inv->customer->operator_id != $user->id)
+                continue;
+            if ($user->role == 'admin' && $inv->admin_id != $user->id)
+                continue;
+
+            $inv->update(['due_date' => $request->due_date]);
+            $count++;
+        }
+
+        return back()->with('success', "Berhasil memperbarui jatuh tempo untuk $count tagihan.");
+    }
 }

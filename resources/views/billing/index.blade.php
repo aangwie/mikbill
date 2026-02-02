@@ -11,6 +11,7 @@
                                 showGenerateModal: false,
                                 showPayModal: false,
                                 showDeleteModal: false,
+                                showDueDateModal: false,
                                 selectedInvoices: [],
                                 toggleAll() {
                                     if (this.selectedInvoices.length === {{ count($invoices->where('status', 'unpaid')) }}) {
@@ -127,6 +128,12 @@
                     style="display: none;" x-transition>
                     <i class="fas fa-check-double mr-2"></i> Bayar Sekaligus (<span
                         x-text="selectedInvoices.length"></span>)
+                </button>
+
+                <button @click="showDueDateModal = true" x-show="selectedInvoices.length > 0"
+                    class="inline-flex items-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 transition-all ml-2"
+                    style="display: none;" x-transition>
+                    <i class="fas fa-calendar-alt mr-2"></i> Ubah Jatuh Tempo (<span x-text="selectedInvoices.length"></span>)
                 </button>
 
                 <button @click="showDeleteModal = true" x-show="selectedInvoices.length > 0"
@@ -583,6 +590,50 @@
                             <button type="button" @click="showDeleteModal = false"
                                 class="mt-3 inline-flex w-full justify-center rounded-md bg-white dark:bg-slate-700 px-3 py-2 text-sm font-semibold text-slate-900 dark:text-slate-200 shadow-sm ring-1 ring-inset ring-slate-300 dark:ring-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600 sm:mt-0 sm:w-auto">Batal</button>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL MASS UPDATE DUE DATE (Alpine) -->
+        <div x-show="showDueDateModal" class="relative z-500" style="display:none;">
+            <div class="fixed inset-0 bg-slate-900/75 backdrop-blur-sm"></div>
+            <div class="fixed inset-0 z-10 overflow-y-auto">
+                <div class="flex min-h-full items-center justify-center p-4">
+                    <div class="relative transform overflow-hidden rounded-2xl bg-white dark:bg-slate-800 text-left shadow-xl transition-all sm:w-full sm:max-w-lg"
+                        @click.away="showDueDateModal = false">
+                        <form action="{{ route('billing.bulkUpdateDueDate') }}" method="POST">
+                            @csrf
+                            <div class="bg-white dark:bg-slate-800 px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
+                                <div
+                                    class="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/50 mb-4">
+                                    <i class="fas fa-calendar-edit text-blue-600 dark:text-blue-400 text-xl"></i>
+                                </div>
+                                <h3 class="text-xl font-bold leading-6 text-center text-slate-900 dark:text-white mb-2">
+                                    Ubah Jatuh Tempo Massal</h3>
+                                <p class="text-sm text-center text-slate-500 dark:text-slate-400 mb-6">
+                                    Anda akan mengubah tanggal FALL DUE/TANGGAL BAYAR pada <span class="font-bold" x-text="selectedInvoices.length"></span> tagihan terpilih.
+                                </p>
+
+                                <div class="space-y-4">
+                                    <template x-for="id in selectedInvoices">
+                                        <input type="hidden" name="ids[]" :value="id">
+                                    </template>
+
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-900 dark:text-slate-300">Pilih Tanggal Baru</label>
+                                        <input type="date" name="due_date" required
+                                            class="mt-1 block w-full rounded-md border-0 py-1.5 text-slate-900 dark:text-white dark:bg-slate-700 ring-1 ring-inset ring-slate-300 dark:ring-slate-600 focus:ring-2 focus:ring-primary-600 sm:text-sm sm:leading-6">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bg-slate-50 dark:bg-slate-700/50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+                                <button type="submit"
+                                    class="inline-flex w-full justify-center rounded-md bg-blue-600 px-3 py-2 text-sm font-bold text-white shadow-sm hover:bg-blue-500 sm:ml-3 sm:w-auto">Update</button>
+                                <button type="button" @click="showDueDateModal = false"
+                                    class="mt-3 inline-flex w-full justify-center rounded-md bg-white dark:bg-slate-700 px-3 py-2 text-sm font-semibold text-slate-900 dark:text-slate-200 shadow-sm ring-1 ring-inset ring-slate-300 dark:ring-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600 sm:mt-0 sm:w-auto">Batal</button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
