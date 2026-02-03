@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Services\MikrotikService;
 use App\Models\RouterSetting; // 1. Import Model RouterSetting
+use App\Models\SiteSetting;
 use Illuminate\Http\Request;
 
 class PppoeController extends Controller
@@ -23,6 +24,15 @@ class PppoeController extends Controller
         if (!$routerInfo) {
             $routerInfo = RouterSetting::first();
         }
+
+        $siteSetting = SiteSetting::first();
+        if (!$siteSetting) {
+            $siteSetting = SiteSetting::create([
+                'about_us' => 'Selamat datang di layanan kami.',
+                'terms_conditions' => 'Syarat dan ketentuan berlaku.',
+                'connection_mode' => 'auto'
+            ]);
+        }
         
         // 3. Cek Status Koneksi
         $isConnected = $this->mikrotik->isConnected();
@@ -30,10 +40,7 @@ class PppoeController extends Controller
         // Jika belum ada settingan sama sekali
         if (!$routerInfo) {
             return view('pppoe.index', [
-                'routerInfo' => null,
-                'isConnected' => false,
-                'secrets' => [],
-                'actives' => collect([]),
+                'siteSetting' => $siteSetting,
                 'error' => 'Konfigurasi Router belum diatur. Silakan ke menu Pengaturan -> Konfigurasi Mikrotik.'
             ]);
         }
@@ -45,6 +52,7 @@ class PppoeController extends Controller
                 'isConnected' => false,
                 'secrets' => [],
                 'actives' => collect([]),
+                'siteSetting' => $siteSetting,
                 'error' => "Gagal terhubung ke Mikrotik ({$routerInfo->host}:{$routerInfo->port}). Cek koneksi/VPN."
             ]);
         }
@@ -62,6 +70,7 @@ class PppoeController extends Controller
                 'isConnected' => true,       // Kirim status koneksi
                 'secrets' => $secrets,
                 'actives' => $activeCollection,
+                'siteSetting' => $siteSetting,
                 'error' => null
             ]);
 
@@ -71,6 +80,7 @@ class PppoeController extends Controller
                 'isConnected' => false,
                 'secrets' => [],
                 'actives' => collect([]),
+                'siteSetting' => $siteSetting,
                 'error' => 'Terjadi kesalahan: ' . $e->getMessage()
             ]);
         }

@@ -15,6 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->validateCsrfTokens(except: [
             '/payment/webhook',
         ]);
+        $middleware->append(\App\Http\Middleware\ForceConnectionMode::class);
         $middleware->alias([
             'role' => \App\Http\Middleware\CheckRole::class,
         ]);

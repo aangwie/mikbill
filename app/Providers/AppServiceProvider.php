@@ -5,7 +5,9 @@ namespace App\Providers;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\URL;
 use App\Models\Company;
+use App\Models\SiteSetting;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -43,6 +45,18 @@ class AppServiceProvider extends ServiceProvider
             // Bagikan variable $global_favicon dan $company ke semua view
             View::share('global_favicon', $faviconUrl);
             View::share('company', $company);
+        }
+
+        // Force HTTPS or HTTP based on SiteSetting
+        if (!app()->runningInConsole() && Schema::hasTable('site_settings')) {
+            $setting = SiteSetting::first();
+            if ($setting) {
+                if ($setting->connection_mode === 'https') {
+                    URL::forceScheme('https');
+                } elseif ($setting->connection_mode === 'http') {
+                    URL::forceScheme('http');
+                }
+            }
         }
     }
 }

@@ -13,7 +13,8 @@ class SiteSettingController extends Controller
         if (!$setting) {
             $setting = SiteSetting::create([
                 'about_us' => 'Selamat datang di layanan kami.',
-                'terms_conditions' => 'Syarat dan ketentuan berlaku.'
+                'terms_conditions' => 'Syarat dan ketentuan berlaku.',
+                'connection_mode' => 'auto'
             ]);
         }
         return view('superadmin.settings.site', compact('setting'));
@@ -22,7 +23,7 @@ class SiteSettingController extends Controller
     public function update(Request $request)
     {
         $setting = SiteSetting::first();
-        $setting->update($request->only(['about_us', 'terms_conditions']));
+        $setting->update($request->only(['about_us', 'terms_conditions', 'connection_mode']));
 
         return back()->with('success', 'Informasi situs berhasil diperbarui.');
     }
