@@ -21,6 +21,7 @@ use App\Http\Controllers\PlanController;
 use App\Http\Controllers\PaymentSettingController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\SiteSettingController;
+use App\Http\Controllers\ControlController;
 
 
 /*
@@ -189,6 +190,11 @@ Route::middleware(['auth'])->group(function () {
             Route::post('/settings/site', [SiteSettingController::class, 'update'])->name('site.update');
             Route::post('/users/{id}/suspend', [UserController::class, 'suspendSubscription'])->name('users.suspend');
             Route::post('/users/{id}/remove-plan', [UserController::class, 'removeSubscription'])->name('users.removePlan');
+
+            // KONTROL MENU
+            Route::get('/kontrol', [ControlController::class, 'index'])->name('control.index');
+            Route::post('/kontrol/clear-login-logs', [ControlController::class, 'clearLoginLogs'])->name('control.clearLoginLogs');
+            Route::post('/kontrol/clear-cron-logs', [ControlController::class, 'clearCronLogs'])->name('control.clearCronLogs');
         });
 
         Route::resource('users', UserController::class);

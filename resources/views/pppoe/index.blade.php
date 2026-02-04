@@ -77,53 +77,6 @@
         </div>
     </div>
 
-    <!-- Superadmin Connection Settings -->
-    @if(auth()->user()->role == 'superadmin')
-    <div class="mb-8 grid grid-cols-1 md:grid-cols-1 gap-6">
-        <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700">
-            <div class="flex items-center justify-between mb-4">
-                <div class="flex items-center gap-3">
-                    <div class="p-2 bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 rounded-lg">
-                        <i class="fas fa-shield-alt"></i>
-                    </div>
-                    <div>
-                        <h3 class="text-sm font-bold text-slate-900 dark:text-white">Pengaturan Koneksi (Superadmin Only)</h3>
-                        <p class="text-xs text-slate-500 dark:text-slate-400">Paksa protokol koneksi yang digunakan oleh sistem.</p>
-                    </div>
-                </div>
-            </div>
-
-            <form action="{{ route('site.update') }}" method="POST" class="flex flex-wrap items-center gap-4">
-                @csrf
-                <div class="flex items-center gap-4 bg-slate-50 dark:bg-slate-900/50 p-1.5 rounded-xl border border-slate-200 dark:border-slate-700">
-                    <label class="flex items-center cursor-pointer">
-                        <input type="radio" name="connection_mode" value="auto" class="sr-only peer" {{ ($siteSetting->connection_mode ?? 'auto') == 'auto' ? 'checked' : '' }}>
-                        <div class="px-4 py-2 rounded-lg text-sm font-medium transition-all peer-checked:bg-white dark:peer-checked:bg-slate-700 peer-checked:text-primary-600 dark:peer-checked:text-primary-400 peer-checked:shadow-sm text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">
-                            Automatic
-                        </div>
-                    </label>
-                    <label class="flex items-center cursor-pointer">
-                        <input type="radio" name="connection_mode" value="http" class="sr-only peer" {{ ($siteSetting->connection_mode ?? 'auto') == 'http' ? 'checked' : '' }}>
-                        <div class="px-4 py-2 rounded-lg text-sm font-medium transition-all peer-checked:bg-white dark:peer-checked:bg-slate-700 peer-checked:text-primary-600 dark:peer-checked:text-primary-400 peer-checked:shadow-sm text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">
-                            HTTP
-                        </div>
-                    </label>
-                    <label class="flex items-center cursor-pointer">
-                        <input type="radio" name="connection_mode" value="https" class="sr-only peer" {{ ($siteSetting->connection_mode ?? 'auto') == 'https' ? 'checked' : '' }}>
-                        <div class="px-4 py-2 rounded-lg text-sm font-medium transition-all peer-checked:bg-white dark:peer-checked:bg-slate-700 peer-checked:text-primary-600 dark:peer-checked:text-primary-400 peer-checked:shadow-sm text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">
-                            HTTPS
-                        </div>
-                    </label>
-                </div>
-
-                <button type="submit" class="inline-flex items-center px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold rounded-xl transition-all shadow-sm hover:shadow-md focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-slate-800">
-                    <i class="fas fa-save mr-2"></i>
-                    Simpan Perubahan
-                </button>
-            </form>
-        </div>
-    </div>
-    @endif
 
     <!-- Stats Cards -->
     @if(isset($secrets) && isset($actives))

@@ -8,6 +8,9 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\URL;
 use App\Models\Company;
 use App\Models\SiteSetting;
+use Illuminate\Support\Facades\Event;
+use Illuminate\Auth\Events\Login;
+use App\Listeners\LogSuccessfulLogin;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -58,5 +61,11 @@ class AppServiceProvider extends ServiceProvider
                 }
             }
         }
+
+        // Register Login Listener
+        Event::listen(
+            Login::class,
+            LogSuccessfulLogin::class
+        );
     }
 }

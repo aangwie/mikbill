@@ -9,7 +9,7 @@
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <!-- Left Column: Form / Request Activation -->
         <div class="lg:col-span-1">
-            @if(auth()->user()->is_activated)
+            @if(auth()->user()->is_activated || auth()->user()->isSuperAdmin())
                 <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 sticky top-24 overflow-hidden">
                     <div class="bg-primary-600 dark:bg-primary-700 px-6 py-4 border-b border-primary-500 dark:border-primary-600">
                         <h3 class="text-base font-bold text-white flex items-center" id="formTitle">
@@ -158,7 +158,7 @@
                                         <div class="text-xs text-slate-500 dark:text-slate-400">User: {{ $r->username }}</div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        @if(auth()->user()->is_activated)
+                                        @if(auth()->user()->is_activated || auth()->user()->isSuperAdmin())
                                             <div class="flex justify-end gap-2">
                                                 @if(!$r->is_active)
                                                     <form action="{{ route('router.activate', $r->id) }}" method="POST">
