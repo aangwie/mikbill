@@ -7,26 +7,26 @@
 @section('content')
 
     <div x-data="{ 
-                                showCreateModal: false, 
-                                showGenerateModal: false,
-                                showPayModal: false,
-                                showDeleteModal: false,
-                                showDueDateModal: false,
-                                selectedInvoices: [],
-                                toggleAll() {
-                                    if (this.selectedInvoices.length === {{ count($invoices->where('status', 'unpaid')) }}) {
-                                        this.selectedInvoices = [];
-                                    } else {
-                                        this.selectedInvoices = [
-                                            @foreach($invoices as $inv)
-                                                @if($inv->status == 'unpaid')
-                                                    {{ $inv->id }},
-                                                @endif
-                                            @endforeach
-                                        ];
+                                    showCreateModal: false, 
+                                    showGenerateModal: false,
+                                    showPayModal: false,
+                                    showDeleteModal: false,
+                                    showDueDateModal: false,
+                                    selectedInvoices: [],
+                                    toggleAll() {
+                                        if (this.selectedInvoices.length === {{ count($invoices->where('status', 'unpaid')) }}) {
+                                            this.selectedInvoices = [];
+                                        } else {
+                                            this.selectedInvoices = [
+                                                @foreach($invoices as $inv)
+                                                    @if($inv->status == 'unpaid')
+                                                        {{ $inv->id }},
+                                                    @endif
+                                                @endforeach
+                                            ];
+                                        }
                                     }
-                                }
-                            }">
+                                }">
 
         <!-- Filter Bar -->
         <div class="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -133,7 +133,8 @@
                 <button @click="showDueDateModal = true" x-show="selectedInvoices.length > 0"
                     class="inline-flex items-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 transition-all ml-2"
                     style="display: none;" x-transition>
-                    <i class="fas fa-calendar-alt mr-2"></i> Ubah Jatuh Tempo (<span x-text="selectedInvoices.length"></span>)
+                    <i class="fas fa-calendar-alt mr-2"></i> Ubah Jatuh Tempo (<span
+                        x-text="selectedInvoices.length"></span>)
                 </button>
 
                 <button @click="showDeleteModal = true" x-show="selectedInvoices.length > 0"
@@ -219,7 +220,8 @@
                                         </div>
                                     @else
                                         <div class="flex items-center justify-center">
-                                            <span class="h-3 w-3 rounded-full bg-red-500" title="Belum Bayar" alt="Belum Bayar"></span>
+                                            <span class="h-3 w-3 rounded-full bg-red-500" title="Belum Bayar"
+                                                alt="Belum Bayar"></span>
                                         </div>
                                     @endif
                                 </td>
@@ -270,7 +272,7 @@
         </div>
 
         <!-- MODAL CREATE MANUAL (Alpine) -->
-        <div x-show="showCreateModal" class="relative z-500" style="display:none;">
+        <div x-show="showCreateModal" id="showCreateModalContainer" class="relative z-500" style="display:none;">
             <div class="fixed inset-0 bg-slate-900/75 backdrop-blur-sm"></div>
             <div class="fixed inset-0 z-10 overflow-y-auto">
                 <div class="flex min-h-full items-center justify-center p-4">
@@ -297,22 +299,32 @@
                                         <div>
                                             <label
                                                 class="block text-sm font-medium text-slate-900 dark:text-slate-300">Bulan</label>
-                                            <select name="month"
+                                            <select id="manualMonth"
                                                 class="mt-1 block w-full rounded-md border-0 py-1.5 text-slate-900 dark:text-white dark:bg-slate-700 ring-1 ring-inset ring-slate-300 dark:ring-slate-600 sm:text-sm">
                                                 @for($i = 1; $i <= 12; $i++)
-                                                    <option value="{{ $i }}" {{ date('n') == $i ? 'selected' : '' }}>{{ $i }}
-                                                </option> @endfor
+                                                    <option value="{{ $i }}" {{ date('n') == $i ? 'selected' : '' }}>
+                                                        {{ DateTime::createFromFormat('!m', $i)->format('F') }}</option>
+                                                @endfor
                                             </select>
                                         </div>
                                         <div>
                                             <label
                                                 class="block text-sm font-medium text-slate-900 dark:text-slate-300">Tahun</label>
-                                            <select name="year"
+                                            <select id="manualYear"
                                                 class="mt-1 block w-full rounded-md border-0 py-1.5 text-slate-900 dark:text-white dark:bg-slate-700 ring-1 ring-inset ring-slate-300 dark:ring-slate-600 sm:text-sm">
-                                                <option value="{{ date('Y') }}">{{ date('Y') }}</option>
-                                                <option value="{{ date('Y') + 1 }}">{{ date('Y') + 1 }}</option>
+                                                @for($y = date('Y') + 1; $y >= date('Y') - 1; $y--)
+                                                    <option value="{{ $y }}" {{ date('Y') == $y ? 'selected' : '' }}>{{ $y }}
+                                                    </option>
+                                                @endfor
                                             </select>
                                         </div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-900 dark:text-slate-300">Jatuh
+                                            Tempo (Due Date)</label>
+                                        <input type="date" name="due_date" id="manualDueDate" value="{{ date('Y-m-d') }}"
+                                            required
+                                            class="mt-1 block w-full rounded-md border-0 py-1.5 text-slate-900 dark:text-white dark:bg-slate-700 ring-1 ring-inset ring-slate-300 dark:ring-slate-600 focus:ring-2 focus:ring-primary-600 sm:text-sm sm:leading-6">
                                     </div>
                                     <div>
                                         <label class="block text-sm font-medium text-slate-900 dark:text-slate-300">Nominal
@@ -390,8 +402,9 @@
                                             class="block text-sm font-medium text-slate-900 dark:text-slate-300">Tahun</label>
                                         <select id="genYear"
                                             class="mt-1 block w-full rounded-md border-0 py-1.5 text-slate-900 dark:text-white dark:bg-slate-700 ring-1 ring-inset ring-slate-300 dark:ring-slate-600 sm:text-sm">
-                                            <option value="{{ date('Y') }}">{{ date('Y') }}</option>
-                                            <option value="{{ date('Y') + 1 }}">{{ date('Y') + 1 }}</option>
+                                            @for($y = date('Y') + 1; $y >= date('Y') - 1; $y--)
+                                                <option value="{{ $y }}" {{ date('Y') == $y ? 'selected' : '' }}>{{ $y }}</option>
+                                            @endfor
                                         </select>
                                     </div>
                                 </div>
@@ -612,7 +625,8 @@
                                 <h3 class="text-xl font-bold leading-6 text-center text-slate-900 dark:text-white mb-2">
                                     Ubah Jatuh Tempo Massal</h3>
                                 <p class="text-sm text-center text-slate-500 dark:text-slate-400 mb-6">
-                                    Anda akan mengubah tanggal FALL DUE/TANGGAL BAYAR pada <span class="font-bold" x-text="selectedInvoices.length"></span> tagihan terpilih.
+                                    Anda akan mengubah tanggal FALL DUE/TANGGAL BAYAR pada <span class="font-bold"
+                                        x-text="selectedInvoices.length"></span> tagihan terpilih.
                                 </p>
 
                                 <div class="space-y-4">
@@ -621,7 +635,8 @@
                                     </template>
 
                                     <div>
-                                        <label class="block text-sm font-medium text-slate-900 dark:text-slate-300">Pilih Tanggal Baru</label>
+                                        <label class="block text-sm font-medium text-slate-900 dark:text-slate-300">Pilih
+                                            Tanggal Baru</label>
                                         <input type="date" name="due_date" required
                                             class="mt-1 block w-full rounded-md border-0 py-1.5 text-slate-900 dark:text-white dark:bg-slate-700 ring-1 ring-inset ring-slate-300 dark:ring-slate-600 focus:ring-2 focus:ring-primary-600 sm:text-sm sm:leading-6">
                                     </div>
@@ -658,6 +673,50 @@
         .select2-container--default .select2-selection--single .select2-selection__arrow {
             top: 6px;
         }
+
+        /* Dark Mode Fix for Select2 */
+        .dark .select2-container--default .select2-selection--single {
+            background-color: #334155;
+            /* slate-700 */
+            border-color: #475569;
+            /* slate-600 */
+            color: #f8fafc;
+            /* slate-50 */
+        }
+
+        .dark .select2-container--default .select2-selection--single .select2-selection__rendered {
+            color: #f8fafc;
+        }
+
+        .dark .select2-dropdown {
+            background-color: #1e293b;
+            /* slate-800 */
+            border-color: #475569;
+            /* slate-600 */
+            color: #f8fafc;
+        }
+
+        .dark .select2-container--default .select2-results__option {
+            color: #cbd5e1;
+            /* slate-300 */
+        }
+
+        .dark .select2-container--default .select2-results__option--highlighted[aria-selected] {
+            background-color: #4f46e5;
+            /* primary-600 */
+            color: white;
+        }
+
+        .dark .select2-container--default .select2-search--dropdown .select2-search__field {
+            background-color: #334155;
+            border-color: #475569;
+            color: white;
+        }
+
+        /* General Visibility Fix */
+        .select2-results__option {
+            padding: 8px 12px;
+        }
     </style>
 @endpush
 
@@ -670,7 +729,27 @@
         $(document).ready(function () {
             $('#tableBilling').DataTable({ responsive: true });
             // Init Select2 inside modal
-            $('.select2-modal').select2({ width: '100%' });
+            $('.select2-modal').select2({
+                width: '100%',
+                dropdownParent: $('#showCreateModalContainer') // Target container if needed, but let's try standard first
+            });
+
+            // Sync Manual Due Date when Month/Year changes
+            $('#manualMonth, #manualYear').on('change', function () {
+                const month = $('#manualMonth').val();
+                const year = $('#manualYear').val();
+                // Get current day from manualDueDate or default to today's day
+                const currentVal = $('#manualDueDate').val();
+                let day = new Date().getDate();
+                if (currentVal) {
+                    day = new Date(currentVal).getDate();
+                }
+
+                // Format YYYY-MM-DD
+                const formattedMonth = month.toString().padStart(2, '0');
+                const formattedDay = day.toString().padStart(2, '0');
+                $('#manualDueDate').val(`${year}-${formattedMonth}-${formattedDay}`);
+            });
         });
 
         async function startGenerate() {
@@ -687,7 +766,7 @@
                 }
             @endif
 
-                        if (!dueDate) {
+                            if (!dueDate) {
                 alert('Pilih tanggal jatuh tempo!');
                 return;
             }
