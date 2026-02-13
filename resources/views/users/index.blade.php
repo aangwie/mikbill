@@ -146,7 +146,7 @@
                                         @if($user->plan)
                                             <div class="text-xs font-bold text-slate-900 dark:text-white">{{ $user->plan->name }}</div>
                                             <div class="text-[10px] text-slate-500 dark:text-slate-400">
-                                                Berakhir: {{ $user->plan_expires_at ? $user->plan_expires_at->format('d/m/Y') : '-' }}
+                                                Berakhir: {{ ($user->plan_expires_at instanceof \Carbon\Carbon) ? $user->plan_expires_at->format('d/m/Y') : '-' }}
                                             </div>
                                             @if($user->plan_expires_at && $user->plan_expires_at->isPast())
                                                 <span class="text-[10px] text-red-500 font-bold uppercase">Sudah Kadaluarsa</span>
@@ -165,7 +165,7 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <div class="flex justify-end gap-2">
-                                        <button @click="openEditModal({{ json_encode($user) }})"
+                                        <button @click="openEditModal({{ json_encode($user->makeHidden(['plan', 'parent'])) }})"
                                             class="text-amber-500 hover:text-amber-700 dark:hover:text-amber-400 p-1.5 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg transition-colors"
                                             title="Edit">
                                             <i class="fas fa-edit"></i>

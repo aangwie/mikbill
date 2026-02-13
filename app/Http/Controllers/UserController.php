@@ -22,7 +22,7 @@ class UserController extends Controller
     public function index()
     {
         $user = Auth::user();
-        $query = User::with('plan')->orderBy('created_at', 'desc');
+        $query = User::with(['plan', 'parent'])->orderBy('created_at', 'desc');
 
         if ($user->isAdmin()) {
             // Admin bisa lihat dirinya sendiri dan operator miliknya
