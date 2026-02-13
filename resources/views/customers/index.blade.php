@@ -18,7 +18,6 @@
         <!-- Toolbar -->
         <div class="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div class="flex flex-wrap gap-2">
-                @if(Auth::user()->role !== 'superadmin')
                     <button @click="showAddModal = true"
                         class="inline-flex items-center rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 transition-all">
                         <i class="fas fa-plus mr-2"></i> Tambah Baru
@@ -27,7 +26,6 @@
                         class="inline-flex items-center rounded-lg bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 shadow-sm hover:bg-slate-50 dark:hover:bg-slate-600 transition-all">
                         <i class="fas fa-sync mr-2 text-slate-400"></i> Sinkron
                     </button>
-                @endif
 
                 @if(Auth::user()->isSuperAdmin())
                     <form action="{{ route('customers.index') }}" method="GET" class="flex items-center gap-2">
@@ -45,22 +43,18 @@
             </div>
             
             <div class="flex gap-2">
-                @if(Auth::user()->role !== 'superadmin')
-                    <button @click="showImportModal = true"
-                        class="inline-flex items-center rounded-lg bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 shadow-sm hover:bg-slate-50 dark:hover:bg-slate-600 transition-all">
-                        <i class="fas fa-file-upload mr-2 text-blue-500"></i> Impor
-                    </button>
-                @endif
+                <button @click="showImportModal = true"
+                    class="inline-flex items-center rounded-lg bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 shadow-sm hover:bg-slate-50 dark:hover:bg-slate-600 transition-all">
+                    <i class="fas fa-file-upload mr-2 text-blue-500"></i> Impor
+                </button>
                 <a href="{{ route('customers.export') }}"
                     class="inline-flex items-center rounded-lg bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 shadow-sm hover:bg-slate-50 dark:hover:bg-slate-600 transition-all">
                     <i class="fas fa-file-excel mr-2 text-green-600"></i> Ekspor
                 </a>
-                @if(Auth::user()->role !== 'superadmin')
-                    <button @click="showDeleteAllModal = true"
-                        class="inline-flex items-center rounded-lg bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-900/50 px-3 py-2 text-sm font-medium text-rose-600 dark:text-rose-400 shadow-sm hover:bg-rose-100 dark:hover:bg-rose-900/40 transition-all">
-                        <i class="fas fa-trash-alt mr-2"></i> Hapus Semua
-                    </button>
-                @endif
+                <button @click="showDeleteAllModal = true"
+                    class="inline-flex items-center rounded-lg bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-900/50 px-3 py-2 text-sm font-medium text-rose-600 dark:text-rose-400 shadow-sm hover:bg-rose-100 dark:hover:bg-rose-900/40 transition-all">
+                    <i class="fas fa-trash-alt mr-2"></i> Hapus Semua
+                </button>
             </div>
         </div>
 
@@ -153,12 +147,10 @@
                                             data-notes="{{ $c->notes }}">
                                             <i class="fas fa-pencil-alt"></i>
                                         </button>
-                                        @if(Auth::user()->role !== 'superadmin')
-                                            <button type="button" onclick="confirmDelete('{{ $c->id }}', '{{ $c->name }}')"
-                                                class="p-1.5 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors">
-                                                <i class="fas fa-trash-alt"></i>
-                                            </button>
-                                        @endif
+                                        <button type="button" onclick="confirmDelete('{{ $c->id }}', '{{ $c->name }}')"
+                                            class="p-1.5 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </button>
                                     </div>
                                 </td>
                             </tr>
@@ -362,8 +354,7 @@
                                                 <div class="mt-1 flex rounded-md shadow-sm">
                                                     <input type="text" name="internet_number" id="editInet"
                                                         class="block w-full rounded-l-md border-0 py-1.5 text-slate-900 dark:text-white dark:bg-slate-700 ring-1 ring-inset ring-slate-300 dark:ring-slate-600 sm:text-sm"
-                                                        required @if(Auth::user()->role === 'superadmin') readonly disabled
-                                                        @endif>
+                                                        required>
                                                     <button type="button" onclick="generateRandomInetEdit()"
                                                         class="relative -ml-px inline-flex items-center gap-x-1.5 rounded-r-md px-3 py-2 text-sm font-semibold text-slate-600 dark:text-slate-300 ring-1 ring-inset ring-slate-300 dark:ring-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700"><i
                                                             class="fas fa-random"></i></button>
@@ -372,26 +363,22 @@
                                             <div><label
                                                     class="block text-sm font-medium text-slate-900 dark:text-white">Nama
                                                     Pelanggan</label><input type="text" name="name" id="editName"
-                                                    class="mt-1 block w-full rounded-md border-0 py-1.5 ring-1 ring-inset ring-slate-300 dark:ring-slate-600 text-slate-900 dark:text-white bg-white dark:bg-slate-700 sm:text-sm"
-                                                    @if(Auth::user()->role === 'superadmin') readonly disabled @endif>
+                                                    class="mt-1 block w-full rounded-md border-0 py-1.5 ring-1 ring-inset ring-slate-300 dark:ring-slate-600 text-slate-900 dark:text-white bg-white dark:bg-slate-700 sm:text-sm">
                                             </div>
                                             <div><label class="block text-sm font-medium text-slate-900 dark:text-white">No.
                                                     HP</label><input type="text" name="phone" id="editPhone"
-                                                    class="mt-1 block w-full rounded-md border-0 py-1.5 ring-1 ring-inset ring-slate-300 dark:ring-slate-600 text-slate-900 dark:text-white bg-white dark:bg-slate-700 sm:text-sm"
-                                                    @if(Auth::user()->role === 'superadmin') readonly disabled @endif>
+                                                    class="mt-1 block w-full rounded-md border-0 py-1.5 ring-1 ring-inset ring-slate-300 dark:ring-slate-600 text-slate-900 dark:text-white bg-white dark:bg-slate-700 sm:text-sm">
                                             </div>
                                             <div><label
                                                     class="block text-sm font-medium text-slate-900 dark:text-white">Harga
                                                     Paket</label><input type="number" name="monthly_price" id="editPrice"
-                                                    class="mt-1 block w-full rounded-md border-0 py-1.5 ring-1 ring-inset ring-slate-300 dark:ring-slate-600 text-slate-900 dark:text-white bg-white dark:bg-slate-700 sm:text-sm"
-                                                    @if(Auth::user()->role === 'superadmin') readonly disabled @endif>
+                                                    class="mt-1 block w-full rounded-md border-0 py-1.5 ring-1 ring-inset ring-slate-300 dark:ring-slate-600 text-slate-900 dark:text-white bg-white dark:bg-slate-700 sm:text-sm">
                                             </div>
                                             <div>
                                                 <label
                                                     class="block text-sm font-medium text-slate-900 dark:text-white">Operator</label>
                                                 <select name="operator_id" id="editOperator"
-                                                    class="mt-1 block w-full rounded-md border-0 py-1.5 ring-1 ring-inset ring-slate-300 dark:ring-slate-600 text-slate-900 dark:text-white bg-white dark:bg-slate-700 sm:text-sm"
-                                                    @if(Auth::user()->role === 'superadmin') disabled @endif>
+                                                    class="mt-1 block w-full rounded-md border-0 py-1.5 ring-1 ring-inset ring-slate-300 dark:ring-slate-600 text-slate-900 dark:text-white bg-white dark:bg-slate-700 sm:text-sm">
                                                     <option value="">-- Admin Langsung --</option>
                                                     @if(isset($operators)) @foreach($operators as $op) <option
                                                     value="{{ $op->id }}">{{ $op->name }}</option> @endforeach @endif
@@ -400,9 +387,7 @@
                                             <div><label
                                                     class="block text-sm font-medium text-slate-700 dark:text-slate-300">Catatan</label><textarea
                                                     name="notes" id="editNotes" rows="2"
-                                                    class="mt-1 block w-full rounded-md border-0 py-1.5 ring-1 ring-inset ring-slate-300 dark:ring-slate-600 text-slate-900 dark:text-white bg-white dark:bg-slate-700 sm:text-sm"
-                                                    @if(Auth::user()->role === 'superadmin') readonly disabled
-                                                    @endif></textarea>
+                                                    class="mt-1 block w-full rounded-md border-0 py-1.5 ring-1 ring-inset ring-slate-300 dark:ring-slate-600 text-slate-900 dark:text-white bg-white dark:bg-slate-700 sm:text-sm"></textarea>
                                             </div>
                                         </div>
                                         <div class="mt-6 pt-4 border-t border-slate-100 dark:border-slate-700">
@@ -410,8 +395,7 @@
                                                 Internet
                                                 (Profile)</label>
                                             <select name="profile" id="editProfile"
-                                                class="mt-2 block w-full rounded-md border-0 py-1.5 pl-3 pr-10 ring-1 ring-inset ring-slate-300 dark:ring-slate-600 text-slate-900 dark:text-white bg-white dark:bg-slate-700 focus:ring-2 focus:ring-primary-600 sm:text-sm sm:leading-6"
-                                                @if(Auth::user()->role === 'superadmin') disabled @endif>
+                                                class="mt-2 block w-full rounded-md border-0 py-1.5 pl-3 pr-10 ring-1 ring-inset ring-slate-300 dark:ring-slate-600 text-slate-900 dark:text-white bg-white dark:bg-slate-700 focus:ring-2 focus:ring-primary-600 sm:text-sm sm:leading-6">
                                                 @if(isset($profiles)) @foreach($profiles as $p) <option
                                                 value="{{ $p['name'] }}">{{ $p['name'] }}</option> @endforeach @else
                                                     <option value="default">Default</option> @endif
@@ -430,26 +414,21 @@
                                             class="h-64 w-full rounded-lg border border-slate-300 mb-4 z-10 relative"></div>
                                         <div class="grid grid-cols-2 gap-4 mb-4">
                                             <input type="text" name="latitude" id="editLat"
-                                                class="block w-full rounded-md border-0 py-1.5 text-xs bg-slate-50 dark:bg-slate-700 dark:text-white ring-1 ring-inset ring-slate-200 dark:ring-slate-600"
-                                                @if(Auth::user()->role === 'superadmin') readonly disabled @endif>
+                                                class="block w-full rounded-md border-0 py-1.5 text-xs bg-slate-50 dark:bg-slate-700 dark:text-white ring-1 ring-inset ring-slate-200 dark:ring-slate-600">
                                             <input type="text" name="longitude" id="editLng"
-                                                class="block w-full rounded-md border-0 py-1.5 text-xs bg-slate-50 dark:bg-slate-700 dark:text-white ring-1 ring-inset ring-slate-200 dark:ring-slate-600"
-                                                @if(Auth::user()->role === 'superadmin') readonly disabled @endif>
+                                                class="block w-full rounded-md border-0 py-1.5 text-xs bg-slate-50 dark:bg-slate-700 dark:text-white ring-1 ring-inset ring-slate-200 dark:ring-slate-600">
                                         </div>
                                         <div><label class="block text-sm font-medium text-slate-900 dark:text-white">Alamat
                                                 Lengkap</label><textarea name="address" id="editAddress" rows="3"
-                                                class="mt-1 block w-full rounded-md border-0 py-1.5 ring-1 ring-inset ring-slate-300 dark:ring-slate-600 text-slate-900 dark:text-white bg-white dark:bg-slate-700 sm:text-sm"
-                                                @if(Auth::user()->role === 'superadmin') readonly disabled @endif></textarea>
+                                                class="mt-1 block w-full rounded-md border-0 py-1.5 ring-1 ring-inset ring-slate-300 dark:ring-slate-600 text-slate-900 dark:text-white bg-white dark:bg-slate-700 sm:text-sm"></textarea>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                             <div class="bg-amber-50 dark:bg-slate-700/50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
-                                @if(Auth::user()->role !== 'superadmin')
                                     <button type="submit"
                                         class="inline-flex w-full justify-center rounded-md bg-amber-600 px-3 py-2 text-sm font-bold text-white shadow-sm hover:bg-amber-500 sm:ml-3 sm:w-auto">Update
                                         Data</button>
-                                @endif
                                 <button type="button" @click="showEditModal = false"
                                     class="mt-3 inline-flex w-full justify-center rounded-md bg-white dark:bg-slate-700 px-3 py-2 text-sm font-semibold text-slate-900 dark:text-slate-200 shadow-sm ring-1 ring-inset ring-slate-300 dark:ring-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600 sm:mt-0 sm:w-auto">
                                     {{ Auth::user()->role === 'superadmin' ? 'Tutup' : 'Batal' }}

@@ -59,16 +59,19 @@ class CustomerController extends Controller
     public function store(Request $request)
     {
         $user = auth()->user();
-        $plan = $user->plan;
+        if (!$user->isSuperAdmin()) {
+            $admin = $user->isAdmin() ? $user : $user->parent;
+            $plan = $admin->plan;
 
-        if (!$plan) {
-            return back()->with('error', 'Layanan Anda belum diaktifkan (Belum memiliki paket).');
-        }
+            if (!$plan) {
+                return back()->with('error', 'Layanan Anda belum diaktifkan (Belum memiliki paket).');
+            }
 
-        if (!$request->id) { // New customer
-            $currentCount = Customer::count();
-            if ($currentCount >= $plan->max_customers) {
-                return back()->with('error', "Limit Pelanggan Tercapai! Paket Anda (" . $plan->name . ") hanya mendukung maksimal " . $plan->max_customers . " pelanggan.");
+            if (!$request->id) { // New customer
+                $currentCount = Customer::where('admin_id', $admin->id)->count();
+                if ($currentCount >= $plan->max_customers) {
+                    return back()->with('error', "Limit Pelanggan Tercapai! Paket Anda (" . $plan->name . ") hanya mendukung maksimal " . $plan->max_customers . " pelanggan.");
+                }
             }
         }
 
@@ -207,20 +210,27 @@ class CustomerController extends Controller
         }
 
         $user = auth()->user();
-        $admin = $user->isAdmin() ? $user : $user->parent;
-        $plan = $admin->plan;
+        $admin = $user->isSuperAdmin() ? ($user->isSuperAdmin() && $request->admin_id ? User::find($request->admin_id) : $user) : ($user->isAdmin() ? $user : $user->parent);
+        
+        // If superadmin but no admin selected/found, fallback to current user
+        if (!$admin) $admin = $user;
 
         $customer = Customer::where('admin_id', $admin->id)->where('pppoe_username', $secret['name'])->first();
 
         // Check Plan Limit (Total Pelanggan)
-        if ($plan && $plan->max_customers > 0 && !$customer) {
-            $currentCount = Customer::where('admin_id', $admin->id)->count();
-            if ($currentCount >= $plan->max_customers) {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => "Limit pelanggan ({$plan->max_customers}) tercapai. Sinkronisasi dihentikan.",
-                    'stop' => true
-                ], 403);
+        if (!$user->isSuperAdmin()) {
+            $admin = $user->isAdmin() ? $user : $user->parent;
+            $plan = $admin->plan;
+
+            if ($plan && $plan->max_customers > 0 && !$customer) {
+                $currentCount = Customer::where('admin_id', $admin->id)->count();
+                if ($currentCount >= $plan->max_customers) {
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => "Limit pelanggan ({$plan->max_customers}) tercapai. Sinkronisasi dihentikan.",
+                        'stop' => true
+                    ], 403);
+                }
             }
         }
 
