@@ -58,8 +58,8 @@
                         Plans
                     </a>
                     @endif
-                    <!-- Billing (Operator & Superadmin) -->
-                    @if(auth()->user()->role == 'operator' || auth()->user()->isSuperAdmin())
+                    <!-- Billing (Admin, Operator & Superadmin) -->
+                    @if(auth()->user()->isAdmin() || auth()->user()->role == 'operator' || auth()->user()->isSuperAdmin())
                         <a href="{{ route('billing.index') }}"
                             class="{{ request()->routeIs('billing.index') ? 'border-[#352f99] text-gray-900' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700' }} inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium transition-colors duration-200">
                             <i
@@ -435,7 +435,7 @@
                 class="block border-l-4 {{ request()->routeIs('maps.index') ? 'border-[#352f99] bg-indigo-50 text-[#352f99]' : 'border-transparent text-gray-600 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-800' }} py-2 pl-3 pr-4 text-base font-medium">
                 <i class="fas fa-map-marked-alt w-6 text-center"></i> Peta
             </a>
-            @if(auth()->user()->role == 'operator' || auth()->user()->isSuperAdmin())
+            @if(auth()->user()->isAdmin() || auth()->user()->role == 'operator' || auth()->user()->isSuperAdmin())
                 <a href="{{ route('customers.index') }}"
                     class="block border-l-4 {{ request()->routeIs('customers.index') ? 'border-[#352f99] bg-indigo-50 text-[#352f99]' : 'border-transparent text-gray-600 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-800' }} py-2 pl-3 pr-4 text-base font-medium">
                     <i class="fas fa-users w-6 text-center"></i> Pelanggan
