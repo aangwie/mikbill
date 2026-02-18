@@ -563,8 +563,6 @@
                     </button>
                 </form>
             </div>
-=======
->>>>>>> b8be497823d3c75be29cb1d3f02bfa3344607f9f
         </div>
     </div>
 </nav>
