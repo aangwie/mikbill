@@ -108,7 +108,7 @@
                     </div>
                 </div>
 
-                @if(auth()->user()->role == 'operator' || auth()->user()->isSuperAdmin())
+                @if(auth()->user()->role == 'operator' || auth()->user()->isSuperAdmin() || auth()->user()->isAdmin())
                     <a href="{{ route('customers.index') }}"
                         class="group relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200
                                     {{ request()->routeIs('customers.index') ? 'bg-[#352f99]/10 text-[#352f99] dark:bg-indigo-900/40 dark:text-indigo-300 border-l-[3px] border-[#352f99]' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50 hover:text-slate-900 dark:hover:text-white' }}"
