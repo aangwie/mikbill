@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="h-full" x-data="{ 
           darkMode: localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches),
+          sidebarOpen: false,
+          sidebarCollapsed: localStorage.getItem('sidebarCollapsed') === 'true',
           toggleTheme() {
               this.darkMode = !this.darkMode;
               localStorage.setItem('theme', this.darkMode ? 'dark' : 'light');
@@ -9,6 +11,10 @@
               } else {
                   document.documentElement.classList.remove('dark');
               }
+          },
+          toggleSidebar() {
+              this.sidebarCollapsed = !this.sidebarCollapsed;
+              localStorage.setItem('sidebarCollapsed', this.sidebarCollapsed);
           }
       }"
     x-init="$watch('darkMode', val => val ? document.documentElement.classList.add('dark') : document.documentElement.classList.remove('dark')); if(darkMode) document.documentElement.classList.add('dark');">
@@ -64,6 +70,11 @@
         [x-cloak] {
             display: none !important;
         }
+        /* Sidebar scrollbar */
+        .scrollbar-thin::-webkit-scrollbar { width: 4px; }
+        .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+        .scrollbar-thin::-webkit-scrollbar-thumb { background-color: rgba(148, 163, 184, 0.3); border-radius: 20px; }
+        .scrollbar-thin::-webkit-scrollbar-thumb:hover { background-color: rgba(148, 163, 184, 0.5); }
     </style>
     @stack('styles')
 </head>
@@ -71,13 +82,16 @@
 <body
     class="h-full font-sans text-slate-800 antialiased bg-slate-50 dark:bg-slate-900 dark:text-slate-100 transition-colors duration-300">
 
-    <!-- Navbar -->
+    {{-- Sidebar --}}
+    @include('layouts.sidebar')
+
+    {{-- Navbar --}}
     @include('layouts.navbar_tail')
 
-    <!-- Main Content -->
-    <main class="py-10 pb-24">
+    {{-- Main Content --}}
+    <main class="py-10 pb-24 transition-all duration-300" :class="sidebarCollapsed ? 'lg:pl-20' : 'lg:pl-64'">
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <!-- Page Header -->
+            {{-- Page Header --}}
             @if (trim($__env->yieldContent('header')))
                 <header class="mb-8">
                     <h1 class="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">@yield('header')</h1>
@@ -87,7 +101,7 @@
                 </header>
             @endif
 
-            <!-- Alert Messages -->
+            {{-- Alert Messages --}}
             @if(session('success'))
                 <div x-data="{ show: true }" x-show="show" x-transition
                     class="mb-6 rounded-md bg-green-50 p-4 border border-green-200">
@@ -131,22 +145,10 @@
                 </div>
             @endif
 
-            <!-- Content Slot -->
+            {{-- Content Slot --}}
             @yield('content')
         </div>
     </main>
-
-    <!-- Footer -->
-    <footer
-        class="fixed bottom-0 left-0 w-full z-40 bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 shadow-lg">
-        <div class="mx-auto max-w-7xl px-6 py-4 md:flex md:items-center md:justify-between lg:px-8">
-            <div class="w-full">
-                <p class="text-center text-xs leading-5 text-slate-500">
-                    &copy; 2025 Mikrotik App. All rights reserved. Develop By Aangwi.
-                </p>
-            </div>
-        </div>
-    </footer>
 
     @stack('scripts')
 </body>

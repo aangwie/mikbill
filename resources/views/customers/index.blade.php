@@ -30,7 +30,7 @@
                 @if(Auth::user()->isSuperAdmin())
                     <form action="{{ route('customers.index') }}" method="GET" class="flex items-center gap-2">
                         <select name="admin_id" onchange="this.form.submit()" 
-                            class="block w-48 rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white text-sm focus:ring-primary-500 transition-all shadow-sm">
+                            class="block w-48 rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white text-sm focus:ring-primary-500 transition-all shadow-sm py-2">
                             <option value="">-- Semua Admin --</option>
                             @foreach($admins as $adm)
                                 <option value="{{ $adm->id }}" {{ $selectedAdmin == $adm->id ? 'selected' : '' }}>
