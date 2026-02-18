@@ -37,7 +37,6 @@
                         <span
                             class="text-lg font-bold text-slate-800 dark:text-white tracking-tight group-hover:text-[#352f99] transition">MikBill</span>
                     </a>
-<<<<<<< HEAD
                     @if(auth()->user()->role == 'admin')
                     <a href="{{ route('plans.public') }}"
                         class="group flex items-center px-4 py-2 text-sm text-gray-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-[#352f99]">
@@ -407,8 +406,6 @@
                     </div>
                 </div>
             </div>
-<<<<<<< HEAD
-
             <!-- Mobile menu button -->
             <div class="-mr-2 flex items-center sm:hidden">
                 <span
