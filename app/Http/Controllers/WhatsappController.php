@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\WhatsappSetting;
+use App\Models\WaBillTemplate;
 use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\ScheduledMessage;
@@ -60,7 +61,14 @@ class WhatsappController extends Controller
             ->limit(50)
             ->get();
 
-        return view('whatsapp.index', compact('setting', 'customers', 'globalAdsense', 'scheduledMessages', 'admins', 'selectedAdminId'));
+        // Fetch bill templates based on role
+        if ($user->role == 'superadmin') {
+            $billTemplates = WaBillTemplate::with('admin')->orderBy('name', 'asc')->get();
+        } else {
+            $billTemplates = WaBillTemplate::where('admin_id', $user->id)->orderBy('name', 'asc')->get();
+        }
+
+        return view('whatsapp.index', compact('setting', 'customers', 'globalAdsense', 'scheduledMessages', 'admins', 'selectedAdminId', 'billTemplates'));
     }
 
     // Simpan Konfigurasi
@@ -399,6 +407,48 @@ class WhatsappController extends Controller
         $message->delete();
 
         return response()->json(['status' => true, 'message' => 'Jadwal pesan berhasil dihapus.']);
+    }
+
+    // Store a new bill template
+    public function storeBillTemplate(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'content' => 'required|string',
+        ]);
+
+        $template = WaBillTemplate::create([
+            'admin_id' => auth()->id(),
+            'name' => $request->name,
+            'content' => $request->content,
+        ]);
+
+        $template->load('admin');
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Template berhasil disimpan.',
+            'template' => $template,
+        ]);
+    }
+
+    // Delete a bill template
+    public function destroyBillTemplate($id)
+    {
+        $template = WaBillTemplate::findOrFail($id);
+        $user = auth()->user();
+
+        // Admin can only delete own templates; superadmin can delete any
+        if ($user->role !== 'superadmin' && $template->admin_id !== $user->id) {
+            return response()->json(['status' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        $template->delete();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Template berhasil dihapus.',
+        ]);
     }
 
     public function regenerateApiKey()

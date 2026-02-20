@@ -194,7 +194,25 @@
                     </div>
 
                     <!-- Tab: Unpaid Reminder -->
-                    <div x-show="activeTab === 'unpaid'" style="display: none;">
+                    <div x-show="activeTab === 'unpaid'" style="display: none;" x-data="{
+                        selectedTemplateId: '',
+                        previewContent: '',
+                        showSaveForm: false,
+                        templateName: '',
+                        selectTemplate(id) {
+                            this.selectedTemplateId = id;
+                            if (id) {
+                                const option = document.querySelector('#billTemplateSelect option[value=\'' + id + '\']');
+                                if (option) {
+                                    this.previewContent = option.dataset.content;
+                                    document.getElementById('msgUnpaid').value = option.dataset.content;
+                                }
+                            } else {
+                                this.previewContent = '';
+                                document.getElementById('msgUnpaid').value = '';
+                            }
+                        }
+                    }">
                         <div class="bg-amber-50 border-l-4 border-amber-400 p-4 mb-6 rounded-r-lg">
                             <div class="flex">
                                 <div class="flex-shrink-0"><i class="fas fa-exclamation-triangle text-amber-400"></i></div>
@@ -219,17 +237,105 @@
                                 </select>
                             </div>
                             @endif
+
+                            {{-- Template Select with Search --}}
+                            <div>
+                                <label class="block text-sm font-bold text-slate-900 mb-1">
+                                    <i class="fas fa-file-alt mr-1 text-indigo-500"></i>Pilih Template Tagihan
+                                </label>
+                                <div class="flex gap-2">
+                                    <div class="flex-1">
+                                        <select id="billTemplateSelect"
+                                            class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                                            x-on:change="selectTemplate($event.target.value)">
+                                            <option value="">-- Pilih Template --</option>
+                                            @if(auth()->user()->role == 'superadmin')
+                                                @php
+                                                    $groupedTemplates = $billTemplates->groupBy(function($t) {
+                                                        return $t->admin ? $t->admin->name : 'Unknown';
+                                                    });
+                                                @endphp
+                                                @foreach($groupedTemplates as $adminName => $templates)
+                                                    <optgroup label="{{ $adminName }}">
+                                                        @foreach($templates as $tpl)
+                                                            <option value="{{ $tpl->id }}" data-content="{{ e($tpl->content) }}">
+                                                                {{ $tpl->name }}
+                                                            </option>
+                                                        @endforeach
+                                                    </optgroup>
+                                                @endforeach
+                                            @else
+                                                @foreach($billTemplates as $tpl)
+                                                    <option value="{{ $tpl->id }}" data-content="{{ e($tpl->content) }}">
+                                                        {{ $tpl->name }}
+                                                    </option>
+                                                @endforeach
+                                            @endif
+                                        </select>
+                                    </div>
+                                    <button type="button"
+                                        x-show="selectedTemplateId"
+                                        @click="deleteTemplate()"
+                                        class="inline-flex items-center rounded-lg bg-red-50 px-3 py-1.5 text-red-600 hover:bg-red-100 border border-red-200 transition-all"
+                                        title="Hapus Template">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            {{-- Preview Box --}}
+                            <div x-show="previewContent" x-transition>
+                                <label class="block text-xs font-bold text-indigo-600 mb-1 uppercase tracking-wider">
+                                    <i class="fas fa-eye mr-1"></i>Preview Template
+                                </label>
+                                <div class="bg-gradient-to-br from-indigo-50 to-blue-50 border border-indigo-200 rounded-xl p-4 text-sm text-slate-700 whitespace-pre-wrap leading-relaxed shadow-inner"
+                                    x-text="previewContent">
+                                </div>
+                            </div>
+
+                            {{-- Message Textarea --}}
                             <div>
                                 <label class="block text-sm font-bold text-slate-900 mb-1">Isi Pesan Template</label>
-                                <textarea id="msgUnpaid" rows="6"
-                                    class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">Halo {name}, tagihan internet Anda sebesar Rp {tagihan} belum terbayar. Mohon segera lunasi.</textarea>
+                                <div class="relative">
+                                    <textarea id="msgUnpaid" rows="6"
+                                        class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                                        x-on:input="previewContent = $event.target.value"
+                                        placeholder="Halo {name}, tagihan internet Anda sebesar Rp {tagihan} belum terbayar...">Halo {name}, tagihan internet Anda sebesar Rp {tagihan} belum terbayar. Mohon segera lunasi.</textarea>
+                                    <div class="absolute bottom-2 right-2 text-xs text-slate-400 bg-white px-2 rounded border border-slate-100 shadow-sm">
+                                        Gunakan {name} untuk nama, {tagihan} untuk tagihan
+                                    </div>
+                                </div>
                             </div>
+
+                            {{-- Save as Template Toggle --}}
+                            <div class="bg-slate-50 rounded-xl border border-slate-200 overflow-hidden">
+                                <button type="button" @click="showSaveForm = !showSaveForm"
+                                    class="w-full flex items-center justify-between px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-100 transition-colors">
+                                    <span><i class="fas fa-save mr-2 text-emerald-500"></i>Simpan sebagai Template</span>
+                                    <i class="fas fa-chevron-down transition-transform" :class="showSaveForm ? 'rotate-180' : ''"></i>
+                                </button>
+                                <div x-show="showSaveForm" x-transition class="px-4 pb-4 space-y-3">
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-500 mb-1">Nama Template</label>
+                                        <input type="text" x-model="templateName"
+                                            class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                                            placeholder="Contoh: Reminder Tagihan Bulanan">
+                                    </div>
+                                    <button type="button" @click="saveTemplate()"
+                                        class="w-full inline-flex justify-center items-center rounded-lg bg-emerald-600 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-emerald-500 transition-all">
+                                        <i class="fas fa-check mr-2"></i> Simpan Template
+                                    </button>
+                                </div>
+                            </div>
+
+                            {{-- Broadcast Button --}}
                             <button onclick="prepareBroadcast('unpaid')"
                                 class="w-full inline-flex justify-center items-center rounded-lg bg-amber-500 px-4 py-3 text-sm font-bold text-white shadow-sm hover:bg-amber-600 hover:shadow-md transition-all">
                                 <i class="fab fa-whatsapp mr-2 text-lg"></i> Mulai Broadcast Reminder
                             </button>
                         </div>
                     </div>
+
 
                     <!-- Tab: All Broadcast (Enhanced) -->
                     <div id="broadcastTab" x-show="activeTab === 'broadcast'" style="display: none;" x-data="{
@@ -725,7 +831,131 @@
                     userSelect.prop('disabled', false);
                 });
             });
+
+            // Initialize Select2 for Bill Template Select (with search)
+            $('#billTemplateSelect').select2({
+                placeholder: '-- Pilih Template --',
+                allowClear: true,
+                width: '100%'
+            }).on('change', function() {
+                const val = $(this).val();
+                // Sync with Alpine.js
+                const tab = document.querySelector('[x-show="activeTab === \'unpaid\'"]');
+                if (tab) {
+                    const data = Alpine.$data(tab);
+                    data.selectTemplate(val || '');
+                }
+            });
         });
+        // Save bill template via AJAX
+        function saveTemplate() {
+            const tab = document.querySelector('[x-show="activeTab === \'unpaid\'"]');
+            if (!tab) return;
+            const data = Alpine.$data(tab);
+            const name = data.templateName;
+            const content = document.getElementById('msgUnpaid').value;
+
+            if (!name || !name.trim()) {
+                Swal.fire({ icon: 'error', title: 'Nama Kosong', text: 'Silakan masukkan nama template.' });
+                return;
+            }
+            if (!content || !content.trim()) {
+                Swal.fire({ icon: 'error', title: 'Pesan Kosong', text: 'Silakan masukkan isi pesan template.' });
+                return;
+            }
+
+            $.post("{{ route('whatsapp.billTemplate.store') }}", {
+                _token: $('meta[name="csrf-token"]').attr('content'),
+                name: name.trim(),
+                content: content.trim()
+            }).done(function(response) {
+                if (response.status) {
+                    const tpl = response.template;
+                    const adminName = tpl.admin ? tpl.admin.name : 'Unknown';
+                    const select = $('#billTemplateSelect');
+
+                    // Add to Select2
+                    const newOption = new Option(tpl.name, tpl.id, true, true);
+                    $(newOption).attr('data-content', tpl.content);
+                    select.append(newOption).trigger('change');
+
+                    // Update Alpine state
+                    data.selectedTemplateId = String(tpl.id);
+                    data.previewContent = tpl.content;
+                    data.templateName = '';
+                    data.showSaveForm = false;
+
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Berhasil!',
+                        text: response.message,
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 2000
+                    });
+                }
+            }).fail(function(xhr) {
+                let msg = 'Gagal menyimpan template.';
+                if (xhr.responseJSON && xhr.responseJSON.message) msg = xhr.responseJSON.message;
+                Swal.fire({ icon: 'error', title: 'Error', text: msg });
+            });
+        }
+
+        // Delete bill template via AJAX
+        function deleteTemplate() {
+            const tab = document.querySelector('[x-show="activeTab === \'unpaid\'"]');
+            if (!tab) return;
+            const data = Alpine.$data(tab);
+            const id = data.selectedTemplateId;
+
+            if (!id) return;
+
+            Swal.fire({
+                title: 'Hapus Template?',
+                text: 'Template ini akan dihapus secara permanen.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Ya, Hapus',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: "{{ url('/whatsapp/bill-template') }}/" + id,
+                        type: 'DELETE',
+                        data: { _token: $('meta[name="csrf-token"]').attr('content') },
+                        success: function(response) {
+                            if (response.status) {
+                                // Remove from Select2
+                                $('#billTemplateSelect option[value="' + id + '"]').remove();
+                                $('#billTemplateSelect').val('').trigger('change');
+
+                                data.selectedTemplateId = '';
+                                data.previewContent = '';
+                                document.getElementById('msgUnpaid').value = '';
+
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Dihapus!',
+                                    text: response.message,
+                                    toast: true,
+                                    position: 'top-end',
+                                    showConfirmButton: false,
+                                    timer: 2000
+                                });
+                            } else {
+                                Swal.fire('Gagal', response.message, 'error');
+                            }
+                        },
+                        error: function() {
+                            Swal.fire('Error', 'Gagal menghapus template.', 'error');
+                        }
+                    });
+                }
+            });
+        }
 
         // Enhanced Broadcast Function
         function startEnhancedBroadcast() {

@@ -137,6 +137,10 @@ Route::middleware(['auth'])->group(function () {
         // Route Helper Gateway (Essential only)
         Route::post('/whatsapp/api-key', [WhatsappController::class, 'regenerateApiKey'])->name('whatsapp.apikey');
 
+        // Bill Template CRUD (AJAX)
+        Route::post('/whatsapp/bill-template', [WhatsappController::class, 'storeBillTemplate'])->name('whatsapp.billTemplate.store');
+        Route::delete('/whatsapp/bill-template/{id}', [WhatsappController::class, 'destroyBillTemplate'])->name('whatsapp.billTemplate.destroy');
+
         // Route Proses Kirim (yang sudah dibuat sebelumnya)
         Route::post('/whatsapp/broadcast/process', [WhatsappController::class, 'broadcastProcess'])->name('whatsapp.broadcast.process');
         Route::delete('/customers/{id}', [CustomerController::class, 'destroy'])->name('customers.destroy');
