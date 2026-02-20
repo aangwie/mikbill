@@ -161,7 +161,7 @@
                                 @endif
 
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">
-                                    {{ $user->created_at->format('d M Y') }}
+                                    {{ optional($user->created_at)->format('d M Y') ?? '-' }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <div class="flex justify-end gap-2">
