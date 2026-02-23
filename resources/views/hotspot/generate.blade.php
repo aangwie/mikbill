@@ -58,8 +58,8 @@
                             <div>
                                 @php
                                     $user = auth()->user();
-                                    $admin = $user->isAdmin() ? $user : $user->parent;
-                                    $plan = $admin->plan;
+                                    $admin = ($user->isAdmin() || $user->isSuperAdmin()) ? $user : $user->parent;
+                                    $plan = $admin ? $admin->plan : null;
                                     $maxV = $plan ? $plan->max_vouchers : 0;
                                     $currentV = count($managedUsers);
                                 @endphp

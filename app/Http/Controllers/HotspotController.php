@@ -61,8 +61,8 @@ class HotspotController extends Controller
 
         // Check Plan Limit
         $user = auth()->user();
-        $admin = $user->isAdmin() ? $user : $user->parent;
-        $plan = $admin->plan;
+        $admin = ($user->isAdmin() || $user->isSuperAdmin()) ? $user : $user->parent;
+        $plan = $admin ? $admin->plan : null;
 
         if ($plan && $plan->max_vouchers > 0) {
             $existingUsers = $this->mikrotik->getHotspotUsers();
