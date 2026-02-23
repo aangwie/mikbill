@@ -16,6 +16,15 @@ const path = require("path");
 const app = express();
 const port = process.env.PORT || 3000;
 
+// Simple file logging for shared hosting debugging
+const logFile = path.join(__dirname, "gateway.log");
+const logStream = fs.createWriteStream(logFile, { flags: "a" });
+function logToFile(msg) {
+    const timestamp = new Date().toISOString();
+    logStream.write(`[${timestamp}] ${msg}\n`);
+    console.log(msg);
+}
+
 app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -26,57 +35,64 @@ let connectionStatus = "disconnected";
 let connectedNumber = null;
 
 async function connectToWhatsApp() {
-    connectionStatus = "connecting";
-    const { state, saveCreds } = await useMultiFileAuthState(path.join(__dirname, "auth_info_baileys"));
-    const { version, isLatest } = await fetchLatestBaileysVersion();
+    logToFile("Starting connection to WhatsApp...");
+    try {
+        connectionStatus = "connecting";
+        const { state, saveCreds } = await useMultiFileAuthState(path.join(__dirname, "auth_info_baileys"));
+        const { version, isLatest } = await fetchLatestBaileysVersion();
 
-    sock = makeWASocket({
-        version,
-        printQRInTerminal: true,
-        auth: {
-            creds: state.creds,
-            keys: makeCacheableSignalKeyStore(state.keys, pino({ level: "silent" })),
-        },
-        logger: pino({ level: "silent" }),
-    });
+        sock = makeWASocket({
+            version,
+            printQRInTerminal: true,
+            auth: {
+                creds: state.creds,
+                keys: makeCacheableSignalKeyStore(state.keys, pino({ level: "silent" })),
+            },
+            logger: pino({ level: "silent" }),
+        });
 
-    sock.ev.on("connection.update", async (update) => {
-        const { connection, lastDisconnect, qr } = update;
+        sock.ev.on("connection.update", async (update) => {
+            const { connection, lastDisconnect, qr } = update;
 
-        if (qr) {
-            qrCode = await qrcode.toDataURL(qr);
-            connectionStatus = "connecting";
-        }
-
-        if (connection === "connecting") {
-            connectionStatus = "connecting";
-            console.log("Connecting to WhatsApp...");
-        } else if (connection === "close") {
-            const statusCode = lastDisconnect?.error?.output?.statusCode;
-            const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
-
-            console.log(`Connection closed. Reason: ${statusCode}, Reconnecting: ${shouldReconnect}`);
-
-            connectionStatus = "disconnected";
-            qrCode = null;
-            connectedNumber = null;
-
-            if (shouldReconnect) {
-                connectToWhatsApp();
+            if (qr) {
+                qrCode = await qrcode.toDataURL(qr);
+                connectionStatus = "connecting";
             }
-        } else if (connection === "open") {
-            connectionStatus = "connected";
-            qrCode = null;
-            connectedNumber = sock.user?.id;
-            console.log("WhatsApp connected as: " + connectedNumber);
-        }
-    });
 
-    sock.ev.on("creds.update", saveCreds);
+            if (connection === "connecting") {
+                connectionStatus = "connecting";
+                logToFile("Connecting to WhatsApp...");
+            } else if (connection === "close") {
+                const statusCode = lastDisconnect?.error?.output?.statusCode;
+                const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
+
+                logToFile(`Connection closed. Reason: ${statusCode}, Reconnecting: ${shouldReconnect}`);
+
+                connectionStatus = "disconnected";
+                qrCode = null;
+                connectedNumber = null;
+
+                if (shouldReconnect) {
+                    connectToWhatsApp();
+                }
+            } else if (connection === "open") {
+                connectionStatus = "connected";
+                qrCode = null;
+                connectedNumber = sock.user?.id;
+                logToFile("WhatsApp connected as: " + connectedNumber);
+            }
+        });
+
+        sock.ev.on("creds.update", saveCreds);
+    } catch (err) {
+        logToFile("Fatal Connection Error: " + err.message);
+    }
 }
 
 // API Endpoints
 app.get("/", (req, res) => {
+    // CloudLinux check expects exact content-type matching often
+    res.setHeader('Content-Type', 'text/html');
     res.send("WhatsApp Gateway is running.");
 });
 
