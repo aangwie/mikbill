@@ -141,6 +141,8 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/whatsapp/broadcast/schedule/{id}', [WhatsappController::class, 'destroyScheduled'])->name('whatsapp.broadcast.schedule.destroy');
         // Route Helper Gateway (Essential only)
         Route::post('/whatsapp/api-key', [WhatsappController::class, 'regenerateApiKey'])->name('whatsapp.apikey');
+        Route::get('/whatsapp/gateway-status', [WhatsappController::class, 'getGatewayStatus'])->name('whatsapp.gateway.status');
+        Route::post('/whatsapp/gateway-logout', [WhatsappController::class, 'logoutGateway'])->name('whatsapp.gateway.logout');
 
         // Bill Template CRUD (AJAX)
         Route::post('/whatsapp/bill-template', [WhatsappController::class, 'storeBillTemplate'])->name('whatsapp.billTemplate.store');

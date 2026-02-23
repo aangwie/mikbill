@@ -76,9 +76,11 @@ class WhatsappController extends Controller
     {
         $user = auth()->user();
         $rules = [
-            'target_url' => 'required|url',
-            'api_key' => 'required|string',
+            'wa_provider' => 'required|in:api,gateway',
+            'target_url' => 'nullable|url',
+            'api_key' => 'nullable|string',
             'sender_number' => 'nullable|string',
+            'wa_gateway_url' => 'nullable|url',
         ];
 
         if ($user->isSuperAdmin()) {
@@ -458,5 +460,35 @@ class WhatsappController extends Controller
         $user->save();
 
         return back()->with('success', 'API Key Generated successfully.');
+    }
+
+    // --- GATEWAY HELPERS (AJAX) ---
+
+    public function getGatewayStatus()
+    {
+        $setting = WhatsappSetting::first();
+        $gatewayUrl = $setting->wa_gateway_url ?? 'http://localhost:3000';
+
+        try {
+            $client = new \GuzzleHttp\Client();
+            $response = $client->get($gatewayUrl . '/status', ['timeout' => 5]);
+            return response()->json(json_decode($response->getBody()->getContents(), true));
+        } catch (\Exception $e) {
+            return response()->json(['status' => 'disconnected', 'message' => 'Gateway offline']);
+        }
+    }
+
+    public function logoutGateway()
+    {
+        $setting = WhatsappSetting::first();
+        $gatewayUrl = $setting->wa_gateway_url ?? 'http://localhost:3000';
+
+        try {
+            $client = new \GuzzleHttp\Client();
+            $response = $client->post($gatewayUrl . '/logout', ['timeout' => 5]);
+            return response()->json(json_decode($response->getBody()->getContents(), true));
+        } catch (\Exception $e) {
+            return response()->json(['status' => false, 'message' => 'Gateway offline']);
+        }
     }
 }

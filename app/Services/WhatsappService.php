@@ -20,7 +20,38 @@ class WhatsappService
             $targetNumber = '62' . substr($targetNumber, 1);
         }
 
-        // 3. Persiapkan Data (Sesuai parameter yang diminta user: host, api_key, sender)
+        // 3. Cek Provider: API atau Gateway
+        if ($setting->wa_provider === 'gateway') {
+            // KIRIM VIA SELF-HOSTED GATEWAY (BAILEYS)
+            $url = ($setting->wa_gateway_url ?? 'http://localhost:3000') . '/send';
+            $data = [
+                'number' => $targetNumber,
+                'message' => $message,
+            ];
+
+            try {
+                $client = new \GuzzleHttp\Client();
+                $response = $client->post($url, [
+                    'json' => $data,
+                    'timeout' => 15,
+                    'http_errors' => false
+                ]);
+
+                $body = $response->getBody()->getContents();
+                $result = json_decode($body, true);
+
+                if ($response->getStatusCode() == 200 && isset($result['status']) && $result['status']) {
+                    return ['status' => true, 'response' => $body];
+                } else {
+                    return ['status' => false, 'message' => 'Gateway Error: ' . ($result['message'] ?? 'Unknown error')];
+                }
+            } catch (\Exception $e) {
+                Log::error("WA Gateway Exception: " . $e->getMessage());
+                return ['status' => false, 'message' => 'Gateway Exception: ' . $e->getMessage()];
+            }
+        }
+
+        // --- KIRIM VIA API EXTERNAL (Provider Lama) ---
         $url = $setting->target_url;
         $apiKey = $setting->api_key;
         $sender = $setting->sender_number;
@@ -35,15 +66,12 @@ class WhatsappService
         try {
             $client = new \GuzzleHttp\Client();
             $response = $client->post($url, [
-                'form_params' => $data, // Gunakan form_params atau json tergantung provider, biasanya form
+                'form_params' => $data,
                 'timeout' => 10,
                 'http_errors' => false
             ]);
 
             $body = $response->getBody()->getContents();
-            $result = json_decode($body, true);
-
-            // Log response untuk debugging
             Log::info("WA API Response: " . $body);
 
             if ($response->getStatusCode() == 200) {

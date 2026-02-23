@@ -43,33 +43,114 @@
             <div class="bg-white rounded-2xl shadow-sm border border-slate-200 sticky top-24 overflow-hidden">
                 <div class="bg-indigo-600 px-6 py-4 border-b border-indigo-500">
                     <h3 class="text-base font-bold text-white flex items-center">
-                        <i class="fas fa-cog mr-2"></i> Konfigurasi API
+                        <i class="fas fa-cog mr-2"></i> Konfigurasi WhatsApp
                     </h3>
                 </div>
                 <div class="p-6">
                     <form action="{{ route('whatsapp.update') }}" method="POST">
                         @csrf
-                        <div class="space-y-4">
-                            <div>
-                                <label class="block text-sm font-bold text-slate-900 mb-1">Target URL / API Host</label>
-                                <input type="url" name="target_url"
-                                    class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                                    placeholder="https://api.gateway.com/send"
-                                    value="{{ optional($setting)->target_url ?? '' }}" required>
-                                <p class="mt-1 text-xs text-slate-500">Endpoint untuk POST request.</p>
+                        <div class="space-y-4" x-data="{ waProvider: '{{ optional($setting)->wa_provider ?? 'api' }}' }">
+                            
+                            <!-- Provider Toggle -->
+                            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 mb-4">
+                                <label class="block text-sm font-bold text-slate-900 mb-3">Metode Pengiriman</label>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <label class="flex items-center justify-center p-3 rounded-lg border-2 cursor-pointer transition-all"
+                                        :class="waProvider === 'api' ? 'bg-indigo-50 border-indigo-600 text-indigo-700' : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'">
+                                        <input type="radio" name="wa_provider" value="api" x-model="waProvider" class="hidden">
+                                        <div class="text-center">
+                                            <i class="fas fa-cloud text-lg mb-1"></i>
+                                            <div class="text-xs font-bold uppercase">API External</div>
+                                        </div>
+                                    </label>
+                                    <label class="flex items-center justify-center p-3 rounded-lg border-2 cursor-pointer transition-all"
+                                        :class="waProvider === 'gateway' ? 'bg-emerald-50 border-emerald-600 text-emerald-700' : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'">
+                                        <input type="radio" name="wa_provider" value="gateway" x-model="waProvider" class="hidden">
+                                        <div class="text-center">
+                                            <i class="fas fa-server text-lg mb-1"></i>
+                                            <div class="text-xs font-bold uppercase">Self-Gateway</div>
+                                        </div>
+                                    </label>
+                                </div>
                             </div>
-                            <div>
-                                <label class="block text-sm font-bold text-slate-900 mb-1">API Key (Provider)</label>
-                                <input type="text" name="api_key"
-                                    class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                                    placeholder="Provider API Key" value="{{ optional($setting)->api_key ?? '' }}" required>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-bold text-slate-900 mb-1">Nomor Pengirim (Wajib)</label>
-                                <input type="text" name="sender_number"
-                                    class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                                    placeholder="628xxx" value="{{ optional($setting)->sender_number ?? '' }}">
-                            </div>
+
+                            <!-- API external Fields -->
+                            <template x-if="waProvider === 'api'">
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-bold text-slate-900 mb-1">Target URL / API Host</label>
+                                        <input type="url" name="target_url"
+                                            class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                                            placeholder="https://api.gateway.com/send"
+                                            value="{{ optional($setting)->target_url ?? '' }}">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-bold text-slate-900 mb-1">API Key (Provider)</label>
+                                        <input type="text" name="api_key"
+                                            class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                                            placeholder="Provider API Key" value="{{ optional($setting)->api_key ?? '' }}">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-bold text-slate-900 mb-1">Nomor Pengirim</label>
+                                        <input type="text" name="sender_number"
+                                            class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                                            placeholder="628xxx" value="{{ optional($setting)->sender_number ?? '' }}">
+                                    </div>
+                                </div>
+                            </template>
+
+                            <!-- Self-Gateway Fields -->
+                            <template x-if="waProvider === 'gateway'">
+                                <div class="space-y-4" x-data="whatsappGateway()">
+                                    <div>
+                                        <label class="block text-sm font-bold text-slate-900 mb-1">Gateway URL (Local)</label>
+                                        <input type="url" name="wa_gateway_url"
+                                            class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-emerald-600 sm:text-sm sm:leading-6"
+                                            placeholder="http://localhost:3000"
+                                            value="{{ optional($setting)->wa_gateway_url ?? 'http://localhost:3000' }}">
+                                        <p class="mt-1 text-[10px] text-slate-500">Gunakan localhost:3000 jika gateway di server yang sama.</p>
+                                    </div>
+
+                                    <!-- Gateway Connection Panel -->
+                                    <div class="mt-4 border border-emerald-100 rounded-xl bg-emerald-50/30 overflow-hidden">
+                                        <div class="bg-emerald-500 px-4 py-2 flex items-center justify-between">
+                                            <span class="text-xs font-bold text-white uppercase tracking-wider">Status Gateway</span>
+                                            <span class="flex items-center gap-1.5 text-[10px] font-black text-white bg-white/20 px-2 py-0.5 rounded-full">
+                                                <span class="h-2 w-2 rounded-full" :class="status === 'connected' ? 'bg-white' : 'bg-red-200'"></span>
+                                                <span x-text="status.toUpperCase()"></span>
+                                            </span>
+                                        </div>
+                                        <div class="p-4 flex flex-col items-center">
+                                            <!-- QR Code Display -->
+                                            <template x-if="status === 'disconnected' && qr">
+                                                <div class="mb-4 bg-white p-3 rounded-xl shadow-inner border border-emerald-100 animate-fade-in text-center">
+                                                    <p class="text-[10px] font-bold text-emerald-600 mb-2 uppercase italic tracking-widest">Pindai QR untuk Menghubungkan</p>
+                                                    <img :src="qr" class="w-48 h-48 mx-auto" />
+                                                </div>
+                                            </template>
+                                            
+                                            <template x-if="status === 'disconnected' && !qr">
+                                                <div class="py-12 text-center">
+                                                    <i class="fas fa-qrcode fa-3x text-emerald-200 mb-2"></i>
+                                                    <p class="text-xs text-emerald-600 font-bold">Menghubungkan ke Gateway...</p>
+                                                </div>
+                                            </template>
+
+                                            <template x-if="status === 'connected'">
+                                                <div class="py-8 text-center bg-white w-full rounded-xl border border-emerald-100 shadow-sm">
+                                                    <div class="h-16 w-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                                                        <i class="fas fa-check-circle text-emerald-500 text-3xl"></i>
+                                                    </div>
+                                                    <p class="text-sm font-bold text-slate-700">Terhubung ke WhatsApp</p>
+                                                    <button type="button" @click="logout()" class="mt-4 text-[10px] font-bold text-red-500 hover:text-red-700 underline uppercase tracking-widest">
+                                                        <i class="fas fa-sign-out-alt mr-1"></i> Putuskan Koneksi
+                                                    </button>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
 
                             @if(Auth::user()->role === 'superadmin')
                                 <div class="pt-4 border-t border-slate-100">
@@ -744,6 +825,65 @@
         .select2-container--default .select2-selection--multiple .select2-selection__choice {
             color: #000080 !important;
             font-weight: 600;
+        }
+    </style>
+    <script>
+        function whatsappGateway() {
+            return {
+                status: 'disconnected',
+                qr: null,
+                polling: null,
+
+                init() {
+                    this.fetchStatus();
+                    this.polling = setInterval(() => this.fetchStatus(), 5000);
+                },
+
+                fetchStatus() {
+                    fetch('{{ route('whatsapp.gateway.status') }}')
+                        .then(res => res.json())
+                        .then(data => {
+                            this.status = data.status;
+                            this.qr = data.qr;
+                        })
+                        .catch(err => {
+                            this.status = 'disconnected';
+                            this.qr = null;
+                        });
+                },
+
+                logout() {
+                    if (!confirm('Apakah Anda yakin ingin memutuskan koneksi WhatsApp?')) return;
+                    
+                    fetch('{{ route('whatsapp.gateway.logout') }}', {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Content-Type': 'application/json'
+                        }
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.status) {
+                            this.fetchStatus();
+                            Swal.fire('Berhasil', 'WhatsApp telah diputus.', 'success');
+                        }
+                    });
+                },
+
+                destroy() {
+                    if (this.polling) clearInterval(this.polling);
+                }
+            }
+        }
+    </script>
+    <style>
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease-out forwards;
         }
     </style>
 @endpush
