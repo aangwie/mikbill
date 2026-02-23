@@ -76,6 +76,10 @@ async function connectToWhatsApp() {
 }
 
 // API Endpoints
+app.get("/", (req, res) => {
+    res.send("WhatsApp Gateway is running.");
+});
+
 app.get("/status", (req, res) => {
     res.json({
         status: connectionStatus,
