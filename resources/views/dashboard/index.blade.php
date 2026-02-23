@@ -7,7 +7,7 @@
 @section('content')
 
     {{-- ════════════════════════════════════════════════════════════════
-         CUSTOMER SUMMARY CARDS
+    CUSTOMER SUMMARY CARDS
     ════════════════════════════════════════════════════════════════ --}}
     <div class="mb-8">
         <h3 class="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-4">
@@ -15,7 +15,8 @@
         </h3>
         <dl class="grid grid-cols-1 gap-5 sm:grid-cols-3">
             {{-- Total Customers --}}
-            <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-700 to-slate-900 border border-slate-600 p-6 shadow-lg shadow-slate-900/20 hover:shadow-xl hover:scale-[1.02] transition-all duration-300 group cursor-default">
+            <div
+                class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-700 to-slate-900 border border-slate-600 p-6 shadow-lg shadow-slate-900/20 hover:shadow-xl hover:scale-[1.02] transition-all duration-300 group cursor-default">
                 <dt class="truncate text-sm font-medium text-slate-300">Total Pelanggan</dt>
                 <dd class="mt-2 flex items-baseline text-3xl font-bold tracking-tight text-white">
                     {{ number_format($totalCustomers) }}
@@ -24,12 +25,21 @@
                     <i class="fas fa-users fa-3x transform rotate-12"></i>
                 </div>
                 <div class="mt-3 flex items-center text-xs text-slate-400">
-                    <i class="fas fa-database mr-1"></i> Data dari database
+                    @if($isConnected)
+                        <span class="flex items-center text-emerald-400">
+                            <i class="fas fa-signal mr-1"></i> Mikrotik (Real-time)
+                        </span>
+                    @else
+                        <span class="flex items-center text-amber-400">
+                            <i class="fas fa-database mr-1"></i> Database (Router Offline)
+                        </span>
+                    @endif
                 </div>
             </div>
 
             {{-- Active Customers --}}
-            <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 border border-emerald-400 p-6 shadow-lg shadow-emerald-500/20 hover:shadow-xl hover:scale-[1.02] transition-all duration-300 group cursor-default">
+            <div
+                class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 border border-emerald-400 p-6 shadow-lg shadow-emerald-500/20 hover:shadow-xl hover:scale-[1.02] transition-all duration-300 group cursor-default">
                 <dt class="truncate text-sm font-medium text-emerald-100">Pelanggan Aktif</dt>
                 <dd class="mt-2 flex items-baseline text-3xl font-bold tracking-tight text-white">
                     {{ number_format($activeCustomers) }}
@@ -38,13 +48,14 @@
                     <i class="fas fa-user-check fa-3x"></i>
                 </div>
                 <div class="mt-3 flex items-center text-xs text-emerald-200/80">
-                    <i class="fas fa-check-circle mr-1"></i>
-                    {{ $totalCustomers > 0 ? round(($activeCustomers / $totalCustomers) * 100, 1) : 0 }}% dari total
+                    <i class="fas fa-chart-line mr-1"></i>
+                    {{ $isConnected ? 'Koneksi Online' : 'Statistik Database' }}
                 </div>
             </div>
 
             {{-- Disabled Customers --}}
-            <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-rose-500 to-pink-600 border border-rose-400 p-6 shadow-lg shadow-rose-500/20 hover:shadow-xl hover:scale-[1.02] transition-all duration-300 group cursor-default">
+            <div
+                class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-rose-500 to-pink-600 border border-rose-400 p-6 shadow-lg shadow-rose-500/20 hover:shadow-xl hover:scale-[1.02] transition-all duration-300 group cursor-default">
                 <dt class="truncate text-sm font-medium text-rose-100">Pelanggan Non-Aktif</dt>
                 <dd class="mt-2 flex items-baseline text-3xl font-bold tracking-tight text-white">
                     {{ number_format($disabledCustomers) }}
@@ -62,15 +73,17 @@
     </div>
 
     {{-- ════════════════════════════════════════════════════════════════
-         BILLING SUMMARY CARDS
+    BILLING SUMMARY CARDS
     ════════════════════════════════════════════════════════════════ --}}
     <div class="mb-8">
         <h3 class="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-4">
-            <i class="fas fa-file-invoice-dollar mr-2 text-indigo-500"></i>Informasi Tagihan — {{ \Carbon\Carbon::now()->locale('id')->isoFormat('MMMM YYYY') }}
+            <i class="fas fa-file-invoice-dollar mr-2 text-indigo-500"></i>Informasi Tagihan —
+            {{ \Carbon\Carbon::now()->locale('id')->isoFormat('MMMM YYYY') }}
         </h3>
         <dl class="grid grid-cols-1 gap-5 sm:grid-cols-3">
             {{-- Total Billing --}}
-            <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 border border-indigo-400 p-6 shadow-lg shadow-indigo-500/20 hover:shadow-xl hover:scale-[1.02] transition-all duration-300 group cursor-default">
+            <div
+                class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 border border-indigo-400 p-6 shadow-lg shadow-indigo-500/20 hover:shadow-xl hover:scale-[1.02] transition-all duration-300 group cursor-default">
                 <dt class="truncate text-sm font-medium text-indigo-100">Total Tagihan</dt>
                 <dd class="mt-2 flex items-baseline text-2xl font-bold tracking-tight text-white">
                     Rp {{ number_format($totalBilling, 0, ',', '.') }}
@@ -81,7 +94,8 @@
             </div>
 
             {{-- Paid --}}
-            <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-500 to-green-600 border border-emerald-400 p-6 shadow-lg shadow-emerald-500/20 hover:shadow-xl hover:scale-[1.02] transition-all duration-300 group cursor-default">
+            <div
+                class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-500 to-green-600 border border-emerald-400 p-6 shadow-lg shadow-emerald-500/20 hover:shadow-xl hover:scale-[1.02] transition-all duration-300 group cursor-default">
                 <dt class="truncate text-sm font-medium text-emerald-100">Sudah Dibayar (Paid)</dt>
                 <dd class="mt-2 flex items-baseline text-2xl font-bold tracking-tight text-white">
                     Rp {{ number_format($paidBilling, 0, ',', '.') }}
@@ -96,7 +110,8 @@
             </div>
 
             {{-- Unpaid --}}
-            <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 border border-amber-400 p-6 shadow-lg shadow-amber-500/20 hover:shadow-xl hover:scale-[1.02] transition-all duration-300 group cursor-default">
+            <div
+                class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 border border-amber-400 p-6 shadow-lg shadow-amber-500/20 hover:shadow-xl hover:scale-[1.02] transition-all duration-300 group cursor-default">
                 <dt class="truncate text-sm font-medium text-amber-100">Belum Dibayar (Unpaid)</dt>
                 <dd class="mt-2 flex items-baseline text-2xl font-bold tracking-tight text-white">
                     Rp {{ number_format($unpaidBilling, 0, ',', '.') }}
@@ -113,15 +128,18 @@
     </div>
 
     {{-- ════════════════════════════════════════════════════════════════
-         PAYMENT CHART
+    PAYMENT CHART
     ════════════════════════════════════════════════════════════════ --}}
     <div class="mb-8">
-        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm ring-1 ring-slate-900/5 dark:ring-slate-700 overflow-hidden">
-            <div class="border-b border-slate-200 dark:border-slate-700 px-6 py-4 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
+        <div
+            class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm ring-1 ring-slate-900/5 dark:ring-slate-700 overflow-hidden">
+            <div
+                class="border-b border-slate-200 dark:border-slate-700 px-6 py-4 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
                 <h3 class="text-base font-semibold leading-6 text-slate-900 dark:text-white">
                     <i class="fas fa-chart-bar mr-2 text-indigo-500"></i>Grafik Pembayaran (6 Bulan Terakhir)
                 </h3>
-                <span class="inline-flex items-center rounded-md bg-indigo-50 dark:bg-indigo-900/20 px-2 py-1 text-xs font-medium text-indigo-700 dark:text-indigo-400 ring-1 ring-inset ring-indigo-700/10 dark:ring-indigo-400/20">
+                <span
+                    class="inline-flex items-center rounded-md bg-indigo-50 dark:bg-indigo-900/20 px-2 py-1 text-xs font-medium text-indigo-700 dark:text-indigo-400 ring-1 ring-inset ring-indigo-700/10 dark:ring-indigo-400/20">
                     Chart.js
                 </span>
             </div>
@@ -132,11 +150,12 @@
     </div>
 
     {{-- ════════════════════════════════════════════════════════════════
-         SYSTEM INFORMATION
+    SYSTEM INFORMATION
     ════════════════════════════════════════════════════════════════ --}}
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         {{-- Server Info --}}
-        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm ring-1 ring-slate-900/5 dark:ring-slate-700 overflow-hidden">
+        <div
+            class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm ring-1 ring-slate-900/5 dark:ring-slate-700 overflow-hidden">
             <div class="border-b border-slate-200 dark:border-slate-700 px-6 py-4 bg-slate-50/50 dark:bg-slate-800/50">
                 <h3 class="text-base font-semibold leading-6 text-slate-900 dark:text-white">
                     <i class="fas fa-server mr-2 text-indigo-500"></i>Informasi Server
@@ -145,25 +164,29 @@
             <div class="p-6 space-y-4">
                 <div class="flex items-center justify-between py-3 border-b border-slate-100 dark:border-slate-700">
                     <span class="text-sm font-medium text-slate-500 dark:text-slate-400">PHP Version</span>
-                    <span class="inline-flex items-center rounded-lg bg-blue-50 dark:bg-blue-900/20 px-3 py-1.5 text-sm font-bold text-blue-700 dark:text-blue-400 ring-1 ring-inset ring-blue-700/10 dark:ring-blue-500/20">
+                    <span
+                        class="inline-flex items-center rounded-lg bg-blue-50 dark:bg-blue-900/20 px-3 py-1.5 text-sm font-bold text-blue-700 dark:text-blue-400 ring-1 ring-inset ring-blue-700/10 dark:ring-blue-500/20">
                         <i class="fab fa-php mr-2 text-lg"></i>{{ $phpVersion }}
                     </span>
                 </div>
                 <div class="flex items-center justify-between py-3 border-b border-slate-100 dark:border-slate-700">
                     <span class="text-sm font-medium text-slate-500 dark:text-slate-400">Laravel Version</span>
-                    <span class="inline-flex items-center rounded-lg bg-red-50 dark:bg-red-900/20 px-3 py-1.5 text-sm font-bold text-red-700 dark:text-red-400 ring-1 ring-inset ring-red-700/10 dark:ring-red-500/20">
+                    <span
+                        class="inline-flex items-center rounded-lg bg-red-50 dark:bg-red-900/20 px-3 py-1.5 text-sm font-bold text-red-700 dark:text-red-400 ring-1 ring-inset ring-red-700/10 dark:ring-red-500/20">
                         <i class="fab fa-laravel mr-2 text-lg"></i>{{ $laravelVersion }}
                     </span>
                 </div>
                 <div class="flex items-center justify-between py-3 border-b border-slate-100 dark:border-slate-700">
                     <span class="text-sm font-medium text-slate-500 dark:text-slate-400">Database Version</span>
-                    <span class="inline-flex items-center rounded-lg bg-amber-50 dark:bg-amber-900/20 px-3 py-1.5 text-sm font-bold text-amber-700 dark:text-amber-400 ring-1 ring-inset ring-amber-700/10 dark:ring-amber-500/20">
+                    <span
+                        class="inline-flex items-center rounded-lg bg-amber-50 dark:bg-amber-900/20 px-3 py-1.5 text-sm font-bold text-amber-700 dark:text-amber-400 ring-1 ring-inset ring-amber-700/10 dark:ring-amber-500/20">
                         <i class="fas fa-database mr-2"></i>{{ $dbVersion }}
                     </span>
                 </div>
                 <div class="flex items-center justify-between py-3">
                     <span class="text-sm font-medium text-slate-500 dark:text-slate-400">Server OS</span>
-                    <span class="inline-flex items-center rounded-lg bg-slate-100 dark:bg-slate-700 px-3 py-1.5 text-sm font-bold text-slate-700 dark:text-slate-300">
+                    <span
+                        class="inline-flex items-center rounded-lg bg-slate-100 dark:bg-slate-700 px-3 py-1.5 text-sm font-bold text-slate-700 dark:text-slate-300">
                         <i class="fas fa-desktop mr-2"></i>{{ PHP_OS }}
                     </span>
                 </div>
@@ -171,7 +194,8 @@
         </div>
 
         {{-- Library Status --}}
-        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm ring-1 ring-slate-900/5 dark:ring-slate-700 overflow-hidden">
+        <div
+            class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm ring-1 ring-slate-900/5 dark:ring-slate-700 overflow-hidden">
             <div class="border-b border-slate-200 dark:border-slate-700 px-6 py-4 bg-slate-50/50 dark:bg-slate-800/50">
                 <h3 class="text-base font-semibold leading-6 text-slate-900 dark:text-white">
                     <i class="fas fa-puzzle-piece mr-2 text-indigo-500"></i>PHP Extensions & Libraries
@@ -180,8 +204,10 @@
             <div class="p-6">
                 <div class="grid grid-cols-2 gap-3">
                     @foreach($libraries as $lib)
-                        <div class="flex items-center justify-between rounded-xl px-4 py-3 {{ $lib['loaded'] ? 'bg-emerald-50 dark:bg-emerald-900/10 ring-1 ring-emerald-500/20' : 'bg-rose-50 dark:bg-rose-900/10 ring-1 ring-rose-500/20' }} transition-all duration-200 hover:scale-[1.02]">
-                            <span class="text-sm font-semibold {{ $lib['loaded'] ? 'text-emerald-800 dark:text-emerald-300' : 'text-rose-800 dark:text-rose-300' }}">
+                        <div
+                            class="flex items-center justify-between rounded-xl px-4 py-3 {{ $lib['loaded'] ? 'bg-emerald-50 dark:bg-emerald-900/10 ring-1 ring-emerald-500/20' : 'bg-rose-50 dark:bg-rose-900/10 ring-1 ring-rose-500/20' }} transition-all duration-200 hover:scale-[1.02]">
+                            <span
+                                class="text-sm font-semibold {{ $lib['loaded'] ? 'text-emerald-800 dark:text-emerald-300' : 'text-rose-800 dark:text-rose-300' }}">
                                 {{ $lib['name'] }}
                             </span>
                             @if($lib['loaded'])
@@ -205,7 +231,7 @@
 @push('scripts')
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             const isDark = document.documentElement.classList.contains('dark');
             const gridColor = isDark ? 'rgba(148,163,184,0.1)' : 'rgba(0,0,0,0.06)';
             const textColor = isDark ? '#94a3b8' : '#64748b';
@@ -272,7 +298,7 @@
                             cornerRadius: 12,
                             padding: 12,
                             callbacks: {
-                                label: function(context) {
+                                label: function (context) {
                                     let value = context.parsed.y || 0;
                                     return context.dataset.label + ': Rp ' + value.toLocaleString('id-ID');
                                 }
@@ -290,7 +316,7 @@
                             ticks: {
                                 color: textColor,
                                 font: { size: 11 },
-                                callback: function(value) {
+                                callback: function (value) {
                                     if (value >= 1000000) return 'Rp ' + (value / 1000000).toFixed(1) + 'jt';
                                     if (value >= 1000) return 'Rp ' + (value / 1000).toFixed(0) + 'rb';
                                     return 'Rp ' + value;

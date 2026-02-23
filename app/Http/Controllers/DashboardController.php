@@ -7,8 +7,17 @@ use App\Models\Invoice;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
+use App\Services\MikrotikService;
+
 class DashboardController extends Controller
 {
+    protected $mikrotik;
+
+    public function __construct(MikrotikService $mikrotik)
+    {
+        $this->mikrotik = $mikrotik;
+    }
+
     public function index()
     {
         $user = auth()->user();
@@ -27,10 +36,36 @@ class DashboardController extends Controller
             $invoiceQuery->where('admin_id', $user->id);
         }
 
-        // ── Customer Stats ──
-        $totalCustomers = (clone $customerQuery)->count();
-        $activeCustomers = (clone $customerQuery)->where('is_active', true)->count();
-        $disabledCustomers = (clone $customerQuery)->where('is_active', false)->count();
+        // ── Customer Stats (Optimized: Fetch from Mikrotik for real-time status) ──
+        $isConnected = $this->mikrotik->isConnected();
+        $totalCustomers = 0;
+        $activeCustomers = 0;
+        $disabledCustomers = 0;
+
+        // Get list of usernames belonging to this user from local DB for filtering Mikrotik results
+        $myCustomerUsernames = (clone $customerQuery)->pluck('pppoe_username')->filter()->toArray();
+
+        if ($isConnected) {
+            $secrets = $this->mikrotik->getSecrets();
+            $actives = $this->mikrotik->getActiveUsers();
+
+            // Filter Mikrotik data to only show what belongs to this login ID
+            $mySecrets = array_filter($secrets, function ($s) use ($myCustomerUsernames) {
+                return in_array($s['name'], $myCustomerUsernames);
+            });
+            $myActives = array_filter($actives, function ($a) use ($myCustomerUsernames) {
+                return in_array($a['name'], $myCustomerUsernames);
+            });
+
+            $totalCustomers = count($mySecrets);
+            $activeCustomers = count($myActives);
+            $disabledCustomers = $totalCustomers - $activeCustomers;
+        } else {
+            // Fallback to local DB if Mikrotik is disconnected
+            $totalCustomers = (clone $customerQuery)->count();
+            $activeCustomers = (clone $customerQuery)->where('is_active', true)->count();
+            $disabledCustomers = (clone $customerQuery)->where('is_active', false)->count();
+        }
 
         // ── Billing Stats (current month) ──
         $now = Carbon::now();
@@ -118,6 +153,7 @@ class DashboardController extends Controller
             'chartLabels',
             'chartPaid',
             'chartUnpaid',
+            'isConnected',
             'phpVersion',
             'laravelVersion',
             'dbVersion',
