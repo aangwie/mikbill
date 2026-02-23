@@ -22,6 +22,8 @@ use App\Http\Controllers\PaymentSettingController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\SiteSettingController;
 use App\Http\Controllers\ControlController;
+use App\Http\Controllers\DashboardController;
+
 
 
 /*
@@ -75,13 +77,16 @@ Route::match(['get', 'post'], '/logout', [AuthController::class, 'logout'])->nam
 */
 Route::middleware(['auth'])->group(function () {
 
-    // Redirect /dashboard ke billing index (atau dashboard admin jika mau)
+    // Redirect /dashboard ke dashboard baru
     Route::get('/dashboard', function () {
-        return redirect()->route('billing.index');
+        return redirect()->route('dashboard.index');
     });
 
-    //Dashboard bisa di akses Admin dan Operator
-    Route::get('/admin/dashboard', [PppoeController::class, 'index'])->name('pppoe.dashboard');
+    // Dashboard Utama
+    Route::get('/admin/dashboard', [DashboardController::class, 'index'])->name('dashboard.index');
+
+    // PPPoE Monitoring (Sebelumnya Dashboard)
+    Route::get('/admin/pppoe', [PppoeController::class, 'index'])->name('pppoe.dashboard');
     //Route Maps Pelanggan
     Route::get('/maps', [App\Http\Controllers\MapController::class, 'index'])->name('maps.index');
 

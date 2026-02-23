@@ -12,7 +12,7 @@
 
                 {{-- Company Logo & Name --}}
                 @if(isset($company) && (!empty($company->logo_path) || !empty($company->company_name)))
-                    <a href="{{ route('pppoe.dashboard') }}" class="flex items-center gap-2 group ml-[5%]"
+                    <a href="{{ route('dashboard.index') }}" class="flex items-center gap-2 group ml-[5%]"
                         style="margin-left: 5%;">
                         @if(!empty($company->logo_path))
                             <img src="{{ asset('uploads/' . $company->logo_path) }}" alt="Logo" class="h-9 w-auto rounded-lg">
@@ -28,7 +28,7 @@
                         </span>
                     </a>
                 @else
-                    <a href="{{ route('pppoe.dashboard') }}" class="flex items-center gap-2 group ml-[5%]"
+                    <a href="{{ route('dashboard.index') }}" class="flex items-center gap-2 group ml-[5%]"
                         style="margin-left: 5%;">
                         <div
                             class="bg-[#352f99] text-white p-1.5 rounded-lg shadow-md group-hover:bg-indigo-700 transition">
@@ -422,9 +422,13 @@
     <div x-show="mobileMenuOpen" style="display: none;"
         class="sm:hidden border-t border-gray-100 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-lg absolute w-full left-0 z-50">
         <div class="space-y-1 pb-3 pt-2">
+            <a href="{{ route('dashboard.index') }}"
+                class="block border-l-4 {{ request()->routeIs('dashboard.index') ? 'border-[#352f99] bg-indigo-50 dark:bg-indigo-900/50 text-[#352f99] dark:text-indigo-300' : 'border-transparent text-gray-600 dark:text-slate-400 hover:border-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 hover:text-gray-800 dark:hover:text-white' }} py-2 pl-3 pr-4 text-base font-medium">
+                <i class="fas fa-home w-6 text-center"></i> Dashboard
+            </a>
             <a href="{{ route('pppoe.dashboard') }}"
                 class="block border-l-4 {{ request()->routeIs('pppoe.dashboard') ? 'border-[#352f99] bg-indigo-50 dark:bg-indigo-900/50 text-[#352f99] dark:text-indigo-300' : 'border-transparent text-gray-600 dark:text-slate-400 hover:border-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 hover:text-gray-800 dark:hover:text-white' }} py-2 pl-3 pr-4 text-base font-medium">
-                <i class="fas fa-tachometer-alt w-6 text-center"></i> Dashboard
+                <i class="fas fa-desktop w-6 text-center"></i> PPPoE Monitoring
             </a>
             @if(auth()->user()->isSuperAdmin())
                 <a href="{{ route('control.index') }}"
