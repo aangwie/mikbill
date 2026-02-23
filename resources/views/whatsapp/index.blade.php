@@ -50,22 +50,26 @@
                     <form action="{{ route('whatsapp.update') }}" method="POST">
                         @csrf
                         <div class="space-y-4" x-data="{ waProvider: '{{ optional($setting)->wa_provider ?? 'api' }}' }">
-                            
+
                             <!-- Provider Toggle -->
                             <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 mb-4">
                                 <label class="block text-sm font-bold text-slate-900 mb-3">Metode Pengiriman</label>
                                 <div class="grid grid-cols-2 gap-3">
-                                    <label class="flex items-center justify-center p-3 rounded-lg border-2 cursor-pointer transition-all"
+                                    <label
+                                        class="flex items-center justify-center p-3 rounded-lg border-2 cursor-pointer transition-all"
                                         :class="waProvider === 'api' ? 'bg-indigo-50 border-indigo-600 text-indigo-700' : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'">
-                                        <input type="radio" name="wa_provider" value="api" x-model="waProvider" class="hidden">
+                                        <input type="radio" name="wa_provider" value="api" x-model="waProvider"
+                                            class="hidden">
                                         <div class="text-center">
                                             <i class="fas fa-cloud text-lg mb-1"></i>
                                             <div class="text-xs font-bold uppercase">API External</div>
                                         </div>
                                     </label>
-                                    <label class="flex items-center justify-center p-3 rounded-lg border-2 cursor-pointer transition-all"
+                                    <label
+                                        class="flex items-center justify-center p-3 rounded-lg border-2 cursor-pointer transition-all"
                                         :class="waProvider === 'gateway' ? 'bg-emerald-50 border-emerald-600 text-emerald-700' : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'">
-                                        <input type="radio" name="wa_provider" value="gateway" x-model="waProvider" class="hidden">
+                                        <input type="radio" name="wa_provider" value="gateway" x-model="waProvider"
+                                            class="hidden">
                                         <div class="text-center">
                                             <i class="fas fa-server text-lg mb-1"></i>
                                             <div class="text-xs font-bold uppercase">Self-Gateway</div>
@@ -78,14 +82,16 @@
                             <template x-if="waProvider === 'api'">
                                 <div class="space-y-4">
                                     <div>
-                                        <label class="block text-sm font-bold text-slate-900 mb-1">Target URL / API Host</label>
+                                        <label class="block text-sm font-bold text-slate-900 mb-1">Target URL / API
+                                            Host</label>
                                         <input type="url" name="target_url"
                                             class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                                             placeholder="https://api.gateway.com/send"
                                             value="{{ optional($setting)->target_url ?? '' }}">
                                     </div>
                                     <div>
-                                        <label class="block text-sm font-bold text-slate-900 mb-1">API Key (Provider)</label>
+                                        <label class="block text-sm font-bold text-slate-900 mb-1">API Key
+                                            (Provider)</label>
                                         <input type="text" name="api_key"
                                             class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                                             placeholder="Provider API Key" value="{{ optional($setting)->api_key ?? '' }}">
@@ -103,46 +109,64 @@
                             <template x-if="waProvider === 'gateway'">
                                 <div class="space-y-4" x-data="whatsappGateway()">
                                     <div>
-                                        <label class="block text-sm font-bold text-slate-900 mb-1">Gateway URL (Local)</label>
+                                        <label class="block text-sm font-bold text-slate-900 mb-1">Gateway URL
+                                            (Local)</label>
                                         <input type="url" name="wa_gateway_url"
                                             class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-emerald-600 sm:text-sm sm:leading-6"
                                             placeholder="http://localhost:3000"
                                             value="{{ optional($setting)->wa_gateway_url ?? 'http://localhost:3000' }}">
-                                        <p class="mt-1 text-[10px] text-slate-500">Gunakan localhost:3000 jika gateway di server yang sama.</p>
+                                        <p class="mt-1 text-[10px] text-slate-500">Gunakan localhost:3000 jika gateway di
+                                            server yang sama.</p>
                                     </div>
 
                                     <!-- Gateway Connection Panel -->
                                     <div class="mt-4 border border-emerald-100 rounded-xl bg-emerald-50/30 overflow-hidden">
                                         <div class="bg-emerald-500 px-4 py-2 flex items-center justify-between">
-                                            <span class="text-xs font-bold text-white uppercase tracking-wider">Status Gateway</span>
-                                            <span class="flex items-center gap-1.5 text-[10px] font-black text-white bg-white/20 px-2 py-0.5 rounded-full">
-                                                <span class="h-2 w-2 rounded-full" :class="status === 'connected' ? 'bg-white' : 'bg-red-200'"></span>
+                                            <span class="text-xs font-bold text-white uppercase tracking-wider">Status
+                                                Gateway</span>
+                                            <span
+                                                class="flex items-center gap-1.5 text-[10px] font-black text-white bg-white/20 px-2 py-0.5 rounded-full">
+                                                <span class="h-2 w-2 rounded-full" :class="{
+                                                            'bg-white': status === 'connected',
+                                                            'bg-amber-300': status === 'connecting',
+                                                            'bg-red-300': status === 'disconnected'
+                                                        }"></span>
                                                 <span x-text="status.toUpperCase()"></span>
                                             </span>
                                         </div>
                                         <div class="p-4 flex flex-col items-center">
                                             <!-- QR Code Display -->
-                                            <template x-if="status === 'disconnected' && qr">
-                                                <div class="mb-4 bg-white p-3 rounded-xl shadow-inner border border-emerald-100 animate-fade-in text-center">
-                                                    <p class="text-[10px] font-bold text-emerald-600 mb-2 uppercase italic tracking-widest">Pindai QR untuk Menghubungkan</p>
+                                            <template x-if="status === 'connecting' && qr">
+                                                <div
+                                                    class="mb-4 bg-white p-3 rounded-xl shadow-inner border border-emerald-100 animate-fade-in text-center">
+                                                    <p
+                                                        class="text-[10px] font-bold text-emerald-600 mb-2 uppercase italic tracking-widest">
+                                                        Pindai QR untuk Menghubungkan</p>
                                                     <img :src="qr" class="w-48 h-48 mx-auto" />
                                                 </div>
                                             </template>
-                                            
-                                            <template x-if="status === 'disconnected' && !qr">
+
+                                            <template x-if="status === 'connecting' && !qr">
                                                 <div class="py-12 text-center">
                                                     <i class="fas fa-qrcode fa-3x text-emerald-200 mb-2"></i>
-                                                    <p class="text-xs text-emerald-600 font-bold">Menghubungkan ke Gateway...</p>
+                                                    <p class="text-xs text-emerald-600 font-bold">Menghubungkan ke
+                                                        Gateway...</p>
                                                 </div>
                                             </template>
 
                                             <template x-if="status === 'connected'">
-                                                <div class="py-8 text-center bg-white w-full rounded-xl border border-emerald-100 shadow-sm">
-                                                    <div class="h-16 w-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                                                <div
+                                                    class="py-8 text-center bg-white w-full rounded-xl border border-emerald-100 shadow-sm">
+                                                    <div
+                                                        class="h-16 w-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-3">
                                                         <i class="fas fa-check-circle text-emerald-500 text-3xl"></i>
                                                     </div>
                                                     <p class="text-sm font-bold text-slate-700">Terhubung ke WhatsApp</p>
-                                                    <button type="button" @click="logout()" class="mt-4 text-[10px] font-bold text-red-500 hover:text-red-700 underline uppercase tracking-widest">
+                                                    <p class="text-xs font-medium text-emerald-600 mt-1" x-show="number">
+                                                        <i class="fab fa-whatsapp mr-1"></i> <span x-text="number"></span>
+                                                    </p>
+                                                    <button type="button" @click="logout()"
+                                                        class="mt-4 text-[10px] font-bold text-red-500 hover:text-red-700 underline uppercase tracking-widest">
                                                         <i class="fas fa-sign-out-alt mr-1"></i> Putuskan Koneksi
                                                     </button>
                                                 </div>
@@ -230,18 +254,19 @@
                             @csrf
                             <div class="space-y-4">
                                 @if(auth()->user()->role == 'superadmin')
-                                <div>
-                                    <label class="block text-sm font-bold text-slate-900 mb-1">Filter Berdasarkan Admin</label>
-                                    <select id="multiAdminFilter"
-                                        class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
-                                        <option value="">Semua Admin</option>
-                                        @foreach($admins as $admin)
-                                            <option value="{{ $admin->id }}" {{ $selectedAdminId == $admin->id ? 'selected' : '' }}>
-                                                {{ $admin->name }}{{ $admin->id == auth()->id() ? ' (Self)' : '' }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                </div>
+                                    <div>
+                                        <label class="block text-sm font-bold text-slate-900 mb-1">Filter Berdasarkan
+                                            Admin</label>
+                                        <select id="multiAdminFilter"
+                                            class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                                            <option value="">Semua Admin</option>
+                                            @foreach($admins as $admin)
+                                                <option value="{{ $admin->id }}" {{ $selectedAdminId == $admin->id ? 'selected' : '' }}>
+                                                    {{ $admin->name }}{{ $admin->id == auth()->id() ? ' (Self)' : '' }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
                                 @endif
                                 <div>
                                     <label class="block text-sm font-bold text-slate-900 mb-1">Pilih Penerima</label>
@@ -276,24 +301,24 @@
 
                     <!-- Tab: Unpaid Reminder -->
                     <div x-show="activeTab === 'unpaid'" style="display: none;" x-data="{
-                        selectedTemplateId: '',
-                        previewContent: '',
-                        showSaveForm: false,
-                        templateName: '',
-                        selectTemplate(id) {
-                            this.selectedTemplateId = id;
-                            if (id) {
-                                const option = document.querySelector('#billTemplateSelect option[value=\'' + id + '\']');
-                                if (option) {
-                                    this.previewContent = option.dataset.content;
-                                    document.getElementById('msgUnpaid').value = option.dataset.content;
+                                selectedTemplateId: '',
+                                previewContent: '',
+                                showSaveForm: false,
+                                templateName: '',
+                                selectTemplate(id) {
+                                    this.selectedTemplateId = id;
+                                    if (id) {
+                                        const option = document.querySelector('#billTemplateSelect option[value=\'' + id + '\']');
+                                        if (option) {
+                                            this.previewContent = option.dataset.content;
+                                            document.getElementById('msgUnpaid').value = option.dataset.content;
+                                        }
+                                    } else {
+                                        this.previewContent = '';
+                                        document.getElementById('msgUnpaid').value = '';
+                                    }
                                 }
-                            } else {
-                                this.previewContent = '';
-                                document.getElementById('msgUnpaid').value = '';
-                            }
-                        }
-                    }">
+                            }">
                         <div class="bg-amber-50 border-l-4 border-amber-400 p-4 mb-6 rounded-r-lg">
                             <div class="flex">
                                 <div class="flex-shrink-0"><i class="fas fa-exclamation-triangle text-amber-400"></i></div>
@@ -305,18 +330,18 @@
                         </div>
                         <div class="space-y-4">
                             @if(auth()->user()->role == 'superadmin')
-                            <div>
-                                <label class="block text-sm font-bold text-slate-900 mb-1">Filter Berdasarkan Admin</label>
-                                <select id="unpaidAdminFilter"
-                                    class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
-                                    <option value="">Semua Admin</option>
-                                    @foreach($admins as $admin)
-                                        <option value="{{ $admin->id }}" {{ $selectedAdminId == $admin->id ? 'selected' : '' }}>
-                                            {{ $admin->name }}{{ $admin->id == auth()->id() ? ' (Self)' : '' }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
+                                <div>
+                                    <label class="block text-sm font-bold text-slate-900 mb-1">Filter Berdasarkan Admin</label>
+                                    <select id="unpaidAdminFilter"
+                                        class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                                        <option value="">Semua Admin</option>
+                                        @foreach($admins as $admin)
+                                            <option value="{{ $admin->id }}" {{ $selectedAdminId == $admin->id ? 'selected' : '' }}>
+                                                {{ $admin->name }}{{ $admin->id == auth()->id() ? ' (Self)' : '' }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
                             @endif
 
                             {{-- Template Select with Search --}}
@@ -332,7 +357,7 @@
                                             <option value="">-- Pilih Template --</option>
                                             @if(auth()->user()->role == 'superadmin')
                                                 @php
-                                                    $groupedTemplates = $billTemplates->groupBy(function($t) {
+                                                    $groupedTemplates = $billTemplates->groupBy(function ($t) {
                                                         return $t->admin ? $t->admin->name : 'Unknown';
                                                     });
                                                 @endphp
@@ -354,9 +379,7 @@
                                             @endif
                                         </select>
                                     </div>
-                                    <button type="button"
-                                        x-show="selectedTemplateId"
-                                        @click="deleteTemplate()"
+                                    <button type="button" x-show="selectedTemplateId" @click="deleteTemplate()"
                                         class="inline-flex items-center rounded-lg bg-red-50 px-3 py-1.5 text-red-600 hover:bg-red-100 border border-red-200 transition-all"
                                         title="Hapus Template">
                                         <i class="fas fa-trash-alt"></i>
@@ -382,7 +405,8 @@
                                         class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                                         x-on:input="previewContent = $event.target.value"
                                         placeholder="Halo {name}, tagihan internet Anda sebesar Rp {tagihan} belum terbayar...">Halo {name}, tagihan internet Anda sebesar Rp {tagihan} belum terbayar. Mohon segera lunasi.</textarea>
-                                    <div class="absolute bottom-2 right-2 text-xs text-slate-400 bg-white px-2 rounded border border-slate-100 shadow-sm">
+                                    <div
+                                        class="absolute bottom-2 right-2 text-xs text-slate-400 bg-white px-2 rounded border border-slate-100 shadow-sm">
                                         Gunakan {name} untuk nama, {tagihan} untuk tagihan
                                     </div>
                                 </div>
@@ -393,7 +417,8 @@
                                 <button type="button" @click="showSaveForm = !showSaveForm"
                                     class="w-full flex items-center justify-between px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-100 transition-colors">
                                     <span><i class="fas fa-save mr-2 text-emerald-500"></i>Simpan sebagai Template</span>
-                                    <i class="fas fa-chevron-down transition-transform" :class="showSaveForm ? 'rotate-180' : ''"></i>
+                                    <i class="fas fa-chevron-down transition-transform"
+                                        :class="showSaveForm ? 'rotate-180' : ''"></i>
                                 </button>
                                 <div x-show="showSaveForm" x-transition class="px-4 pb-4 space-y-3">
                                     <div>
@@ -420,26 +445,26 @@
 
                     <!-- Tab: All Broadcast (Enhanced) -->
                     <div id="broadcastTab" x-show="activeTab === 'broadcast'" style="display: none;" x-data="{
-                                                            selectionMode: 'all',
-                                                            whatsappAge: '12+',
-                                                            scheduleMode: 'now',
-                                                            selectedCustomers: [],
-                                                            maxRecipients: 9999,
-                                                            scheduledAt: '',
-                                                            getMaxRecipients() {
-                                                                if (this.whatsappAge === '1-6') return 15;
-                                                                if (this.whatsappAge === '6-12') return 50;
-                                                                return 9999;
-                                                            },
-                                                            updateLimit() {
-                                                                this.maxRecipients = this.getMaxRecipients();
-                                                                // Truncate selection if exceeds limit
-                                                                if (this.selectedCustomers.length > this.maxRecipients) {
-                                                                    this.selectedCustomers = this.selectedCustomers.slice(0, this.maxRecipients);
-                                                                    $('#broadcastCustomerSelect').val(this.selectedCustomers).trigger('change');
-                                                                }
-                                                            }
-                                                        }" x-init="updateLimit()">
+                                                                    selectionMode: 'all',
+                                                                    whatsappAge: '12+',
+                                                                    scheduleMode: 'now',
+                                                                    selectedCustomers: [],
+                                                                    maxRecipients: 9999,
+                                                                    scheduledAt: '',
+                                                                    getMaxRecipients() {
+                                                                        if (this.whatsappAge === '1-6') return 15;
+                                                                        if (this.whatsappAge === '6-12') return 50;
+                                                                        return 9999;
+                                                                    },
+                                                                    updateLimit() {
+                                                                        this.maxRecipients = this.getMaxRecipients();
+                                                                        // Truncate selection if exceeds limit
+                                                                        if (this.selectedCustomers.length > this.maxRecipients) {
+                                                                            this.selectedCustomers = this.selectedCustomers.slice(0, this.maxRecipients);
+                                                                            $('#broadcastCustomerSelect').val(this.selectedCustomers).trigger('change');
+                                                                        }
+                                                                    }
+                                                                }" x-init="updateLimit()">
 
                         <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6 rounded-r-lg">
                             <div class="flex">
@@ -606,25 +631,26 @@
                                                 class="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-slate-900 sm:pl-6 font-medium">
                                                 @if($msg->status === 'pending' && $msg->scheduled_at)
                                                     <div x-data="{ 
-                                                                    target: new Date('{{ $msg->scheduled_at->toIso8601String() }}').getTime(),
-                                                                    now: new Date().getTime(),
-                                                                    countdown: '',
-                                                                    update() {
-                                                                        let diff = this.target - this.now;
-                                                                        if (diff <= 0) {
-                                                                            this.countdown = 'Sesaat lagi...';
-                                                                            return;
-                                                                        }
-                                                                        let d = Math.floor(diff / (1000 * 60 * 60 * 24));
-                                                                        let h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                                                                        let m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-                                                                        let s = Math.floor((diff % (1000 * 60)) / 1000);
-                                                                        this.countdown = (d > 0 ? d + 'h ' : '') + h + 'j ' + m + 'm ' + s + 's';
-                                                                    }
-                                                                }"
+                                                                                            target: new Date('{{ $msg->scheduled_at->toIso8601String() }}').getTime(),
+                                                                                            now: new Date().getTime(),
+                                                                                            countdown: '',
+                                                                                            update() {
+                                                                                                let diff = this.target - this.now;
+                                                                                                if (diff <= 0) {
+                                                                                                    this.countdown = 'Sesaat lagi...';
+                                                                                                    return;
+                                                                                                }
+                                                                                                let d = Math.floor(diff / (1000 * 60 * 60 * 24));
+                                                                                                let h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                                                                                                let m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                                                                                                let s = Math.floor((diff % (1000 * 60)) / 1000);
+                                                                                                this.countdown = (d > 0 ? d + 'h ' : '') + h + 'j ' + m + 'm ' + s + 's';
+                                                                                            }
+                                                                                        }"
                                                         x-init="update(); setInterval(() => { now = new Date().getTime(); update() }, 1000)">
                                                         <div class="font-bold text-slate-900">
-                                                            {{ $msg->scheduled_at->format('d M Y H:i') }}</div>
+                                                            {{ $msg->scheduled_at->format('d M Y H:i') }}
+                                                        </div>
                                                         <div class="text-[10px] text-indigo-600 font-mono" x-text="countdown"></div>
                                                     </div>
                                                 @else
@@ -632,7 +658,8 @@
                                                         {{ $msg->scheduled_at ? $msg->scheduled_at->format('d M Y H:i') : 'Sekarang' }}
                                                     </div>
                                                     <div class="text-[10px] text-slate-400 capitalize">
-                                                        {{ $msg->created_at->diffForHumans() }}</div>
+                                                        {{ $msg->created_at->diffForHumans() }}
+                                                    </div>
                                                 @endif
                                             </td>
                                             <td class="whitespace-nowrap px-3 py-4 text-sm text-slate-500">
@@ -828,64 +855,67 @@
         }
     </style>
     <script>
-        function whatsappGateway() {
-            return {
-                status: 'disconnected',
-                qr: null,
-                polling: null,
+            function whatsappGateway()               {
+                    return {
+                        status: 'disconnected',
+                        number: null,
+                        qr: null,
+                        polling: null,
 
-                init() {
-                    this.fetchStatus();
-                    this.polling = setInterval(() => this.fetchStatus(), 5000);
-                },
-
-                fetchStatus() {
-                    fetch('{{ route('whatsapp.gateway.status') }}')
-                        .then(res => res.json())
-                        .then(data => {
-                            this.status = data.status;
-                            this.qr = data.qr;
-                        })
-                        .catch(err => {
-                            this.status = 'disconnected';
-                            this.qr = null;
-                        });
-                },
-
-                logout() {
-                    if (!confirm('Apakah Anda yakin ingin memutuskan koneksi WhatsApp?')) return;
-                    
-                    fetch('{{ route('whatsapp.gateway.logout') }}', {
-                        method: 'POST',
-                        headers: {
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                            'Content-Type': 'application/json'
-                        }
-                    })
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data.status) {
+                        init() {
                             this.fetchStatus();
-                            Swal.fire('Berhasil', 'WhatsApp telah diputus.', 'success');
-                        }
-                    });
-                },
+                            this.polling = setInterval(() => this.fetchStatus(), 5000);
+                        },
 
-                destroy() {
-                    if (this.polling) clearInterval(this.polling);
+                        fetchStatus() {
+                            fetch('{{ route('whatsapp.gateway.status') }}')
+                                .then(res => res.json())
+                                .then(data => {
+                                    this.status = data.status;
+                                    this.qr = data.qr;
+                                    this.number = data.number;
+                                })
+                                .catch(err => {
+                                    this.status = 'disconnected';
+                                    this.qr = null;
+                                    this.number = null;
+                                });
+                        },
+
+                        logout() {
+                            if (!confirm('Apakah Anda yakin ingin memutuskan koneksi WhatsApp?')) return;
+
+                            fetch('{{ route('whatsapp.gateway.logout') }}', {
+                                method: 'POST',
+                                headers: {
+                                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                    'Content-Type': 'application/json'
+                                }
+                            })
+                            .then(res => res.json())
+                            .then(data => {
+                                if (data.status) {
+                                    this.fetchStatus();
+                                    Swal.fire('Berhasil', 'WhatsApp telah diputus.', 'success');
+                                }
+                            });
+                        },
+
+                        destroy() {
+                            if (this.polling) clearInterval(this.polling);
+                        }
+                    }
                 }
-            }
-        }
-    </script>
-    <style>
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-fade-in {
-            animation: fadeIn 0.5s ease-out forwards;
-        }
-    </style>
+            </script>
+            <style>
+                @keyframes fadeIn {
+                    from { opacity: 0; transform: translateY(10px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+                .animate-fade-in {
+                    animation: fadeIn 0.5s ease-out forwards;
+                }
+            </style>
 @endpush
 
 @push('scripts')
@@ -953,9 +983,9 @@
             $('#multiAdminFilter').on('change', function() {
                 const adminId = $(this).val();
                 const userSelect = $('#multiUserSelect');
-                
+
                 userSelect.prop('disabled', true);
-                
+
                 $.get("{{ route('whatsapp.broadcast.targets') }}", { type: 'all', admin_id: adminId }, function(response) {
                     userSelect.empty();
                     // Extract targets if nested

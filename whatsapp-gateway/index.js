@@ -23,8 +23,10 @@ app.use(bodyParser.urlencoded({ extended: true }));
 let sock;
 let qrCode = null;
 let connectionStatus = "disconnected";
+let connectedNumber = null;
 
 async function connectToWhatsApp() {
+    connectionStatus = "connecting";
     const { state, saveCreds } = await useMultiFileAuthState(path.join(__dirname, "auth_info_baileys"));
     const { version, isLatest } = await fetchLatestBaileysVersion();
 
@@ -43,19 +45,30 @@ async function connectToWhatsApp() {
 
         if (qr) {
             qrCode = await qrcode.toDataURL(qr);
+            connectionStatus = "connecting";
         }
 
-        if (connection === "close") {
-            const shouldReconnect = lastDisconnect.error?.output?.statusCode !== DisconnectReason.loggedOut;
+        if (connection === "connecting") {
+            connectionStatus = "connecting";
+            console.log("Connecting to WhatsApp...");
+        } else if (connection === "close") {
+            const statusCode = lastDisconnect?.error?.output?.statusCode;
+            const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
+
+            console.log(`Connection closed. Reason: ${statusCode}, Reconnecting: ${shouldReconnect}`);
+
             connectionStatus = "disconnected";
             qrCode = null;
+            connectedNumber = null;
+
             if (shouldReconnect) {
                 connectToWhatsApp();
             }
         } else if (connection === "open") {
             connectionStatus = "connected";
             qrCode = null;
-            console.log("WhatsApp connected!");
+            connectedNumber = sock.user?.id;
+            console.log("WhatsApp connected as: " + connectedNumber);
         }
     });
 
@@ -64,7 +77,11 @@ async function connectToWhatsApp() {
 
 // API Endpoints
 app.get("/status", (req, res) => {
-    res.json({ status: connectionStatus, qr: qrCode });
+    res.json({
+        status: connectionStatus,
+        qr: qrCode,
+        number: connectedNumber ? connectedNumber.split(':')[0] : null
+    });
 });
 
 app.post("/send", async (req, res) => {
