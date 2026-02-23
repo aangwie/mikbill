@@ -240,7 +240,7 @@ class WhatsappController extends Controller
                 return response()->json([
                     'status' => false,
                     'target' => $customer->name,
-                    'message' => 'Gagal koneksi WA'
+                    'message' => $result['message'] ?? 'Gagal koneksi/Error WA'
                 ]);
             }
         } catch (\Exception $e) {
@@ -422,7 +422,7 @@ class WhatsappController extends Controller
         $template = WaBillTemplate::create([
             'admin_id' => auth()->id(),
             'name' => $request->name,
-            'content' => $request->content,
+            'content' => $request->input('content'),
         ]);
 
         $template->load('admin');

@@ -16,6 +16,9 @@ class WhatsappService
         }
 
         // 2. Format Nomor (Pastikan 628...)
+        // Hapus karakter non-digit (seperti +, -, space)
+        $targetNumber = preg_replace('/[^0-9]/', '', $targetNumber);
+
         if (substr($targetNumber, 0, 1) == '0') {
             $targetNumber = '62' . substr($targetNumber, 1);
         }
