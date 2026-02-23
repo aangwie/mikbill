@@ -22,11 +22,10 @@ class DashboardController extends Controller
             $invoiceQuery->whereHas('customer', function ($q) use ($user) {
                 $q->where('operator_id', $user->id);
             });
-        } elseif ($user->role === 'admin') {
+        } elseif ($user->role === 'admin' || $user->role === 'superadmin') {
             $customerQuery->where('admin_id', $user->id);
             $invoiceQuery->where('admin_id', $user->id);
         }
-        // Superadmin skips these filters to see everything.
 
         // ── Customer Stats ──
         $totalCustomers = (clone $customerQuery)->count();
