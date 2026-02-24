@@ -197,12 +197,19 @@ class DashboardController extends Controller
         }
 
         // Disk Usage (Cross-platform)
-        $ds = disk_total_space("C:"); // Adjust if needed, but C: is standard for XAMPP on Windows
-        $df = disk_free_space("C:");
-        if ($ds && $ds > 0) {
-            $stats['disk_total'] = $ds;
-            $stats['disk_used'] = $ds - $df;
-            $stats['disk_percentage'] = round(($stats['disk_used'] / $stats['disk_total']) * 100, 1);
+        $diskPath = strtoupper(substr(PHP_OS, 0, 3)) === 'WIN' ? "C:" : base_path();
+
+        try {
+            $ds = @disk_total_space($diskPath);
+            $df = @disk_free_space($diskPath);
+
+            if ($ds && $ds > 0) {
+                $stats['disk_total'] = $ds;
+                $stats['disk_used'] = $ds - $df;
+                $stats['disk_percentage'] = round(($stats['disk_used'] / $stats['disk_total']) * 100, 1);
+            }
+        } catch (\Exception $e) {
+            // Fallback if disk space cannot be determined
         }
 
         return $stats;
