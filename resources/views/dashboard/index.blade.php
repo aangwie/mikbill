@@ -238,8 +238,26 @@
                             style="width: {{ $systemStats['disk_percentage'] }}%"></div>
                     </div>
                     <div class="flex justify-between text-[10px] text-slate-400 mt-1">
-                        <span id="disk-used-text">Used: {{ round($systemStats['disk_used'] / (1024 ** 3), 2) }} GB</span>
-                        <span id="disk-total-text">Total: {{ round($systemStats['disk_total'] / (1024 ** 3), 2) }} GB</span>
+                        <span id="disk-used-text">Used: {{ round($systemStats['disk_used'] / (1024**3), 2) }} GB</span>
+                        <span id="disk-total-text">Total: {{ round($systemStats['disk_total'] / (1024**3), 2) }} GB</span>
+                    </div>
+                </div>
+
+                {{-- Network Usage --}}
+                <div class="pt-4 border-t border-slate-100 dark:border-slate-700">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="flex flex-col">
+                            <span class="text-[10px] uppercase font-bold text-slate-400 mb-1">
+                                <i class="fas fa-arrow-down mr-1"></i>Download
+                            </span>
+                            <span id="net-down-speed" class="text-sm font-bold text-emerald-500">0 KB/s</span>
+                        </div>
+                        <div class="flex flex-col">
+                            <span class="text-[10px] uppercase font-bold text-slate-400 mb-1">
+                                <i class="fas fa-arrow-up mr-1"></i>Upload
+                            </span>
+                            <span id="net-up-speed" class="text-sm font-bold text-rose-500">0 KB/s</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -348,10 +366,23 @@
             });
 
             // --- System Monitor Realtime Polling ---
+            let lastNetRx = {{ $systemStats['net_rx'] }};
+            let lastNetTx = {{ $systemStats['net_tx'] }};
+            let lastTime = Date.now();
+
+            function formatSpeed(bytes) {
+                if (bytes >= 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(2) + ' MB/s';
+                if (bytes >= 1024) return (bytes / 1024).toFixed(2) + ' KB/s';
+                return bytes.toFixed(0) + ' B/s';
+            }
+
             function updateSystemStats() {
                 fetch('{{ route('dashboard.systemStats') }}')
                     .then(response => response.json())
                     .then(data => {
+                        const now = Date.now();
+                        const timeDiff = (now - lastTime) / 1000; // in seconds
+
                         // CPU
                         document.getElementById('cpu-load-value').innerText = data.cpu_load + '%';
                         document.getElementById('cpu-progress').style.width = data.cpu_load + '%';
@@ -367,6 +398,19 @@
                         document.getElementById('disk-progress').style.width = data.disk_percentage + '%';
                         document.getElementById('disk-used-text').innerText = 'Used: ' + data.disk_used_gb + ' GB';
                         document.getElementById('disk-total-text').innerText = 'Total: ' + data.disk_total_gb + ' GB';
+
+                        // Network Speeds
+                        if (timeDiff > 0) {
+                            const rxSpeed = (data.net_rx - lastNetRx) / timeDiff;
+                            const txSpeed = (data.net_tx - lastNetTx) / timeDiff;
+                            
+                            document.getElementById('net-down-speed').innerText = formatSpeed(rxSpeed > 0 ? rxSpeed : 0);
+                            document.getElementById('net-up-speed').innerText = formatSpeed(txSpeed > 0 ? txSpeed : 0);
+                        }
+
+                        lastNetRx = data.net_rx;
+                        lastNetTx = data.net_tx;
+                        lastTime = now;
                     })
                     .catch(error => console.error('Error fetching system stats:', error));
             }

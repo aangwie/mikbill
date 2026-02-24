@@ -159,12 +159,15 @@ class DashboardController extends Controller
             'disk_total' => 0,
             'disk_used' => 0,
             'disk_percentage' => 0,
+            'net_rx' => 0,
+            'net_tx' => 0,
         ];
 
         // Windows Specific Stats
         if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
             try {
                 // CPU Load
+                // ... (existing CPU logic) ...
                 $cpu = shell_exec('wmic cpu get loadpercentage');
                 if ($cpu) {
                     $lines = explode("\n", trim($cpu));
@@ -174,6 +177,7 @@ class DashboardController extends Controller
                 }
 
                 // RAM Status
+                // ... (existing RAM logic) ...
                 $ram = shell_exec('wmic OS get FreePhysicalMemory,TotalVisibleMemorySize /Value');
                 if ($ram) {
                     $lines = explode("\n", trim($ram));
@@ -191,6 +195,22 @@ class DashboardController extends Controller
                         $stats['ram_percentage'] = round(($stats['ram_used'] / $stats['ram_total']) * 100, 1);
                     }
                 }
+
+                // Network Status (Windows)
+                $net = shell_exec('netstat -e');
+                if ($net) {
+                    $lines = explode("\n", trim($net));
+                    foreach ($lines as $line) {
+                        if (stripos($line, 'Bytes') !== false) {
+                            $parts = preg_split('/\s+/', trim($line));
+                            if (count($parts) >= 3) {
+                                $stats['net_rx'] = (float) $parts[1];
+                                $stats['net_tx'] = (float) $parts[2];
+                            }
+                            break;
+                        }
+                    }
+                }
             } catch (\Exception $e) {
                 // Handle or log error
             }
@@ -201,9 +221,6 @@ class DashboardController extends Controller
                 if (function_exists('sys_getloadavg')) {
                     $load = sys_getloadavg();
                     if (isset($load[0])) {
-                        // Estimate percentage based on 1-min load avg. 
-                        // Shared hosting might have many cores, so 1.0 = 100% of 1 core.
-                        // We'll cap it at 100 for display purposes.
                         $stats['cpu_load'] = min(round($load[0] * 100), 100);
                     }
                 }
@@ -224,10 +241,25 @@ class DashboardController extends Controller
                         $stats['ram_used'] = $data['MemTotal'] - $data['MemAvailable'];
                         $stats['ram_percentage'] = round(($stats['ram_used'] / $stats['ram_total']) * 100, 1);
                     } elseif (isset($data['MemTotal']) && isset($data['MemFree'])) {
-                        // Fallback if MemAvailable is not present (older kernels)
                         $stats['ram_total'] = $data['MemTotal'];
                         $stats['ram_used'] = $data['MemTotal'] - $data['MemFree'];
                         $stats['ram_percentage'] = round(($stats['ram_used'] / $stats['ram_total']) * 100, 1);
+                    }
+                }
+
+                // Network Status (Linux /proc/net/dev)
+                if (is_readable('/proc/net/dev')) {
+                    $netinfo = file_get_contents('/proc/net/dev');
+                    $lines = explode("\n", $netinfo);
+                    foreach ($lines as $line) {
+                        if (strpos($line, ':') !== false) {
+                            $parts = preg_split('/\s+/', trim($line));
+                            $interface = trim(str_replace(':', '', $parts[0]));
+                            if ($interface !== 'lo') {
+                                $stats['net_rx'] += (float) $parts[1];
+                                $stats['net_tx'] += (float) $parts[9];
+                            }
+                        }
                     }
                 }
             } catch (\Exception $e) {
