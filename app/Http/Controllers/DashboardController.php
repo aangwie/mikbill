@@ -194,6 +194,45 @@ class DashboardController extends Controller
             } catch (\Exception $e) {
                 // Handle or log error
             }
+        } else {
+            // Linux / Shared Hosting Stats
+            try {
+                // CPU Load (using sys_getloadavg)
+                if (function_exists('sys_getloadavg')) {
+                    $load = sys_getloadavg();
+                    if (isset($load[0])) {
+                        // Estimate percentage based on 1-min load avg. 
+                        // Shared hosting might have many cores, so 1.0 = 100% of 1 core.
+                        // We'll cap it at 100 for display purposes.
+                        $stats['cpu_load'] = min(round($load[0] * 100), 100);
+                    }
+                }
+
+                // RAM Status (parsing /proc/meminfo)
+                if (is_readable('/proc/meminfo')) {
+                    $meminfo = file_get_contents('/proc/meminfo');
+                    $data = [];
+                    foreach (explode("\n", $meminfo) as $line) {
+                        if (strpos($line, ':') !== false) {
+                            list($key, $val) = explode(':', $line);
+                            $data[trim($key)] = (int) trim($val) * 1024; // KB to Bytes
+                        }
+                    }
+
+                    if (isset($data['MemTotal']) && isset($data['MemAvailable'])) {
+                        $stats['ram_total'] = $data['MemTotal'];
+                        $stats['ram_used'] = $data['MemTotal'] - $data['MemAvailable'];
+                        $stats['ram_percentage'] = round(($stats['ram_used'] / $stats['ram_total']) * 100, 1);
+                    } elseif (isset($data['MemTotal']) && isset($data['MemFree'])) {
+                        // Fallback if MemAvailable is not present (older kernels)
+                        $stats['ram_total'] = $data['MemTotal'];
+                        $stats['ram_used'] = $data['MemTotal'] - $data['MemFree'];
+                        $stats['ram_percentage'] = round(($stats['ram_used'] / $stats['ram_total']) * 100, 1);
+                    }
+                }
+            } catch (\Exception $e) {
+                // Fallback
+            }
         }
 
         // Disk Usage (Cross-platform)
