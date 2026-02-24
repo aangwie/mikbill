@@ -84,6 +84,7 @@ Route::middleware(['auth'])->group(function () {
 
     // Dashboard Utama
     Route::get('/admin/dashboard', [DashboardController::class, 'index'])->name('dashboard.index');
+    Route::get('/admin/system-stats', [DashboardController::class, 'getStatsJson'])->name('dashboard.systemStats');
 
     // PPPoE Monitoring (Sebelumnya Dashboard)
     Route::get('/admin/pppoe', [PppoeController::class, 'index'])->name('pppoe.dashboard');

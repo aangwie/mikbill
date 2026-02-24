@@ -192,7 +192,7 @@ class AuthController extends Controller
             }
 
             $request->session()->regenerate();
-            return redirect()->route('pppoe.dashboard')->with('success', 'Selamat datang kembali!');
+            return redirect()->route('dashboard.index')->with('success', 'Selamat datang kembali!');
         }
 
         // Jika gagal

@@ -121,7 +121,6 @@ class DashboardController extends Controller
 
         // ── System Information ──
         $phpVersion = phpversion();
-        $laravelVersion = app()->version();
 
         try {
             $dbVersionRaw = DB::select('SELECT VERSION() as ver');
@@ -130,18 +129,8 @@ class DashboardController extends Controller
             $dbVersion = 'Unknown';
         }
 
-        $libraries = [
-            ['name' => 'zlib (gz)', 'loaded' => extension_loaded('zlib')],
-            ['name' => 'zip', 'loaded' => extension_loaded('zip')],
-            ['name' => 'mbstring', 'loaded' => extension_loaded('mbstring')],
-            ['name' => 'curl', 'loaded' => extension_loaded('curl')],
-            ['name' => 'openssl', 'loaded' => extension_loaded('openssl')],
-            ['name' => 'gd', 'loaded' => extension_loaded('gd')],
-            ['name' => 'fileinfo', 'loaded' => extension_loaded('fileinfo')],
-            ['name' => 'pdo_mysql', 'loaded' => extension_loaded('pdo_mysql')],
-            ['name' => 'json', 'loaded' => extension_loaded('json')],
-            ['name' => 'tokenizer', 'loaded' => extension_loaded('tokenizer')],
-        ];
+        // ── System Monitor (Realtime) ──
+        $systemStats = $this->getSystemMonitorStats();
 
         return view('dashboard.index', compact(
             'totalCustomers',
@@ -155,9 +144,79 @@ class DashboardController extends Controller
             'chartUnpaid',
             'isConnected',
             'phpVersion',
-            'laravelVersion',
             'dbVersion',
-            'libraries'
+            'systemStats'
         ));
+    }
+
+    private function getSystemMonitorStats()
+    {
+        $stats = [
+            'cpu_load' => 0,
+            'ram_total' => 0,
+            'ram_used' => 0,
+            'ram_percentage' => 0,
+            'disk_total' => 0,
+            'disk_used' => 0,
+            'disk_percentage' => 0,
+        ];
+
+        // Windows Specific Stats
+        if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
+            try {
+                // CPU Load
+                $cpu = shell_exec('wmic cpu get loadpercentage');
+                if ($cpu) {
+                    $lines = explode("\n", trim($cpu));
+                    if (isset($lines[1])) {
+                        $stats['cpu_load'] = (int) trim($lines[1]);
+                    }
+                }
+
+                // RAM Status
+                $ram = shell_exec('wmic OS get FreePhysicalMemory,TotalVisibleMemorySize /Value');
+                if ($ram) {
+                    $lines = explode("\n", trim($ram));
+                    $ramData = [];
+                    foreach ($lines as $line) {
+                        if (strpos($line, '=') !== false) {
+                            list($key, $value) = explode('=', $line);
+                            $ramData[trim($key)] = (int) trim($value);
+                        }
+                    }
+                    if (isset($ramData['TotalVisibleMemorySize']) && isset($ramData['FreePhysicalMemory'])) {
+                        $stats['ram_total'] = $ramData['TotalVisibleMemorySize'] * 1024; // Convert KB to Bytes
+                        $freeRam = $ramData['FreePhysicalMemory'] * 1024;
+                        $stats['ram_used'] = $stats['ram_total'] - $freeRam;
+                        $stats['ram_percentage'] = round(($stats['ram_used'] / $stats['ram_total']) * 100, 1);
+                    }
+                }
+            } catch (\Exception $e) {
+                // Handle or log error
+            }
+        }
+
+        // Disk Usage (Cross-platform)
+        $ds = disk_total_space("C:"); // Adjust if needed, but C: is standard for XAMPP on Windows
+        $df = disk_free_space("C:");
+        if ($ds && $ds > 0) {
+            $stats['disk_total'] = $ds;
+            $stats['disk_used'] = $ds - $df;
+            $stats['disk_percentage'] = round(($stats['disk_used'] / $stats['disk_total']) * 100, 1);
+        }
+
+        return $stats;
+    }
+
+    public function getStatsJson()
+    {
+        $stats = $this->getSystemMonitorStats();
+        // Add human readable formats for JS
+        $stats['ram_used_gb'] = round($stats['ram_used'] / (1024 ** 3), 2);
+        $stats['ram_total_gb'] = round($stats['ram_total'] / (1024 ** 3), 2);
+        $stats['disk_used_gb'] = round($stats['disk_used'] / (1024 ** 3), 2);
+        $stats['disk_total_gb'] = round($stats['disk_total'] / (1024 ** 3), 2);
+
+        return response()->json($stats);
     }
 }

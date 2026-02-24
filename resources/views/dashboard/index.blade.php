@@ -169,13 +169,7 @@
                         <i class="fab fa-php mr-2 text-lg"></i>{{ $phpVersion }}
                     </span>
                 </div>
-                <div class="flex items-center justify-between py-3 border-b border-slate-100 dark:border-slate-700">
-                    <span class="text-sm font-medium text-slate-500 dark:text-slate-400">Laravel Version</span>
-                    <span
-                        class="inline-flex items-center rounded-lg bg-red-50 dark:bg-red-900/20 px-3 py-1.5 text-sm font-bold text-red-700 dark:text-red-400 ring-1 ring-inset ring-red-700/10 dark:ring-red-500/20">
-                        <i class="fab fa-laravel mr-2 text-lg"></i>{{ $laravelVersion }}
-                    </span>
-                </div>
+
                 <div class="flex items-center justify-between py-3 border-b border-slate-100 dark:border-slate-700">
                     <span class="text-sm font-medium text-slate-500 dark:text-slate-400">Database Version</span>
                     <span
@@ -193,34 +187,60 @@
             </div>
         </div>
 
-        {{-- Library Status --}}
+        {{-- System Monitor --}}
         <div
             class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm ring-1 ring-slate-900/5 dark:ring-slate-700 overflow-hidden">
             <div class="border-b border-slate-200 dark:border-slate-700 px-6 py-4 bg-slate-50/50 dark:bg-slate-800/50">
                 <h3 class="text-base font-semibold leading-6 text-slate-900 dark:text-white">
-                    <i class="fas fa-puzzle-piece mr-2 text-indigo-500"></i>PHP Extensions & Libraries
+                    <i class="fas fa-microchip mr-2 text-indigo-500"></i>Sistem Monitor
                 </h3>
             </div>
-            <div class="p-6">
-                <div class="grid grid-cols-2 gap-3">
-                    @foreach($libraries as $lib)
-                        <div
-                            class="flex items-center justify-between rounded-xl px-4 py-3 {{ $lib['loaded'] ? 'bg-emerald-50 dark:bg-emerald-900/10 ring-1 ring-emerald-500/20' : 'bg-rose-50 dark:bg-rose-900/10 ring-1 ring-rose-500/20' }} transition-all duration-200 hover:scale-[1.02]">
-                            <span
-                                class="text-sm font-semibold {{ $lib['loaded'] ? 'text-emerald-800 dark:text-emerald-300' : 'text-rose-800 dark:text-rose-300' }}">
-                                {{ $lib['name'] }}
-                            </span>
-                            @if($lib['loaded'])
-                                <span class="flex items-center gap-1 text-xs font-bold text-emerald-600 dark:text-emerald-400">
-                                    <i class="fas fa-check-circle"></i> Active
-                                </span>
-                            @else
-                                <span class="flex items-center gap-1 text-xs font-bold text-rose-600 dark:text-rose-400">
-                                    <i class="fas fa-times-circle"></i> Missing
-                                </span>
-                            @endif
-                        </div>
-                    @endforeach
+            <div class="p-6 space-y-6">
+                {{-- CPU Usage --}}
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm font-medium text-slate-500 dark:text-slate-400">Processor Status (Load)</span>
+                        <span id="cpu-load-value"
+                            class="text-sm font-bold text-indigo-600 dark:text-indigo-400">{{ $systemStats['cpu_load'] }}%</span>
+                    </div>
+                    <div class="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-2">
+                        <div id="cpu-progress" class="bg-indigo-500 h-2 rounded-full transition-all duration-500"
+                            style="width: {{ $systemStats['cpu_load'] }}%"></div>
+                    </div>
+                </div>
+
+                {{-- RAM Usage --}}
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm font-medium text-slate-500 dark:text-slate-400">RAM Status (Used)</span>
+                        <span id="ram-percentage-value"
+                            class="text-sm font-bold text-emerald-600 dark:text-emerald-400">{{ $systemStats['ram_percentage'] }}%</span>
+                    </div>
+                    <div class="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-2">
+                        <div id="ram-progress" class="bg-emerald-500 h-2 rounded-full transition-all duration-500"
+                            style="width: {{ $systemStats['ram_percentage'] }}%"></div>
+                    </div>
+                    <div class="flex justify-between text-[10px] text-slate-400 mt-1">
+                        <span id="ram-used-text">Used: {{ round($systemStats['ram_used'] / (1024 ** 3), 2) }} GB</span>
+                        <span id="ram-total-text">Total: {{ round($systemStats['ram_total'] / (1024 ** 3), 2) }} GB</span>
+                    </div>
+                </div>
+
+                {{-- Storage Usage --}}
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm font-medium text-slate-500 dark:text-slate-400">Storage Capacity (Used)</span>
+                        <span id="disk-percentage-value"
+                            class="text-sm font-bold text-amber-600 dark:text-amber-400">{{ $systemStats['disk_percentage'] }}%</span>
+                    </div>
+                    <div class="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-2">
+                        <div id="disk-progress" class="bg-amber-500 h-2 rounded-full transition-all duration-500"
+                            style="width: {{ $systemStats['disk_percentage'] }}%"></div>
+                    </div>
+                    <div class="flex justify-between text-[10px] text-slate-400 mt-1">
+                        <span id="disk-used-text">Used: {{ round($systemStats['disk_used'] / (1024 ** 3), 2) }} GB</span>
+                        <span id="disk-total-text">Total: {{ round($systemStats['disk_total'] / (1024 ** 3), 2) }} GB</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -326,6 +346,33 @@
                     }
                 }
             });
+
+            // --- System Monitor Realtime Polling ---
+            function updateSystemStats() {
+                fetch('{{ route('dashboard.systemStats') }}')
+                    .then(response => response.json())
+                    .then(data => {
+                        // CPU
+                        document.getElementById('cpu-load-value').innerText = data.cpu_load + '%';
+                        document.getElementById('cpu-progress').style.width = data.cpu_load + '%';
+
+                        // RAM
+                        document.getElementById('ram-percentage-value').innerText = data.ram_percentage + '%';
+                        document.getElementById('ram-progress').style.width = data.ram_percentage + '%';
+                        document.getElementById('ram-used-text').innerText = 'Used: ' + data.ram_used_gb + ' GB';
+                        document.getElementById('ram-total-text').innerText = 'Total: ' + data.ram_total_gb + ' GB';
+
+                        // Disk
+                        document.getElementById('disk-percentage-value').innerText = data.disk_percentage + '%';
+                        document.getElementById('disk-progress').style.width = data.disk_percentage + '%';
+                        document.getElementById('disk-used-text').innerText = 'Used: ' + data.disk_used_gb + ' GB';
+                        document.getElementById('disk-total-text').innerText = 'Total: ' + data.disk_total_gb + ' GB';
+                    })
+                    .catch(error => console.error('Error fetching system stats:', error));
+            }
+
+            // Poll every 5 seconds
+            setInterval(updateSystemStats, 5000);
         });
     </script>
 @endpush
