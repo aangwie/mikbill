@@ -411,6 +411,91 @@ class WhatsappController extends Controller
         return response()->json(['status' => true, 'message' => 'Jadwal pesan berhasil dihapus.']);
     }
 
+    // Schedule or immediately process unpaid broadcast
+    public function scheduleUnpaidBroadcast(Request $request)
+    {
+        $request->validate([
+            'message' => 'required|string',
+            'whatsapp_age' => 'required|in:1-6,6-12,12+',
+            'schedule_mode' => 'required|in:now,scheduled',
+            'scheduled_at' => 'required_if:schedule_mode,scheduled|nullable|date',
+        ]);
+
+        $user = auth()->user();
+        $whatsappAge = $request->whatsapp_age;
+        $maxRecipients = ScheduledMessage::getMaxRecipients($whatsappAge);
+        $adminId = $request->admin_id;
+
+        // Get unpaid customer IDs
+        $query = Customer::whereNotNull('phone')
+            ->where('phone', '!=', '')
+            ->whereHas('invoices', function ($q) {
+                $q->where('status', '!=', 'paid');
+            });
+
+        if ($user->role == 'superadmin' && $adminId) {
+            $query->where('admin_id', $adminId);
+        }
+
+        $customerIds = $query->limit($maxRecipients)->pluck('id')->toArray();
+
+        if (empty($customerIds)) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Tidak ada pelanggan dengan tagihan belum lunas.'
+            ]);
+        }
+
+        // Enforce limit
+        if (count($customerIds) > $maxRecipients) {
+            $customerIds = array_slice($customerIds, 0, $maxRecipients);
+        }
+
+        // Determine scheduled time
+        $scheduledAt = null;
+        if ($request->schedule_mode === 'scheduled' && $request->scheduled_at) {
+            $scheduledAt = Carbon::parse($request->scheduled_at);
+        }
+
+        // Create scheduled message record
+        $scheduledMessage = ScheduledMessage::create([
+            'admin_id' => $user->id,
+            'message' => $request->message,
+            'customer_ids' => $customerIds,
+            'whatsapp_age' => $whatsappAge,
+            'broadcast_type' => 'unpaid',
+            'scheduled_at' => $scheduledAt,
+            'status' => $scheduledAt ? 'pending' : 'processing',
+            'total_count' => count($customerIds),
+        ]);
+
+        // If immediate send, return the customer list for AJAX processing
+        if (!$scheduledAt) {
+            $targets = Customer::whereIn('id', $customerIds)
+                ->whereNotNull('phone')
+                ->get(['id', 'name', 'phone', 'monthly_price']);
+
+            return response()->json([
+                'status' => true,
+                'mode' => 'immediate',
+                'scheduled_message_id' => $scheduledMessage->id,
+                'targets' => $targets,
+                'total' => count($customerIds),
+                'message' => 'Broadcast tagihan dimulai...'
+            ]);
+        }
+
+        // Scheduled for later
+        return response()->json([
+            'status' => true,
+            'mode' => 'scheduled',
+            'scheduled_message_id' => $scheduledMessage->id,
+            'scheduled_at' => $scheduledAt->format('d M Y H:i'),
+            'total' => count($customerIds),
+            'message' => 'Broadcast tagihan dijadwalkan untuk ' . $scheduledAt->format('d M Y H:i')
+        ]);
+    }
+
     // Store a new bill template
     public function storeBillTemplate(Request $request)
     {

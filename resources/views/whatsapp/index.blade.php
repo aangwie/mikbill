@@ -127,10 +127,10 @@
                                             <span
                                                 class="flex items-center gap-1.5 text-[10px] font-black text-white bg-white/20 px-2 py-0.5 rounded-full">
                                                 <span class="h-2 w-2 rounded-full" :class="{
-                                                            'bg-white': status === 'connected',
-                                                            'bg-amber-300': status === 'connecting',
-                                                            'bg-red-300': status === 'disconnected'
-                                                        }"></span>
+                                                                    'bg-white': status === 'connected',
+                                                                    'bg-amber-300': status === 'connecting',
+                                                                    'bg-red-300': status === 'disconnected'
+                                                                }"></span>
                                                 <span x-text="status.toUpperCase()"></span>
                                             </span>
                                         </div>
@@ -299,36 +299,49 @@
                         </form>
                     </div>
 
-                    <!-- Tab: Unpaid Reminder -->
-                    <div x-show="activeTab === 'unpaid'" style="display: none;" x-data="{
-                                selectedTemplateId: '',
-                                previewContent: '',
-                                showSaveForm: false,
-                                templateName: '',
-                                selectTemplate(id) {
-                                    this.selectedTemplateId = id;
-                                    if (id) {
-                                        const option = document.querySelector('#billTemplateSelect option[value=\'' + id + '\']');
-                                        if (option) {
-                                            this.previewContent = option.dataset.content;
-                                            document.getElementById('msgUnpaid').value = option.dataset.content;
+                    <!-- Tab: Unpaid Reminder (Enhanced with Scheduling) -->
+                    <div id="unpaidTab" x-show="activeTab === 'unpaid'" style="display: none;" x-data="{
+                                        selectedTemplateId: '',
+                                        previewContent: '',
+                                        showSaveForm: false,
+                                        templateName: '',
+                                        whatsappAge: '12+',
+                                        scheduleMode: 'now',
+                                        scheduledAt: '',
+                                        maxRecipients: 9999,
+                                        getMaxRecipients() {
+                                            if (this.whatsappAge === '1-6') return 15;
+                                            if (this.whatsappAge === '6-12') return 50;
+                                            return 9999;
+                                        },
+                                        updateLimit() {
+                                            this.maxRecipients = this.getMaxRecipients();
+                                        },
+                                        selectTemplate(id) {
+                                            this.selectedTemplateId = id;
+                                            if (id) {
+                                                const option = document.querySelector('#billTemplateSelect option[value=\'' + id + '\']');
+                                                if (option) {
+                                                    this.previewContent = option.dataset.content;
+                                                    document.getElementById('msgUnpaid').value = option.dataset.content;
+                                                }
+                                            } else {
+                                                this.previewContent = '';
+                                                document.getElementById('msgUnpaid').value = '';
+                                            }
                                         }
-                                    } else {
-                                        this.previewContent = '';
-                                        document.getElementById('msgUnpaid').value = '';
-                                    }
-                                }
-                            }">
+                                    }" x-init="updateLimit()">
                         <div class="bg-amber-50 border-l-4 border-amber-400 p-4 mb-6 rounded-r-lg">
                             <div class="flex">
                                 <div class="flex-shrink-0"><i class="fas fa-exclamation-triangle text-amber-400"></i></div>
                                 <div class="ml-3">
                                     <p class="text-sm text-amber-700">Kirim pengingat otomatis ke semua pelanggan yang
-                                        status tagihannya <b>BELUM LUNAS</b> (Unpaid).</p>
+                                        status tagihannya <b>BELUM LUNAS</b> (Unpaid). Anda dapat mengirim langsung atau
+                                        menjadwalkan pengiriman.</p>
                                 </div>
                             </div>
                         </div>
-                        <div class="space-y-4">
+                        <div class="space-y-5">
                             @if(auth()->user()->role == 'superadmin')
                                 <div>
                                     <label class="block text-sm font-bold text-slate-900 mb-1">Filter Berdasarkan Admin</label>
@@ -401,7 +414,7 @@
                             <div>
                                 <label class="block text-sm font-bold text-slate-900 mb-1">Isi Pesan Template</label>
                                 <div class="relative">
-                                    <textarea id="msgUnpaid" rows="6"
+                                    <textarea id="msgUnpaid" rows="5"
                                         class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                                         x-on:input="previewContent = $event.target.value"
                                         placeholder="Halo {name}, tagihan internet Anda sebesar Rp {tagihan} belum terbayar...">Halo {name}, tagihan internet Anda sebesar Rp {tagihan} belum terbayar. Mohon segera lunasi.</textarea>
@@ -434,10 +447,65 @@
                                 </div>
                             </div>
 
+                            {{-- WhatsApp Age Selection --}}
+                            <div
+                                class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-4 border border-green-200">
+                                <label class="block text-sm font-bold text-slate-900 mb-3">
+                                    <i class="fab fa-whatsapp mr-2 text-green-500"></i>Usia Nomor WhatsApp
+                                </label>
+                                <select x-model="whatsappAge" @change="updateLimit()"
+                                    class="block w-full rounded-lg border-0 py-2.5 px-3 text-slate-900 shadow-sm ring-1 ring-inset ring-green-300 focus:ring-2 focus:ring-inset focus:ring-green-500 sm:text-sm font-medium bg-white">
+                                    <option value="1-6">🆕 1-6 Bulan (Max 15 penerima)</option>
+                                    <option value="6-12">📅 6-12 Bulan (Max 50 penerima)</option>
+                                    <option value="12+">✅ 12+ Bulan (Unlimited)</option>
+                                </select>
+                                <p class="mt-2 text-xs text-green-700">
+                                    <i class="fas fa-shield-alt mr-1"></i>
+                                    Batasan untuk mencegah blokir WhatsApp pada nomor baru.
+                                </p>
+                            </div>
+
+                            {{-- Schedule Options --}}
+                            <div
+                                class="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl p-4 border border-purple-200">
+                                <label class="block text-sm font-bold text-slate-900 mb-3">
+                                    <i class="fas fa-clock mr-2 text-purple-500"></i>Waktu Pengiriman
+                                </label>
+                                <div class="flex gap-4 mb-4">
+                                    <label class="flex items-center cursor-pointer group">
+                                        <input type="radio" x-model="scheduleMode" value="now"
+                                            class="w-4 h-4 text-purple-600 border-slate-300 focus:ring-purple-500">
+                                        <span class="ml-2 text-sm font-medium text-slate-700 group-hover:text-purple-600">
+                                            <i class="fas fa-bolt text-yellow-500 mr-1"></i>Kirim Sekarang
+                                        </span>
+                                    </label>
+                                    <label class="flex items-center cursor-pointer group">
+                                        <input type="radio" x-model="scheduleMode" value="scheduled"
+                                            class="w-4 h-4 text-purple-600 border-slate-300 focus:ring-purple-500">
+                                        <span class="ml-2 text-sm font-medium text-slate-700 group-hover:text-purple-600">
+                                            <i class="fas fa-calendar-alt text-purple-500 mr-1"></i>Jadwalkan
+                                        </span>
+                                    </label>
+                                </div>
+
+                                {{-- DateTime Picker --}}
+                                <div x-show="scheduleMode === 'scheduled'" x-transition class="mt-3">
+                                    <input type="datetime-local" x-model="scheduledAt" id="unpaidScheduledAtInput"
+                                        class="block w-full rounded-lg border-0 py-2.5 px-3 text-slate-900 shadow-sm ring-1 ring-inset ring-purple-300 focus:ring-2 focus:ring-inset focus:ring-purple-500 sm:text-sm font-medium bg-white">
+                                    <p class="mt-2 text-xs text-purple-700">
+                                        <i class="fas fa-info-circle mr-1"></i>
+                                        Pesan akan dikirim otomatis pada waktu yang ditentukan ke pelanggan yang masih
+                                        belum membayar tagihan.
+                                    </p>
+                                </div>
+                            </div>
+
                             {{-- Broadcast Button --}}
-                            <button onclick="prepareBroadcast('unpaid')"
-                                class="w-full inline-flex justify-center items-center rounded-lg bg-amber-500 px-4 py-3 text-sm font-bold text-white shadow-sm hover:bg-amber-600 hover:shadow-md transition-all">
-                                <i class="fab fa-whatsapp mr-2 text-lg"></i> Mulai Broadcast Reminder
+                            <button type="button" onclick="startUnpaidBroadcast()"
+                                class="w-full inline-flex justify-center items-center rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 px-4 py-4 text-sm font-bold text-white shadow-lg hover:from-amber-600 hover:to-orange-600 hover:shadow-xl transition-all transform hover:scale-[1.02] active:scale-100">
+                                <i class="fab fa-whatsapp mr-2 text-lg"></i>
+                                <span
+                                    x-text="scheduleMode === 'now' ? 'Mulai Broadcast Reminder' : 'Jadwalkan Broadcast Reminder'"></span>
                             </button>
                         </div>
                     </div>
@@ -445,26 +513,26 @@
 
                     <!-- Tab: All Broadcast (Enhanced) -->
                     <div id="broadcastTab" x-show="activeTab === 'broadcast'" style="display: none;" x-data="{
-                                                                    selectionMode: 'all',
-                                                                    whatsappAge: '12+',
-                                                                    scheduleMode: 'now',
-                                                                    selectedCustomers: [],
-                                                                    maxRecipients: 9999,
-                                                                    scheduledAt: '',
-                                                                    getMaxRecipients() {
-                                                                        if (this.whatsappAge === '1-6') return 15;
-                                                                        if (this.whatsappAge === '6-12') return 50;
-                                                                        return 9999;
-                                                                    },
-                                                                    updateLimit() {
-                                                                        this.maxRecipients = this.getMaxRecipients();
-                                                                        // Truncate selection if exceeds limit
-                                                                        if (this.selectedCustomers.length > this.maxRecipients) {
-                                                                            this.selectedCustomers = this.selectedCustomers.slice(0, this.maxRecipients);
-                                                                            $('#broadcastCustomerSelect').val(this.selectedCustomers).trigger('change');
-                                                                        }
-                                                                    }
-                                                                }" x-init="updateLimit()">
+                                                                            selectionMode: 'all',
+                                                                            whatsappAge: '12+',
+                                                                            scheduleMode: 'now',
+                                                                            selectedCustomers: [],
+                                                                            maxRecipients: 9999,
+                                                                            scheduledAt: '',
+                                                                            getMaxRecipients() {
+                                                                                if (this.whatsappAge === '1-6') return 15;
+                                                                                if (this.whatsappAge === '6-12') return 50;
+                                                                                return 9999;
+                                                                            },
+                                                                            updateLimit() {
+                                                                                this.maxRecipients = this.getMaxRecipients();
+                                                                                // Truncate selection if exceeds limit
+                                                                                if (this.selectedCustomers.length > this.maxRecipients) {
+                                                                                    this.selectedCustomers = this.selectedCustomers.slice(0, this.maxRecipients);
+                                                                                    $('#broadcastCustomerSelect').val(this.selectedCustomers).trigger('change');
+                                                                                }
+                                                                            }
+                                                                        }" x-init="updateLimit()">
 
                         <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6 rounded-r-lg">
                             <div class="flex">
@@ -631,22 +699,22 @@
                                                 class="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-slate-900 sm:pl-6 font-medium">
                                                 @if($msg->status === 'pending' && $msg->scheduled_at)
                                                     <div x-data="{ 
-                                                                                            target: new Date('{{ $msg->scheduled_at->toIso8601String() }}').getTime(),
-                                                                                            now: new Date().getTime(),
-                                                                                            countdown: '',
-                                                                                            update() {
-                                                                                                let diff = this.target - this.now;
-                                                                                                if (diff <= 0) {
-                                                                                                    this.countdown = 'Sesaat lagi...';
-                                                                                                    return;
-                                                                                                }
-                                                                                                let d = Math.floor(diff / (1000 * 60 * 60 * 24));
-                                                                                                let h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                                                                                                let m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-                                                                                                let s = Math.floor((diff % (1000 * 60)) / 1000);
-                                                                                                this.countdown = (d > 0 ? d + 'h ' : '') + h + 'j ' + m + 'm ' + s + 's';
-                                                                                            }
-                                                                                        }"
+                                                                                                                    target: new Date('{{ $msg->scheduled_at->toIso8601String() }}').getTime(),
+                                                                                                                    now: new Date().getTime(),
+                                                                                                                    countdown: '',
+                                                                                                                    update() {
+                                                                                                                        let diff = this.target - this.now;
+                                                                                                                        if (diff <= 0) {
+                                                                                                                            this.countdown = 'Sesaat lagi...';
+                                                                                                                            return;
+                                                                                                                        }
+                                                                                                                        let d = Math.floor(diff / (1000 * 60 * 60 * 24));
+                                                                                                                        let h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                                                                                                                        let m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                                                                                                                        let s = Math.floor((diff % (1000 * 60)) / 1000);
+                                                                                                                        this.countdown = (d > 0 ? d + 'h ' : '') + h + 'j ' + m + 'm ' + s + 's';
+                                                                                                                    }
+                                                                                                                }"
                                                         x-init="update(); setInterval(() => { now = new Date().getTime(); update() }, 1000)">
                                                         <div class="font-bold text-slate-900">
                                                             {{ $msg->scheduled_at->format('d M Y H:i') }}
@@ -855,67 +923,75 @@
         }
     </style>
     <script>
-            function whatsappGateway()               {
-                    return {
-                        status: 'disconnected',
-                        number: null,
-                        qr: null,
-                        polling: null,
+        function whatsappGateway() {
+            return {
+                status: 'disconnected',
+                number: null,
+                qr: null,
+                polling: null,
 
-                        init() {
-                            this.fetchStatus();
-                            this.polling = setInterval(() => this.fetchStatus(), 5000);
-                        },
+                init() {
+                    this.fetchStatus();
+                    this.polling = setInterval(() => this.fetchStatus(), 5000);
+                },
 
-                        fetchStatus() {
-                            fetch('{{ route('whatsapp.gateway.status') }}')
-                                .then(res => res.json())
-                                .then(data => {
-                                    this.status = data.status;
-                                    this.qr = data.qr;
-                                    this.number = data.number;
-                                })
-                                .catch(err => {
-                                    this.status = 'disconnected';
-                                    this.qr = null;
-                                    this.number = null;
-                                });
-                        },
+                fetchStatus() {
+                    fetch('{{ route('whatsapp.gateway.status') }}')
+                        .then(res => res.json())
+                        .then(data => {
+                            this.status = data.status;
+                            this.qr = data.qr;
+                            this.number = data.number;
+                        })
+                        .catch(err => {
+                            this.status = 'disconnected';
+                            this.qr = null;
+                            this.number = null;
+                        });
+                },
 
-                        logout() {
-                            if (!confirm('Apakah Anda yakin ingin memutuskan koneksi WhatsApp?')) return;
+                logout() {
+                    if (!confirm('Apakah Anda yakin ingin memutuskan koneksi WhatsApp?')) return;
 
-                            fetch('{{ route('whatsapp.gateway.logout') }}', {
-                                method: 'POST',
-                                headers: {
-                                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                                    'Content-Type': 'application/json'
-                                }
-                            })
-                            .then(res => res.json())
-                            .then(data => {
-                                if (data.status) {
-                                    this.fetchStatus();
-                                    Swal.fire('Berhasil', 'WhatsApp telah diputus.', 'success');
-                                }
-                            });
-                        },
-
-                        destroy() {
-                            if (this.polling) clearInterval(this.polling);
+                    fetch('{{ route('whatsapp.gateway.logout') }}', {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Content-Type': 'application/json'
                         }
-                    }
+                    })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.status) {
+                                this.fetchStatus();
+                                Swal.fire('Berhasil', 'WhatsApp telah diputus.', 'success');
+                            }
+                        });
+                },
+
+                destroy() {
+                    if (this.polling) clearInterval(this.polling);
                 }
-            </script>
-            <style>
-                @keyframes fadeIn {
-                    from { opacity: 0; transform: translateY(10px); }
-                    to { opacity: 1; transform: translateY(0); }
-                }
-                .animate-fade-in {
-                    animation: fadeIn 0.5s ease-out forwards;
-                }
-            </style>
+            }
+        }
+    </script>
+    <style>
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+    </style>
 @endpush
 
 @push('scripts')
@@ -979,24 +1055,26 @@
             const minDateTime = now.toISOString().slice(0, 16);
             $('#scheduledAtInput').attr('min', minDateTime);
 
+            $('#unpaidScheduledAtInput').attr('min', minDateTime);
+
             // Update Multi-Send targets when Admin filter changes
-            $('#multiAdminFilter').on('change', function() {
+            $('#multiAdminFilter').on('change', function () {
                 const adminId = $(this).val();
                 const userSelect = $('#multiUserSelect');
 
                 userSelect.prop('disabled', true);
 
-                $.get("{{ route('whatsapp.broadcast.targets') }}", { type: 'all', admin_id: adminId }, function(response) {
+                $.get("{{ route('whatsapp.broadcast.targets') }}", { type: 'all', admin_id: adminId }, function (response) {
                     userSelect.empty();
                     // Extract targets if nested
                     const targets = response.targets || response;
-                    targets.forEach(function(target) {
+                    targets.forEach(function (target) {
                         const option = new Option(target.name + ' (' + target.phone + ')', target.id, false, false);
                         userSelect.append(option);
                     });
                     userSelect.trigger('change');
                     userSelect.prop('disabled', false);
-                }).fail(function() {
+                }).fail(function () {
                     alert('Gagal mengambil data pelanggan.');
                     userSelect.prop('disabled', false);
                 });
@@ -1007,7 +1085,7 @@
                 placeholder: '-- Pilih Template --',
                 allowClear: true,
                 width: '100%'
-            }).on('change', function() {
+            }).on('change', function () {
                 const val = $(this).val();
                 // Sync with Alpine.js
                 const tab = document.querySelector('[x-show="activeTab === \'unpaid\'"]');
@@ -1038,7 +1116,7 @@
                 _token: $('meta[name="csrf-token"]').attr('content'),
                 name: name.trim(),
                 content: content.trim()
-            }).done(function(response) {
+            }).done(function (response) {
                 if (response.status) {
                     const tpl = response.template;
                     const adminName = tpl.admin ? tpl.admin.name : 'Unknown';
@@ -1065,7 +1143,7 @@
                         timer: 2000
                     });
                 }
-            }).fail(function(xhr) {
+            }).fail(function (xhr) {
                 let msg = 'Gagal menyimpan template.';
                 if (xhr.responseJSON && xhr.responseJSON.message) msg = xhr.responseJSON.message;
                 Swal.fire({ icon: 'error', title: 'Error', text: msg });
@@ -1096,7 +1174,7 @@
                         url: "{{ url('/whatsapp/bill-template') }}/" + id,
                         type: 'DELETE',
                         data: { _token: $('meta[name="csrf-token"]').attr('content') },
-                        success: function(response) {
+                        success: function (response) {
                             if (response.status) {
                                 // Remove from Select2
                                 $('#billTemplateSelect option[value="' + id + '"]').remove();
@@ -1119,7 +1197,7 @@
                                 Swal.fire('Gagal', response.message, 'error');
                             }
                         },
-                        error: function() {
+                        error: function () {
                             Swal.fire('Error', 'Gagal menghapus template.', 'error');
                         }
                     });
@@ -1246,10 +1324,10 @@
                                 icon: 'success',
                                 title: 'Broadcast Dijadwalkan!',
                                 html: `
-                                                                <p>Pesan akan dikirim pada:</p>
-                                                                <p class="text-lg font-bold text-indigo-600">${response.scheduled_at}</p>
-                                                                <p class="text-sm text-gray-500 mt-2">Total: ${response.total} penerima</p>
-                                                            `,
+                                                                        <p>Pesan akan dikirim pada:</p>
+                                                                        <p class="text-lg font-bold text-indigo-600">${response.scheduled_at}</p>
+                                                                        <p class="text-sm text-gray-500 mt-2">Total: ${response.total} penerima</p>
+                                                                    `,
                                 confirmButtonColor: '#4f46e5'
                             }).then(() => {
                                 location.reload();
@@ -1277,7 +1355,146 @@
                 });
         }
 
-        // Original Broadcast Logic for Unpaid tab
+        // Enhanced Unpaid Broadcast Function (with scheduling)
+        function startUnpaidBroadcast() {
+            const unpaidTab = document.getElementById('unpaidTab');
+            if (!unpaidTab) {
+                alert('Error: Component not found');
+                return;
+            }
+
+            const data = Alpine.$data(unpaidTab);
+            const message = $('#msgUnpaid').val().trim();
+
+            // Validations
+            if (!message) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Pesan Kosong',
+                    text: 'Silakan masukkan isi pesan terlebih dahulu.'
+                });
+                return;
+            }
+
+            if (data.scheduleMode === 'scheduled' && !data.scheduledAt) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Waktu Belum Dipilih',
+                    text: 'Silakan pilih waktu penjadwalan.'
+                });
+                return;
+            }
+
+            // Confirm action
+            const confirmTitle = data.scheduleMode === 'now' ? 'Kirim Broadcast Tagihan Sekarang?' : 'Jadwalkan Broadcast Tagihan?';
+            const confirmText = `Ke semua pelanggan unpaid (max ${data.maxRecipients === 9999 ? 'unlimited' : data.maxRecipients})`;
+
+            Swal.fire({
+                title: confirmTitle,
+                text: confirmText,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#f59e0b',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: data.scheduleMode === 'now' ? 'Ya, Kirim Sekarang' : 'Ya, Jadwalkan',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    processUnpaidBroadcastRequest(data, message);
+                }
+            });
+        }
+
+        function processUnpaidBroadcastRequest(data, message) {
+            // Show loading
+            Swal.fire({
+                title: 'Memproses...',
+                text: 'Menyiapkan broadcast tagihan',
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading()
+            });
+
+            // Prepare request data
+            const requestData = {
+                _token: $('meta[name="csrf-token"]').attr('content'),
+                message: message,
+                whatsapp_age: data.whatsappAge,
+                schedule_mode: data.scheduleMode,
+                scheduled_at: data.scheduleMode === 'scheduled' ? data.scheduledAt : null,
+                admin_id: $('#unpaidAdminFilter').val() || null
+            };
+
+            $.post("{{ route('whatsapp.unpaid.schedule') }}", requestData)
+                .done(function (response) {
+                    Swal.close();
+
+                    if (response.status) {
+                        if (response.mode === 'immediate') {
+                            // Start immediate broadcast
+                            scheduledMessageId = response.scheduled_message_id;
+                            queue = response.targets;
+                            total = queue.length;
+                            messageToSend = message;
+
+                            if (total === 0) {
+                                Swal.fire({
+                                    icon: 'warning',
+                                    title: 'Tidak Ada Target',
+                                    text: 'Tidak ada pelanggan unpaid yang ditemukan.'
+                                });
+                                return;
+                            }
+
+                            // Show monitor area and start processing
+                            $('#monitorArea').slideDown();
+                            $('#logList').html('');
+                            $('#progressBar').css('width', '0%');
+                            $('#statSuccess').text('0');
+                            $('#statFail').text('0');
+                            current = 0;
+                            successCount = 0;
+                            failCount = 0;
+                            $('button').prop('disabled', true);
+                            processQueue();
+                        } else {
+                            // Scheduled for later
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Broadcast Tagihan Dijadwalkan!',
+                                html: `
+                                            <p>Pesan akan dikirim pada:</p>
+                                            <p class="text-lg font-bold text-amber-600">${response.scheduled_at}</p>
+                                            <p class="text-sm text-gray-500 mt-2">Total: ${response.total} penerima (unpaid saat ini)</p>
+                                            <p class="text-xs text-gray-400 mt-1">Catatan: Daftar penerima akan diperbarui saat waktu pengiriman tiba.</p>
+                                        `,
+                                confirmButtonColor: '#f59e0b'
+                            }).then(() => {
+                                location.reload();
+                            });
+                        }
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Gagal',
+                            text: response.message || 'Terjadi kesalahan.'
+                        });
+                    }
+                })
+                .fail(function (xhr) {
+                    Swal.close();
+                    let errorMsg = 'Terjadi kesalahan server.';
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMsg = xhr.responseJSON.message;
+                    }
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: errorMsg
+                    });
+                });
+        }
+
+        // Original Broadcast Logic for Unpaid tab (legacy - kept for backward compat)
         function prepareBroadcast(type) {
             messageToSend = type === 'unpaid' ? $('#msgUnpaid').val() : $('#msgAll').val();
             if (!messageToSend.trim()) {
@@ -1351,7 +1568,7 @@
                     icon: 'success',
                     title: 'Broadcast Selesai!',
                     html: `<p>Sukses: <span class="text-green-600 font-bold">${successCount}</span></p>
-                                                       <p>Gagal: <span class="text-red-600 font-bold">${failCount}</span></p>`,
+                                                               <p>Gagal: <span class="text-red-600 font-bold">${failCount}</span></p>`,
                     confirmButtonColor: '#4f46e5'
                 });
 

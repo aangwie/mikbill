@@ -148,6 +148,7 @@ Route::middleware(['auth'])->group(function () {
         // Bill Template CRUD (AJAX)
         Route::post('/whatsapp/bill-template', [WhatsappController::class, 'storeBillTemplate'])->name('whatsapp.billTemplate.store');
         Route::delete('/whatsapp/bill-template/{id}', [WhatsappController::class, 'destroyBillTemplate'])->name('whatsapp.billTemplate.destroy');
+        Route::post('/whatsapp/unpaid/schedule', [WhatsappController::class, 'scheduleUnpaidBroadcast'])->name('whatsapp.unpaid.schedule');
 
         // Route Proses Kirim (yang sudah dibuat sebelumnya)
         Route::post('/whatsapp/broadcast/process', [WhatsappController::class, 'broadcastProcess'])->name('whatsapp.broadcast.process');
