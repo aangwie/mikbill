@@ -127,10 +127,10 @@
                                             <span
                                                 class="flex items-center gap-1.5 text-[10px] font-black text-white bg-white/20 px-2 py-0.5 rounded-full">
                                                 <span class="h-2 w-2 rounded-full" :class="{
-                                                                    'bg-white': status === 'connected',
-                                                                    'bg-amber-300': status === 'connecting',
-                                                                    'bg-red-300': status === 'disconnected'
-                                                                }"></span>
+                                                                        'bg-white': status === 'connected',
+                                                                        'bg-amber-300': status === 'connecting',
+                                                                        'bg-red-300': status === 'disconnected'
+                                                                    }"></span>
                                                 <span x-text="status.toUpperCase()"></span>
                                             </span>
                                         </div>
@@ -301,36 +301,36 @@
 
                     <!-- Tab: Unpaid Reminder (Enhanced with Scheduling) -->
                     <div id="unpaidTab" x-show="activeTab === 'unpaid'" style="display: none;" x-data="{
-                                        selectedTemplateId: '',
-                                        previewContent: '',
-                                        showSaveForm: false,
-                                        templateName: '',
-                                        whatsappAge: '12+',
-                                        scheduleMode: 'now',
-                                        scheduledAt: '',
-                                        maxRecipients: 9999,
-                                        getMaxRecipients() {
-                                            if (this.whatsappAge === '1-6') return 15;
-                                            if (this.whatsappAge === '6-12') return 50;
-                                            return 9999;
-                                        },
-                                        updateLimit() {
-                                            this.maxRecipients = this.getMaxRecipients();
-                                        },
-                                        selectTemplate(id) {
-                                            this.selectedTemplateId = id;
-                                            if (id) {
-                                                const option = document.querySelector('#billTemplateSelect option[value=\'' + id + '\']');
-                                                if (option) {
-                                                    this.previewContent = option.dataset.content;
-                                                    document.getElementById('msgUnpaid').value = option.dataset.content;
+                                            selectedTemplateId: '',
+                                            previewContent: '',
+                                            showSaveForm: false,
+                                            templateName: '',
+                                            whatsappAge: '12+',
+                                            scheduleMode: 'now',
+                                            scheduledAt: '',
+                                            maxRecipients: 9999,
+                                            getMaxRecipients() {
+                                                if (this.whatsappAge === '1-6') return 15;
+                                                if (this.whatsappAge === '6-12') return 50;
+                                                return 9999;
+                                            },
+                                            updateLimit() {
+                                                this.maxRecipients = this.getMaxRecipients();
+                                            },
+                                            selectTemplate(id) {
+                                                this.selectedTemplateId = id;
+                                                if (id) {
+                                                    const option = document.querySelector('#billTemplateSelect option[value=\'' + id + '\']');
+                                                    if (option) {
+                                                        this.previewContent = option.dataset.content;
+                                                        document.getElementById('msgUnpaid').value = option.dataset.content;
+                                                    }
+                                                } else {
+                                                    this.previewContent = '';
+                                                    document.getElementById('msgUnpaid').value = '';
                                                 }
-                                            } else {
-                                                this.previewContent = '';
-                                                document.getElementById('msgUnpaid').value = '';
                                             }
-                                        }
-                                    }" x-init="updateLimit()">
+                                        }" x-init="updateLimit()">
                         <div class="bg-amber-50 border-l-4 border-amber-400 p-4 mb-6 rounded-r-lg">
                             <div class="flex">
                                 <div class="flex-shrink-0"><i class="fas fa-exclamation-triangle text-amber-400"></i></div>
@@ -513,26 +513,26 @@
 
                     <!-- Tab: All Broadcast (Enhanced) -->
                     <div id="broadcastTab" x-show="activeTab === 'broadcast'" style="display: none;" x-data="{
-                                                                            selectionMode: 'all',
-                                                                            whatsappAge: '12+',
-                                                                            scheduleMode: 'now',
-                                                                            selectedCustomers: [],
-                                                                            maxRecipients: 9999,
-                                                                            scheduledAt: '',
-                                                                            getMaxRecipients() {
-                                                                                if (this.whatsappAge === '1-6') return 15;
-                                                                                if (this.whatsappAge === '6-12') return 50;
-                                                                                return 9999;
-                                                                            },
-                                                                            updateLimit() {
-                                                                                this.maxRecipients = this.getMaxRecipients();
-                                                                                // Truncate selection if exceeds limit
-                                                                                if (this.selectedCustomers.length > this.maxRecipients) {
-                                                                                    this.selectedCustomers = this.selectedCustomers.slice(0, this.maxRecipients);
-                                                                                    $('#broadcastCustomerSelect').val(this.selectedCustomers).trigger('change');
+                                                                                selectionMode: 'all',
+                                                                                whatsappAge: '12+',
+                                                                                scheduleMode: 'now',
+                                                                                selectedCustomers: [],
+                                                                                maxRecipients: 9999,
+                                                                                scheduledAt: '',
+                                                                                getMaxRecipients() {
+                                                                                    if (this.whatsappAge === '1-6') return 15;
+                                                                                    if (this.whatsappAge === '6-12') return 50;
+                                                                                    return 9999;
+                                                                                },
+                                                                                updateLimit() {
+                                                                                    this.maxRecipients = this.getMaxRecipients();
+                                                                                    // Truncate selection if exceeds limit
+                                                                                    if (this.selectedCustomers.length > this.maxRecipients) {
+                                                                                        this.selectedCustomers = this.selectedCustomers.slice(0, this.maxRecipients);
+                                                                                        $('#broadcastCustomerSelect').val(this.selectedCustomers).trigger('change');
+                                                                                    }
                                                                                 }
-                                                                            }
-                                                                        }" x-init="updateLimit()">
+                                                                            }" x-init="updateLimit()">
 
                         <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6 rounded-r-lg">
                             <div class="flex">
@@ -694,184 +694,194 @@
                                 </thead>
                                 <tbody class="divide-y divide-slate-200 bg-white">
                                     @forelse($scheduledMessages as $msg)
-                                        <tr class="hover:bg-slate-50 transition-colors">
-                                            <td
-                                                class="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-slate-900 sm:pl-6 font-medium">
-                                                @if($msg->status === 'pending' && $msg->scheduled_at)
-                                                    <div x-data="{ 
-                                                                                                                    target: new Date('{{ $msg->scheduled_at->toIso8601String() }}').getTime(),
-                                                                                                                    now: new Date().getTime(),
-                                                                                                                    countdown: '',
-                                                                                                                    update() {
-                                                                                                                        let diff = this.target - this.now;
-                                                                                                                        if (diff <= 0) {
-                                                                                                                            this.countdown = 'Sesaat lagi...';
-                                                                                                                            return;
-                                                                                                                        }
-                                                                                                                        let d = Math.floor(diff / (1000 * 60 * 60 * 24));
-                                                                                                                        let h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                                                                                                                        let m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-                                                                                                                        let s = Math.floor((diff % (1000 * 60)) / 1000);
-                                                                                                                        this.countdown = (d > 0 ? d + 'h ' : '') + h + 'j ' + m + 'm ' + s + 's';
-                                                                                                                    }
-                                                                                                                }"
-                                                        x-init="update(); setInterval(() => { now = new Date().getTime(); update() }, 1000)">
-                                                        <div class="font-bold text-slate-900">
-                                                            {{ $msg->scheduled_at->format('d M Y H:i') }}
-                                                        </div>
-                                                        <div class="text-[10px] text-indigo-600 font-mono" x-text="countdown"></div>
-                                                    </div>
-                                                @else
-                                                    <div class="font-bold text-slate-900">
-                                                        {{ $msg->scheduled_at ? $msg->scheduled_at->format('d M Y H:i') : 'Sekarang' }}
-                                                    </div>
-                                                    <div class="text-[10px] text-slate-400 capitalize">
-                                                        {{ $msg->created_at->diffForHumans() }}
-                                                    </div>
-                                                @endif
-                                            </td>
-                                            <td class="whitespace-nowrap px-3 py-4 text-sm text-slate-500">
-                                                <div class="flex flex-col">
-                                                    <span
-                                                        class="inline-flex items-center w-fit rounded-md bg-indigo-50 px-2 py-1 text-xs font-bold text-indigo-700 ring-1 ring-inset ring-indigo-700/10">
-                                                        <i class="fas fa-users mr-1"></i> {{ $msg->total_count }} Nomor
-                                                    </span>
-                                                    <span class="text-[10px] text-slate-400 mt-1 font-medium">Age:
-                                                        <span class="text-indigo-600">{{ $msg->whatsapp_age }}</span></span>
-                                                </div>
-                                            </td>
-                                            <td class="px-3 py-4 text-sm text-slate-500">
-                                                <div class="max-w-xs break-words line-clamp-2" title="{{ $msg->message }}">
-                                                    {{ $msg->message }}
-                                                </div>
-                                            </td>
-                                            <td class="whitespace-nowrap px-3 py-4 text-sm">
-                                                @if($msg->status === 'pending')
-                                                    <span
-                                                        class="inline-flex items-center rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-bold text-amber-700 ring-1 ring-inset ring-amber-600/20">
-                                                        <span class="mr-1.5 flex h-2 w-2 items-center justify-center">
-                                                            <span
-                                                                class="absolute inline-flex h-2 w-2 animate-ping rounded-full bg-amber-400 opacity-75"></span>
-                                                            <span
-                                                                class="relative inline-flex h-1.5 w-1.5 rounded-full bg-amber-500"></span>
-                                                        </span>
-                                                        Menunggu
-                                                    </span>
-                                                @elseif($msg->status === 'processing')
-                                                    <span
-                                                        class="inline-flex items-center rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-bold text-indigo-700 ring-1 ring-inset ring-indigo-700/10">
-                                                        <i class="fas fa-spinner fa-spin mr-1.5"></i>
-                                                        Diproses
-                                                    </span>
-                                                @elseif($msg->status === 'completed')
-                                                    <div class="flex flex-col gap-1">
+                                                    <tr class="hover:bg-slate-50 transition-colors">
+                                                        <td
+                                                            class="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-slate-900 sm:pl-6 font-medium">
+                                                            @if($msg->status === 'pending' && $msg->scheduled_at)
+                                                                <div x-data="{ 
+                                                                                                                                            target: new Date('{{ $msg->scheduled_at->toIso8601String() }}').getTime(),
+                                                                                                                                            now: new Date().getTime(),
+                                                                                                                                            countdown: '',
+                                                                                                                                            update() {
+                                                                                                                                                let diff = this.target - this.now;
+                                                                                                                                                if (diff <= 0) {
+                                                                                                                                                    this.countdown = 'Sesaat lagi...';
+                                                                                                                                                    return;
+                                                                                                                                                }
+                                                                                                                                                let d = Math.floor(diff / (1000 * 60 * 60 * 24));
+                                                                                                                                                let h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                                                                                                                                                let m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                                                                                                                                                let s = Math.floor((diff % (1000 * 60)) / 1000);
+                                                                                                                                                this.countdown = (d > 0 ? d + 'h ' : '') + h + 'j ' + m + 'm ' + s + 's';
+                                                                                                                                            }
+                                                                                                                                        }"
+                                                                    x-init="update(); setInterval(() => { now = new Date().getTime(); update() }, 1000)">
+                                                                    <div class="font-bold text-slate-900">
+                                                                        {{ $msg->scheduled_at->format('d M Y H:i') }}
+                                                                    </div>
+                                                                    <div class="text-[10px] text-indigo-600 font-mono" x-text="countdown"></div>
+                                                                </div>
+                                                            @else
+                                                                <div class="font-bold text-slate-900">
+                                                                    {{ $msg->scheduled_at ? $msg->scheduled_at->format('d M Y H:i') : 'Sekarang' }}
+                                                                </div>
+                                                                <div class="text-[10px] text-slate-400 capitalize">
+                                                                    {{ $msg->created_at->diffForHumans() }}
+                                                                </div>
+                                                            @endif
+                                                        </td>
+                                                        <td class="whitespace-nowrap px-3 py-4 text-sm text-slate-500">
+                                                            <div class="flex gap-1.5 mb-1">
+                                                                <span
+                                                                    class="inline-flex items-center rounded-md bg-indigo-50 px-2 py-1 text-xs font-bold text-indigo-700 ring-1 ring-inset ring-indigo-700/10">
+                                                                    <i class="fas fa-users mr-1"></i> {{ $msg->total_count }}
+                                                                </span>
+                                                                @if($msg->broadcast_type === 'unpaid')
+                                                                    <span
+                                                                        class="inline-flex items-center rounded-md bg-amber-50 px-2 py-1 text-xs font-bold text-amber-700 ring-1 ring-inset ring-amber-700/10">
+                                                                        <i class="fas fa-file-invoice mr-1"></i> Tagihan
+                                                                    </span>
+                                                                @else
+                                                                    <span
+                                                                        class="inline-flex items-center rounded-md bg-slate-50 px-2 py-1 text-xs font-bold text-slate-700 ring-1 ring-inset ring-slate-700/10">
+                                                                        <i class="fas fa-bullhorn mr-1"></i> All
+                                                                    </span>
+                                                                @endif
+                                                            </div>
+                                                            <span class="text-[10px] text-slate-400 font-medium">Age:
+                                                                <span class="text-indigo-600">{{ $msg->whatsapp_age }}</span></span>
+                                        </div>
+                                        </td>
+                                        <td class="px-3 py-4 text-sm text-slate-500">
+                                            <div class="max-w-xs break-words line-clamp-2" title="{{ $msg->message }}">
+                                                {{ $msg->message }}
+                                            </div>
+                                        </td>
+                                        <td class="whitespace-nowrap px-3 py-4 text-sm">
+                                            @if($msg->status === 'pending')
+                                                <span
+                                                    class="inline-flex items-center rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-bold text-amber-700 ring-1 ring-inset ring-amber-600/20">
+                                                    <span class="mr-1.5 flex h-2 w-2 items-center justify-center">
                                                         <span
-                                                            class="inline-flex items-center rounded-full bg-green-50 px-2.5 py-0.5 text-xs font-bold text-green-700 ring-1 ring-inset ring-green-600/20">
-                                                            <i class="fas fa-check-circle mr-1.5"></i> Selesai
-                                                        </span>
-                                                        <div class="flex gap-2 text-[10px]">
-                                                            <span class="text-green-600 font-bold"><i class="fas fa-check"></i>
-                                                                {{ $msg->success_count }}</span>
-                                                            <span class="text-red-500 font-bold"><i class="fas fa-times"></i>
-                                                                {{ $msg->failed_count }}</span>
-                                                        </div>
+                                                            class="absolute inline-flex h-2 w-2 animate-ping rounded-full bg-amber-400 opacity-75"></span>
+                                                        <span class="relative inline-flex h-1.5 w-1.5 rounded-full bg-amber-500"></span>
+                                                    </span>
+                                                    Menunggu
+                                                </span>
+                                            @elseif($msg->status === 'processing')
+                                                <span
+                                                    class="inline-flex items-center rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-bold text-indigo-700 ring-1 ring-inset ring-indigo-700/10">
+                                                    <i class="fas fa-spinner fa-spin mr-1.5"></i>
+                                                    Diproses
+                                                </span>
+                                            @elseif($msg->status === 'completed')
+                                                <div class="flex flex-col gap-1">
+                                                    <span
+                                                        class="inline-flex items-center rounded-full bg-green-50 px-2.5 py-0.5 text-xs font-bold text-green-700 ring-1 ring-inset ring-green-600/20">
+                                                        <i class="fas fa-check-circle mr-1.5"></i> Selesai
+                                                    </span>
+                                                    <div class="flex gap-2 text-[10px]">
+                                                        <span class="text-green-600 font-bold"><i class="fas fa-check"></i>
+                                                            {{ $msg->success_count }}</span>
+                                                        <span class="text-red-500 font-bold"><i class="fas fa-times"></i>
+                                                            {{ $msg->failed_count }}</span>
                                                     </div>
-                                                @elseif($msg->status === 'failed')
-                                                    <div class="flex flex-col gap-1">
-                                                        <span
-                                                            class="inline-flex items-center rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-bold text-red-700 ring-1 ring-inset ring-red-600/20">
-                                                            <i class="fas fa-exclamation-circle mr-1.5"></i> Gagal
-                                                        </span>
-                                                        <span class="text-[10px] text-red-500 font-bold"><i
-                                                                class="fas fa-times"></i> {{ $msg->failed_count }} Gagal</span>
-                                                    </div>
-                                                @endif
-                                            </td>
-                                            <td
-                                                class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                                                <button onclick="deleteScheduled({{ $msg->id }})"
-                                                    class="inline-flex items-center rounded-lg bg-red-50 p-2 text-red-600 hover:bg-red-100 hover:text-red-700 transition-all border border-red-100">
-                                                    <i class="fas fa-trash-alt"></i>
-                                                </button>
-                                            </td>
+                                                </div>
+                                            @elseif($msg->status === 'failed')
+                                                <div class="flex flex-col gap-1">
+                                                    <span
+                                                        class="inline-flex items-center rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-bold text-red-700 ring-1 ring-inset ring-red-600/20">
+                                                        <i class="fas fa-exclamation-circle mr-1.5"></i> Gagal
+                                                    </span>
+                                                    <span class="text-[10px] text-red-500 font-bold"><i class="fas fa-times"></i>
+                                                        {{ $msg->failed_count }} Gagal</span>
+                                                </div>
+                                            @endif
+                                        </td>
+                                        <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+                                            <button onclick="deleteScheduled({{ $msg->id }})"
+                                                class="inline-flex items-center rounded-lg bg-red-50 p-2 text-red-600 hover:bg-red-100 hover:text-red-700 transition-all border border-red-100">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                        </td>
                                         </tr>
                                     @empty
-                                        <tr>
-                                            <td colspan="5" class="py-12 text-center">
-                                                <div class="flex flex-col items-center justify-center">
-                                                    <div
-                                                        class="inline-flex items-center justify-center h-12 w-12 rounded-full bg-slate-100 text-slate-400 mb-3">
-                                                        <i class="fas fa-calendar-times text-xl"></i>
-                                                    </div>
-                                                    <p class="text-sm font-medium text-slate-500 italic">Tidak ada antrean
-                                                        jadwal pesan.</p>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    @endforelse
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <!-- Tab: Quick Test -->
-                    <div x-show="activeTab === 'test'" style="display: none;">
-                        <div class="max-w-md mx-auto mt-6">
-                            <div class="bg-slate-50 p-6 rounded-xl border border-slate-200">
-                                <h4 class="text-sm font-bold text-slate-700 mb-4 uppercase tracking-wider">
-                                    Test Koneksi API
-                                </h4>
-                                <form action="{{ route('whatsapp.test') }}" method="POST">
-                                    @csrf
-                                    <div class="space-y-4">
-                                        <div>
-                                            <label class="block text-xs font-bold text-slate-500 mb-1">Nomor Tujuan</label>
-                                            <input type="text" name="target"
-                                                class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                                                placeholder="081234xxx" required>
+                            <tr>
+                                <td colspan="5" class="py-12 text-center">
+                                    <div class="flex flex-col items-center justify-center">
+                                        <div
+                                            class="inline-flex items-center justify-center h-12 w-12 rounded-full bg-slate-100 text-slate-400 mb-3">
+                                            <i class="fas fa-calendar-times text-xl"></i>
                                         </div>
-                                        <div>
-                                            <label class="block text-xs font-bold text-slate-500 mb-1">Pesan Test</label>
-                                            <textarea name="message" rows="3"
-                                                class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                                                required>Ini adalah pesan test dari MikBill.</textarea>
-                                        </div>
-                                        <button type="submit"
-                                            class="w-full inline-flex justify-center items-center rounded-lg bg-slate-800 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-slate-700 transition-all">
-                                            <i class="fas fa-rocket mr-2"></i> Kirim Test
-                                        </button>
+                                        <p class="text-sm font-medium text-slate-500 italic">Tidak ada antrean
+                                            jadwal pesan.</p>
                                     </div>
-                                </form>
-                            </div>
-                        </div>
+                                </td>
+                            </tr>
+                        @endforelse
+                        </tbody>
+                        </table>
                     </div>
-
                 </div>
 
-
-                <!-- Monitor Area (Broadcast Progress) -->
-                <div id="monitorArea" class="mt-8 border-t border-slate-200 pt-6" style="display: none;">
-                    <div class="flex items-center justify-between mb-2">
-                        <h4 class="text-sm font-bold text-slate-700 uppercase tracking-wider">Proses Broadcast</h4>
-                        <div class="text-xs font-mono">
-                            <span class="text-green-600 font-bold px-2 py-1 bg-green-50 rounded">OK: <span
-                                    id="statSuccess">0</span></span>
-                            <span class="text-red-600 font-bold px-2 py-1 bg-red-50 rounded ml-2">Fail: <span
-                                    id="statFail">0</span></span>
+                <!-- Tab: Quick Test -->
+                <div x-show="activeTab === 'test'" style="display: none;">
+                    <div class="max-w-md mx-auto mt-6">
+                        <div class="bg-slate-50 p-6 rounded-xl border border-slate-200">
+                            <h4 class="text-sm font-bold text-slate-700 mb-4 uppercase tracking-wider">
+                                Test Koneksi API
+                            </h4>
+                            <form action="{{ route('whatsapp.test') }}" method="POST">
+                                @csrf
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-500 mb-1">Nomor Tujuan</label>
+                                        <input type="text" name="target"
+                                            class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                                            placeholder="081234xxx" required>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-500 mb-1">Pesan Test</label>
+                                        <textarea name="message" rows="3"
+                                            class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                                            required>Ini adalah pesan test dari MikBill.</textarea>
+                                    </div>
+                                    <button type="submit"
+                                        class="w-full inline-flex justify-center items-center rounded-lg bg-slate-800 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-slate-700 transition-all">
+                                        <i class="fas fa-rocket mr-2"></i> Kirim Test
+                                    </button>
+                                </div>
+                            </form>
                         </div>
-                    </div>
-                    <div class="w-full bg-slate-200 rounded-full h-2.5 mb-4 overflow-hidden">
-                        <div id="progressBar" class="bg-indigo-600 h-2.5 rounded-full transition-all duration-300"
-                            style="width: 0%"></div>
-                    </div>
-                    <div id="logList"
-                        class="bg-slate-900 rounded-lg p-4 h-48 overflow-y-auto font-mono text-xs text-slate-300 space-y-1">
-                        <!-- Logs here -->
                     </div>
                 </div>
 
             </div>
+
+
+            <!-- Monitor Area (Broadcast Progress) -->
+            <div id="monitorArea" class="mt-8 border-t border-slate-200 pt-6" style="display: none;">
+                <div class="flex items-center justify-between mb-2">
+                    <h4 class="text-sm font-bold text-slate-700 uppercase tracking-wider">Proses Broadcast</h4>
+                    <div class="text-xs font-mono">
+                        <span class="text-green-600 font-bold px-2 py-1 bg-green-50 rounded">OK: <span
+                                id="statSuccess">0</span></span>
+                        <span class="text-red-600 font-bold px-2 py-1 bg-red-50 rounded ml-2">Fail: <span
+                                id="statFail">0</span></span>
+                    </div>
+                </div>
+                <div class="w-full bg-slate-200 rounded-full h-2.5 mb-4 overflow-hidden">
+                    <div id="progressBar" class="bg-indigo-600 h-2.5 rounded-full transition-all duration-300"
+                        style="width: 0%"></div>
+                </div>
+                <div id="logList"
+                    class="bg-slate-900 rounded-lg p-4 h-48 overflow-y-auto font-mono text-xs text-slate-300 space-y-1">
+                    <!-- Logs here -->
+                </div>
+            </div>
+
         </div>
+    </div>
     </div>
     </div>
 
@@ -1324,10 +1334,10 @@
                                 icon: 'success',
                                 title: 'Broadcast Dijadwalkan!',
                                 html: `
-                                                                        <p>Pesan akan dikirim pada:</p>
-                                                                        <p class="text-lg font-bold text-indigo-600">${response.scheduled_at}</p>
-                                                                        <p class="text-sm text-gray-500 mt-2">Total: ${response.total} penerima</p>
-                                                                    `,
+                                                                            <p>Pesan akan dikirim pada:</p>
+                                                                            <p class="text-lg font-bold text-indigo-600">${response.scheduled_at}</p>
+                                                                            <p class="text-sm text-gray-500 mt-2">Total: ${response.total} penerima</p>
+                                                                        `,
                                 confirmButtonColor: '#4f46e5'
                             }).then(() => {
                                 location.reload();
@@ -1462,11 +1472,11 @@
                                 icon: 'success',
                                 title: 'Broadcast Tagihan Dijadwalkan!',
                                 html: `
-                                            <p>Pesan akan dikirim pada:</p>
-                                            <p class="text-lg font-bold text-amber-600">${response.scheduled_at}</p>
-                                            <p class="text-sm text-gray-500 mt-2">Total: ${response.total} penerima (unpaid saat ini)</p>
-                                            <p class="text-xs text-gray-400 mt-1">Catatan: Daftar penerima akan diperbarui saat waktu pengiriman tiba.</p>
-                                        `,
+                                                <p>Pesan akan dikirim pada:</p>
+                                                <p class="text-lg font-bold text-amber-600">${response.scheduled_at}</p>
+                                                <p class="text-sm text-gray-500 mt-2">Total: ${response.total} penerima (unpaid saat ini)</p>
+                                                <p class="text-xs text-gray-400 mt-1">Catatan: Daftar penerima akan diperbarui saat waktu pengiriman tiba.</p>
+                                            `,
                                 confirmButtonColor: '#f59e0b'
                             }).then(() => {
                                 location.reload();
@@ -1568,7 +1578,7 @@
                     icon: 'success',
                     title: 'Broadcast Selesai!',
                     html: `<p>Sukses: <span class="text-green-600 font-bold">${successCount}</span></p>
-                                                               <p>Gagal: <span class="text-red-600 font-bold">${failCount}</span></p>`,
+                                                                   <p>Gagal: <span class="text-red-600 font-bold">${failCount}</span></p>`,
                     confirmButtonColor: '#4f46e5'
                 });
 
