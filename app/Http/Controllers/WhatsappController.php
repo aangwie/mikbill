@@ -616,7 +616,8 @@ class WhatsappController extends Controller
         $gatewayUrl = $setting->wa_gateway_url;
         if (empty($gatewayUrl) && $user->role != 'superadmin') {
             $saSetting = WhatsappSetting::withoutGlobalScopes()->whereHas('admin', function ($q) {
-                $q->where('role', 'superadmin'); })->first();
+                $q->where('role', 'superadmin');
+            })->first();
             $gatewayUrl = $saSetting->wa_gateway_url ?? 'http://localhost:3000';
         }
         $gatewayUrl = $gatewayUrl ?? 'http://localhost:3000';
@@ -633,9 +634,15 @@ class WhatsappController extends Controller
                 'timeout' => 5,
                 'verify' => false
             ]);
-            return response()->json(json_decode($response->getBody()->getContents(), true));
+            $contents = $response->getBody()->getContents();
+            $data = json_decode($contents, true);
+            if (!$data) {
+                return response()->json(['status' => 'disconnected', 'reachable' => false, 'message' => 'Invalid JSON from Gateway']);
+            }
+            $data['reachable'] = true;
+            return response()->json($data);
         } catch (\Exception $e) {
-            return response()->json(['status' => 'disconnected', 'message' => 'Gateway offline']);
+            return response()->json(['status' => 'disconnected', 'reachable' => false, 'message' => $e->getMessage()]);
         }
     }
 
@@ -655,7 +662,8 @@ class WhatsappController extends Controller
         $gatewayUrl = $setting->wa_gateway_url;
         if (empty($gatewayUrl) && $user->role != 'superadmin') {
             $saSetting = WhatsappSetting::withoutGlobalScopes()->whereHas('admin', function ($q) {
-                $q->where('role', 'superadmin'); })->first();
+                $q->where('role', 'superadmin');
+            })->first();
             $gatewayUrl = $saSetting->wa_gateway_url ?? 'http://localhost:3000';
         }
         $gatewayUrl = $gatewayUrl ?? 'http://localhost:3000';
@@ -672,9 +680,15 @@ class WhatsappController extends Controller
                 'timeout' => 5,
                 'verify' => false
             ]);
-            return response()->json(json_decode($response->getBody()->getContents(), true));
+            $contents = $response->getBody()->getContents();
+            $data = json_decode($contents, true);
+            if (!$data) {
+                return response()->json(['status' => false, 'reachable' => false, 'message' => 'Invalid JSON from Gateway']);
+            }
+            $data['reachable'] = true;
+            return response()->json($data);
         } catch (\Exception $e) {
-            return response()->json(['status' => false, 'message' => 'Gateway offline']);
+            return response()->json(['status' => false, 'reachable' => false, 'message' => $e->getMessage()]);
         }
     }
 
@@ -694,7 +708,8 @@ class WhatsappController extends Controller
         $gatewayUrl = $setting->wa_gateway_url;
         if (empty($gatewayUrl) && $user->role != 'superadmin') {
             $saSetting = WhatsappSetting::withoutGlobalScopes()->whereHas('admin', function ($q) {
-                $q->where('role', 'superadmin'); })->first();
+                $q->where('role', 'superadmin');
+            })->first();
             $gatewayUrl = $saSetting->wa_gateway_url ?? 'http://localhost:3000';
         }
         $gatewayUrl = $gatewayUrl ?? 'http://localhost:3000';
