@@ -92,278 +92,196 @@
                                     <div>
                                         <label class="block text-sm font-bold text-slate-900 mb-1">API Key
                                             External</label>
-                                            <input type="text" name="api_key_external"
-                                                class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                                                placeholder="API Key dari penyedia pihak ke-3"
-                                                value="{{ optional($setting)->api_key_external ?? '' }}">
-                                        </div>
-                                        <div>
-                                            <label class="block text-sm font-bold text-slate-900 mb-1">Nomor Pengirim</label>
-                                            <input type="text" name="sender_number"
-                                                class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                                                placeholder="628xxx" value="{{ optional($setting)->sender_number ?? '' }}">
-                                        </div>
-                                    </div>
-                                </template>
-
-                                <!-- Self-Gateway Fields -->
-                                <template x-if="waProvider === 'gateway'">
-                                    <div class="space-y-4" x-data="whatsappGateway()">
-                                        <div>
-                                            <label class="block text-sm font-bold text-slate-900 mb-1">Gateway URL
-                                                (Local)</label>
-                                            <input type="url" name="wa_gateway_url"
-                                                class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-emerald-600 sm:text-sm sm:leading-6"
-                                                placeholder="http://localhost:3000"
-                                                value="{{ optional($setting)->wa_gateway_url ?? 'http://localhost:3000' }}">
-                                            <p class="mt-1 text-[10px] text-slate-500">Gunakan localhost:3000 jika gateway di
-                                                server yang sama.</p>
-                                        </div>
-
-                                        <div>
-                                            <label class="block text-sm font-bold text-slate-900 mb-1">Gateway API Key
-                                                (Self)</label>
-                                            <div class="flex gap-2">
-                                                <input type="text" name="api_key_gateway" id="gatewayApiKey"
-                                                    class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 bg-slate-50 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-emerald-600 sm:text-sm sm:leading-6"
-                                                    placeholder="Unique Gateway Key"
-                                                    value="{{ optional($setting)->api_key_gateway ?? '' }}" readonly>
-                                                <button type="button" onclick="regenerateGatewayKey()"
-                                                    class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-bold rounded-md text-emerald-700 bg-emerald-100 hover:bg-emerald-200 transition-all shadow-sm">
-                                                    <i class="fas fa-sync-alt mr-1"></i> Ganti
-                                                </button>
-                                            </div>
-                                            <p class="mt-1 text-[10px] text-slate-500 italic">API Key ini digunakan oleh gateway
-                                                Anda untuk otentikasi.</p>
-                                        </div>
-
-                                        <!-- Gateway Connection Panel -->
-                                        <div class="mt-4 border border-emerald-100 rounded-xl bg-emerald-50/30 overflow-hidden">
-                                            <div class="bg-emerald-500 px-4 py-2 flex items-center justify-between">
-                                                <span class="text-xs font-bold text-white uppercase tracking-wider">Status
-                                                    Gateway</span>
-                                                <span
-                                                    class="flex items-center gap-1.5 text-[10px] font-black text-white bg-white/20 px-2 py-0.5 rounded-full">
-                                                    <span class="h-2 w-2 rounded-full" :class="{
-                                                                                                    'bg-white': status === 'connected',
-                                                                                                    'bg-amber-300': status === 'connecting',
-                                                                                                    'bg-red-300': status === 'disconnected'
-                                                                                                }"></span>
-                                                    <span x-text="status.toUpperCase()"></span>
-                                                </span>
-                                            </div>
-                                            <div class="p-4 flex flex-col items-center">
-                                                <!-- QR Code Display -->
-                                                <template x-if="status === 'connecting' && qr">
-                                                    <div
-                                                        class="mb-4 bg-white p-3 rounded-xl shadow-inner border border-emerald-100 animate-fade-in text-center">
-                                                        <p
-                                                            class="text-[10px] font-bold text-emerald-600 mb-2 uppercase italic tracking-widest">
-                                                            Pindai QR untuk Menghubungkan</p>
-                                                        <img :src="qr" class="w-48 h-48 mx-auto" />
-                                                    </div>
-                                                </template>
-
-                                                <template x-if="status === 'connecting' && !qr">
-                                                    <div class="py-12 text-center">
-                                                        <i class="fas fa-qrcode fa-3x text-emerald-200 mb-2"></i>
-                                                        <p class="text-xs text-emerald-600 font-bold">Menghubungkan ke
-                                                            Gateway...</p>
-                                                    </div>
-                                                </template>
-
-                                                <template x-if="status === 'connected'">
-                                                    <div
-                                                        class="py-8 text-center bg-white w-full rounded-xl border border-emerald-100 shadow-sm">
-                                                        <div
-                                                            class="h-16 w-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                                                            <i class="fas fa-check-circle text-emerald-500 text-3xl"></i>
-                                                        </div>
-                                                        <p class="text-sm font-bold text-slate-700">Terhubung ke WhatsApp</p>
-                                                        <p class="text-xs font-medium text-emerald-600 mt-1" x-show="number">
-                                                            <i class="fab fa-whatsapp mr-1"></i> <span x-text="number"></span>
-                                                        </p>
-                                                        <button type="button" @click="logout()"
-                                                            class="mt-4 text-[10px] font-bold text-red-500 hover:text-red-700 underline uppercase tracking-widest">
-                                                            <i class="fas fa-sign-out-alt mr-1"></i> Putuskan Koneksi
-                                                        </button>
-                                                    </div>
-                                                </template>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </template>
-
-                                @if(Auth::user()->role === 'superadmin')
-                                    <div class="pt-4 border-t border-slate-100">
-                                        <label class="block text-sm font-bold text-indigo-600 mb-1 italic">Adsense Content
-                                            (Global)</label>
-                                        <textarea name="adsense_content" rows="2"
+                                        <input type="text" name="api_key_external"
                                             class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                                            placeholder="Teks untuk banner iklan...">{{ optional($setting)->adsense_content ?? '' }}</textarea>
+                                            placeholder="API Key dari penyedia pihak ke-3"
+                                            value="{{ optional($setting)->api_key_external ?? '' }}">
                                     </div>
                                     <div>
-                                        <label class="block text-sm font-bold text-indigo-600 mb-1 italic">Adsense Link URL</label>
-                                        <input type="url" name="adsense_url"
+                                        <label class="block text-sm font-bold text-slate-900 mb-1">Nomor Pengirim</label>
+                                        <input type="text" name="sender_number"
                                             class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                                            placeholder="https://..." value="{{ optional($setting)->adsense_url ?? '' }}">
+                                            placeholder="628xxx" value="{{ optional($setting)->sender_number ?? '' }}">
                                     </div>
-                                @endif
-
-                                <div class="pt-4">
-                                    <button type="submit"
-                                        class="w-full justify-center rounded-lg bg-indigo-600 px-3 py-2 text-sm font-bold text-white shadow-sm hover:bg-indigo-500 transition-all">
-                                        <i class="fas fa-save mr-2"></i> Simpan Konfigurasi
-                                    </button>
                                 </div>
+                            </template>
+
+                            <!-- Self-Gateway Fields -->
+                            <template x-if="waProvider === 'gateway'">
+                                <div class="space-y-4" x-data="whatsappGateway()">
+                                    <div>
+                                        <label class="block text-sm font-bold text-slate-900 mb-1">Gateway URL
+                                            (Local)</label>
+                                        <input type="url" name="wa_gateway_url"
+                                            class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-emerald-600 sm:text-sm sm:leading-6"
+                                            placeholder="http://localhost:3000"
+                                            value="{{ optional($setting)->wa_gateway_url ?? 'http://localhost:3000' }}">
+                                        <p class="mt-1 text-[10px] text-slate-500">Gunakan localhost:3000 jika gateway di
+                                            server yang sama.</p>
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-sm font-bold text-slate-900 mb-1">Gateway API Key
+                                            (Self)</label>
+                                        <div class="flex gap-2">
+                                            <input type="text" name="api_key_gateway" id="gatewayApiKey"
+                                                class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 bg-slate-50 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-emerald-600 sm:text-sm sm:leading-6"
+                                                placeholder="Unique Gateway Key"
+                                                value="{{ optional($setting)->api_key_gateway ?? '' }}" readonly>
+                                            <button type="button" onclick="regenerateGatewayKey()"
+                                                class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-bold rounded-md text-emerald-700 bg-emerald-100 hover:bg-emerald-200 transition-all shadow-sm">
+                                                <i class="fas fa-sync-alt mr-1"></i> Ganti
+                                            </button>
+                                        </div>
+                                        <p class="mt-1 text-[10px] text-slate-500 italic">API Key ini digunakan oleh gateway
+                                            Anda untuk otentikasi.</p>
+                                    </div>
+
+                                    <!-- Gateway Connection Panel -->
+                                    <div class="mt-4 border border-emerald-100 rounded-xl bg-emerald-50/30 overflow-hidden">
+                                        <div class="bg-emerald-500 px-4 py-2 flex items-center justify-between">
+                                            <span class="text-xs font-bold text-white uppercase tracking-wider">Status
+                                                Gateway</span>
+                                            <span
+                                                class="flex items-center gap-1.5 text-[10px] font-black text-white bg-white/20 px-2 py-0.5 rounded-full">
+                                                <span class="h-2 w-2 rounded-full" :class="{
+                                                                                                        'bg-white': status === 'connected',
+                                                                                                        'bg-amber-300': status === 'connecting' || status === 'qr',
+                                                                                                        'bg-red-300': status === 'disconnected'
+                                                                                                    }"></span>
+                                                <span x-text="status.toUpperCase()"></span>
+                                            </span>
+                                        </div>
+                                        <div class="p-4 flex flex-col items-center">
+                                            <!-- QR Code Display (Show if QR exists and not connected) -->
+                                            <template x-if="status !== 'connected' && qr">
+                                                <div
+                                                    class="mb-4 bg-white p-3 rounded-xl shadow-inner border border-emerald-100 animate-fade-in text-center w-full">
+                                                    <p
+                                                        class="text-[10px] font-bold text-emerald-600 mb-2 uppercase italic tracking-widest">
+                                                        Pindai QR untuk Menghubungkan</p>
+                                                    <div
+                                                        class="bg-white p-2 rounded-lg inline-block border border-slate-100 shadow-sm">
+                                                        <img :src="qr" class="w-48 h-48 mx-auto" alt="WhatsApp QR Code" />
+                                                    </div>
+                                                    <p class="mt-2 text-[10px] text-slate-400">QR Code akan diperbarui
+                                                        secara berkala</p>
+                                                </div>
+                                            </template>
+
+                                            <template x-if="status !== 'connected' && !qr">
+                                                <div class="py-12 text-center w-full">
+                                                    <i class="fas fa-qrcode fa-3x text-emerald-200 mb-2 animate-pulse"></i>
+                                                    <p class="text-xs text-emerald-600 font-bold">Menunggu Gateway...</p>
+                                                    <p class="text-[10px] text-slate-400 mt-1">Pastikan gateway Anda aktif
+                                                        dan konfigurasi benar.</p>
+                                                </div>
+                                            </template>
+
+                                            <template x-if="status === 'connected'">
+                                                <div
+                                                    class="py-8 text-center bg-white w-full rounded-xl border border-emerald-100 shadow-sm">
+                                                    <div
+                                                        class="h-16 w-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                                                        <i class="fas fa-check-circle text-emerald-500 text-3xl"></i>
+                                                    </div>
+                                                    <p class="text-sm font-bold text-slate-700">Terhubung ke WhatsApp</p>
+                                                    <p class="text-xs font-medium text-emerald-600 mt-1" x-show="number">
+                                                        <i class="fab fa-whatsapp mr-1"></i> <span x-text="number"></span>
+                                                    </p>
+                                                    <button type="button" @click="logout()"
+                                                        class="mt-4 text-[10px] font-bold text-red-500 hover:text-red-700 underline uppercase tracking-widest">
+                                                        <i class="fas fa-sign-out-alt mr-1"></i> Putuskan Koneksi
+                                                    </button>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+
+                            @if(Auth::user()->role === 'superadmin')
+                                <div class="pt-4 border-t border-slate-100">
+                                    <label class="block text-sm font-bold text-indigo-600 mb-1 italic">Adsense Content
+                                        (Global)</label>
+                                    <textarea name="adsense_content" rows="2"
+                                        class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                                        placeholder="Teks untuk banner iklan...">{{ optional($setting)->adsense_content ?? '' }}</textarea>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-bold text-indigo-600 mb-1 italic">Adsense Link URL</label>
+                                    <input type="url" name="adsense_url"
+                                        class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                                        placeholder="https://..." value="{{ optional($setting)->adsense_url ?? '' }}">
+                                </div>
+                            @endif
+
+                            <div class="pt-4">
+                                <button type="submit"
+                                    class="w-full justify-center rounded-lg bg-indigo-600 px-3 py-2 text-sm font-bold text-white shadow-sm hover:bg-indigo-500 transition-all">
+                                    <i class="fas fa-save mr-2"></i> Simpan Konfigurasi
+                                </button>
                             </div>
-                        </form>
-                    </div>
+                        </div>
+                    </form>
                 </div>
             </div>
+        </div>
 
-            <!-- Right Column: Message Center (Alpine Tabs) -->
-            <div class="xl:col-span-2" x-data="{ activeTab: 'multi' }">
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden min-h-[500px] flex flex-col">
+        <!-- Right Column: Message Center (Alpine Tabs) -->
+        <div class="xl:col-span-2" x-data="{ activeTab: 'multi' }">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden min-h-[500px] flex flex-col">
 
-                    <!-- Tabs Header -->
-                    <div class="bg-slate-50 border-b border-slate-200">
-                        <nav class="flex overflow-x-auto" aria-label="Tabs">
-                            <button @click="activeTab = 'multi'"
-                                :class="activeTab === 'multi' ? 'border-indigo-500 text-indigo-600 bg-white' : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'"
-                                class="whitespace-nowrap border-b-2 py-4 px-6 text-sm font-bold flex items-center transition-colors">
-                                <i class="fas fa-users mr-2"></i> Multi-Send
-                            </button>
-                            <button @click="activeTab = 'unpaid'"
-                                :class="activeTab === 'unpaid' ? 'border-indigo-500 text-indigo-600 bg-white' : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'"
-                                class="whitespace-nowrap border-b-2 py-4 px-6 text-sm font-bold flex items-center transition-colors">
-                                <i class="fas fa-file-invoice-dollar mr-2"></i> Tagihan (Unpaid)
-                            </button>
-                            <button @click="activeTab = 'broadcast'"
-                                :class="activeTab === 'broadcast' ? 'border-indigo-500 text-indigo-600 bg-white' : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'"
-                                class="whitespace-nowrap border-b-2 py-4 px-6 text-sm font-bold flex items-center transition-colors">
-                                <i class="fas fa-bullhorn mr-2"></i> Broadcast All
-                            </button>
-                            <button @click="activeTab = 'test'"
-                                :class="activeTab === 'test' ? 'border-indigo-500 text-indigo-600 bg-white' : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'"
-                                class="whitespace-nowrap border-b-2 py-4 px-6 text-sm font-bold flex items-center transition-colors">
-                                <i class="fas fa-paper-plane mr-2"></i> Quick Test
-                            </button>
-                            <button @click="activeTab = 'queue'"
-                                :class="activeTab === 'queue' ? 'border-indigo-500 text-indigo-600 bg-white' : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'"
-                                class="whitespace-nowrap border-b-2 py-4 px-6 text-sm font-bold flex items-center transition-colors">
-                                <i class="fas fa-list-ol mr-2"></i> Antrean Jadwal
-                                @if(count($scheduledMessages) > 0)
-                                    <span
-                                        class="ml-2 inline-flex items-center rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-700">
-                                        {{ count($scheduledMessages) }}
-                                    </span>
-                                @endif
-                            </button>
-                        </nav>
-                    </div>
+                <!-- Tabs Header -->
+                <div class="bg-slate-50 border-b border-slate-200">
+                    <nav class="flex overflow-x-auto" aria-label="Tabs">
+                        <button @click="activeTab = 'multi'"
+                            :class="activeTab === 'multi' ? 'border-indigo-500 text-indigo-600 bg-white' : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'"
+                            class="whitespace-nowrap border-b-2 py-4 px-6 text-sm font-bold flex items-center transition-colors">
+                            <i class="fas fa-users mr-2"></i> Multi-Send
+                        </button>
+                        <button @click="activeTab = 'unpaid'"
+                            :class="activeTab === 'unpaid' ? 'border-indigo-500 text-indigo-600 bg-white' : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'"
+                            class="whitespace-nowrap border-b-2 py-4 px-6 text-sm font-bold flex items-center transition-colors">
+                            <i class="fas fa-file-invoice-dollar mr-2"></i> Tagihan (Unpaid)
+                        </button>
+                        <button @click="activeTab = 'broadcast'"
+                            :class="activeTab === 'broadcast' ? 'border-indigo-500 text-indigo-600 bg-white' : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'"
+                            class="whitespace-nowrap border-b-2 py-4 px-6 text-sm font-bold flex items-center transition-colors">
+                            <i class="fas fa-bullhorn mr-2"></i> Broadcast All
+                        </button>
+                        <button @click="activeTab = 'test'"
+                            :class="activeTab === 'test' ? 'border-indigo-500 text-indigo-600 bg-white' : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'"
+                            class="whitespace-nowrap border-b-2 py-4 px-6 text-sm font-bold flex items-center transition-colors">
+                            <i class="fas fa-paper-plane mr-2"></i> Quick Test
+                        </button>
+                        <button @click="activeTab = 'queue'"
+                            :class="activeTab === 'queue' ? 'border-indigo-500 text-indigo-600 bg-white' : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'"
+                            class="whitespace-nowrap border-b-2 py-4 px-6 text-sm font-bold flex items-center transition-colors">
+                            <i class="fas fa-list-ol mr-2"></i> Antrean Jadwal
+                            @if(count($scheduledMessages) > 0)
+                                <span
+                                    class="ml-2 inline-flex items-center rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-700">
+                                    {{ count($scheduledMessages) }}
+                                </span>
+                            @endif
+                        </button>
+                    </nav>
+                </div>
 
-                    <!-- Tab Contents -->
-                    <div class="p-6 flex-1">
+                <!-- Tab Contents -->
+                <div class="p-6 flex-1">
 
-                        <!-- Tab: Multi Send -->
-                        <div x-show="activeTab === 'multi'" style="display: none;">
-                            <form action="{{ route('whatsapp.send.customer') }}" method="POST">
-                                @csrf
-                                <div class="space-y-4">
-                                    @if(auth()->user()->role == 'superadmin')
-                                        <div>
-                                            <label class="block text-sm font-bold text-slate-900 mb-1">Filter Berdasarkan
-                                                Admin</label>
-                                            <select id="multiAdminFilter"
-                                                class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
-                                                <option value="">Semua Admin</option>
-                                                @foreach($admins as $admin)
-                                                    <option value="{{ $admin->id }}" {{ $selectedAdminId == $admin->id ? 'selected' : '' }}>
-                                                        {{ $admin->name }}{{ $admin->id == auth()->id() ? ' (Self)' : '' }}
-                                                    </option>
-                                                @endforeach
-                                            </select>
-                                        </div>
-                                    @endif
-                                    <div>
-                                        <label class="block text-sm font-bold text-slate-900 mb-1">Pilih Penerima</label>
-                                        <select name="customer_ids[]" id="multiUserSelect"
-                                            class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 select2-tailwind"
-                                            multiple="multiple" required>
-                                            @foreach($customers as $c)
-                                                <option value="{{ $c->id }}">{{ $c->name }} ({{ $c->phone }})</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-bold text-slate-900 mb-1">Pesan</label>
-                                        <div class="relative">
-                                            <textarea name="message" rows="5"
-                                                class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                                                required placeholder="Halo {name}, ..."></textarea>
-                                            <div
-                                                class="absolute bottom-2 right-2 text-xs text-slate-400 bg-white px-2 rounded border border-slate-100 shadow-sm">
-                                                Gunakan {name} untuk nama pelanggan</div>
-                                        </div>
-                                    </div>
-                                    <div class="flex justify-end pt-2">
-                                        <button type="submit"
-                                            class="inline-flex items-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-indigo-500">
-                                            <i class="fas fa-paper-plane mr-2"></i> Kirim Pesan
-                                        </button>
-                                    </div>
-                                </div>
-                            </form>
-                        </div>
-
-                        <!-- Tab: Unpaid Reminder (Enhanced with Scheduling) -->
-                        <div id="unpaidTab" x-show="activeTab === 'unpaid'" style="display: none;" x-data="{
-                                                                        selectedTemplateId: '',
-                                                                        previewContent: '',
-                                                                        showSaveForm: false,
-                                                                        templateName: '',
-                                                                        whatsappAge: '12+',
-                                                                        scheduleMode: 'now',
-                                                                        scheduledAt: '',
-                                                                        maxRecipients: 9999,
-                                                                        getMaxRecipients() {
-                                                                            if (this.whatsappAge === '1-6') return 15;
-                                                                            if (this.whatsappAge === '6-12') return 50;
-                                                                            return 9999;
-                                                                        },
-                                                                        updateLimit() {
-                                                                            this.maxRecipients = this.getMaxRecipients();
-                                                                        },
-                                                                        selectTemplate(id) {
-                                                                            this.selectedTemplateId = id;
-                                                                            if (id) {
-                                                                                const option = document.querySelector('#billTemplateSelect option[value=\'' + id + '\']');
-                                                                                if (option) {
-                                                                                    this.previewContent = option.dataset.content;
-                                                                                    document.getElementById('msgUnpaid').value = option.dataset.content;
-                                                                                }
-                                                                            } else {
-                                                                                this.previewContent = '';
-                                                                                document.getElementById('msgUnpaid').value = '';
-                                                                            }
-                                                                        }
-                                                                    }" x-init="updateLimit()">
-                            <div class="bg-amber-50 border-l-4 border-amber-400 p-4 mb-6 rounded-r-lg">
-                                <div class="flex">
-                                    <div class="flex-shrink-0"><i class="fas fa-exclamation-triangle text-amber-400"></i></div>
-                                    <div class="ml-3">
-                                        <p class="text-sm text-amber-700">Kirim pengingat otomatis ke semua pelanggan yang
-                                            status tagihannya <b>BELUM LUNAS</b> (Unpaid). Anda dapat mengirim langsung atau
-                                            menjadwalkan pengiriman.</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="space-y-5">
+                    <!-- Tab: Multi Send -->
+                    <div x-show="activeTab === 'multi'" style="display: none;">
+                        <form action="{{ route('whatsapp.send.customer') }}" method="POST">
+                            @csrf
+                            <div class="space-y-4">
                                 @if(auth()->user()->role == 'superadmin')
                                     <div>
-                                        <label class="block text-sm font-bold text-slate-900 mb-1">Filter Berdasarkan Admin</label>
-                                        <select id="unpaidAdminFilter"
+                                        <label class="block text-sm font-bold text-slate-900 mb-1">Filter Berdasarkan
+                                            Admin</label>
+                                        <select id="multiAdminFilter"
                                             class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
                                             <option value="">Semua Admin</option>
                                             @foreach($admins as $admin)
@@ -374,524 +292,612 @@
                                         </select>
                                     </div>
                                 @endif
-
-                                {{-- Template Select with Search --}}
                                 <div>
-                                    <label class="block text-sm font-bold text-slate-900 mb-1">
-                                        <i class="fas fa-file-alt mr-1 text-indigo-500"></i>Pilih Template Tagihan
-                                    </label>
-                                    <div class="flex gap-2">
-                                        <div class="flex-1">
-                                            <select id="billTemplateSelect"
-                                                class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                                                x-on:change="selectTemplate($event.target.value)">
-                                                <option value="">-- Pilih Template --</option>
-                                                @if(auth()->user()->role == 'superadmin')
-                                                    @php
-                                                        $groupedTemplates = $billTemplates->groupBy(function ($t) {
-                                                            return $t->admin ? $t->admin->name : 'Unknown';
-                                                        });
-                                                    @endphp
-                                                    @foreach($groupedTemplates as $adminName => $templates)
-                                                        <optgroup label="{{ $adminName }}">
-                                                            @foreach($templates as $tpl)
-                                                                <option value="{{ $tpl->id }}" data-content="{{ e($tpl->content) }}">
-                                                                    {{ $tpl->name }}
-                                                                </option>
-                                                            @endforeach
-                                                        </optgroup>
-                                                    @endforeach
-                                                @else
-                                                    @foreach($billTemplates as $tpl)
-                                                        <option value="{{ $tpl->id }}" data-content="{{ e($tpl->content) }}">
-                                                            {{ $tpl->name }}
-                                                        </option>
-                                                    @endforeach
-                                                @endif
-                                            </select>
-                                        </div>
-                                        <button type="button" x-show="selectedTemplateId" @click="deleteTemplate()"
-                                            class="inline-flex items-center rounded-lg bg-red-50 px-3 py-1.5 text-red-600 hover:bg-red-100 border border-red-200 transition-all"
-                                            title="Hapus Template">
-                                            <i class="fas fa-trash-alt"></i>
-                                        </button>
-                                    </div>
-                                </div>
-
-                                {{-- Preview Box --}}
-                                <div x-show="previewContent" x-transition>
-                                    <label class="block text-xs font-bold text-indigo-600 mb-1 uppercase tracking-wider">
-                                        <i class="fas fa-eye mr-1"></i>Preview Template
-                                    </label>
-                                    <div class="bg-gradient-to-br from-indigo-50 to-blue-50 border border-indigo-200 rounded-xl p-4 text-sm text-slate-700 whitespace-pre-wrap leading-relaxed shadow-inner"
-                                        x-text="previewContent">
-                                    </div>
-                                </div>
-
-                                {{-- Message Textarea --}}
-                                <div>
-                                    <label class="block text-sm font-bold text-slate-900 mb-1">Isi Pesan Template</label>
-                                    <div class="relative">
-                                        <textarea id="msgUnpaid" rows="5"
-                                            class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                                            x-on:input="previewContent = $event.target.value"
-                                            placeholder="Halo {name}, tagihan internet Anda sebesar Rp {tagihan} belum terbayar...">Halo {name}, tagihan internet Anda sebesar Rp {tagihan} belum terbayar. Mohon segera lunasi.</textarea>
-                                        <div
-                                            class="absolute bottom-2 right-2 text-xs text-slate-400 bg-white px-2 rounded border border-slate-100 shadow-sm">
-                                            Gunakan {name} untuk nama, {tagihan} untuk tagihan
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {{-- Save as Template Toggle --}}
-                                <div class="bg-slate-50 rounded-xl border border-slate-200 overflow-hidden">
-                                    <button type="button" @click="showSaveForm = !showSaveForm"
-                                        class="w-full flex items-center justify-between px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-100 transition-colors">
-                                        <span><i class="fas fa-save mr-2 text-emerald-500"></i>Simpan sebagai Template</span>
-                                        <i class="fas fa-chevron-down transition-transform"
-                                            :class="showSaveForm ? 'rotate-180' : ''"></i>
-                                    </button>
-                                    <div x-show="showSaveForm" x-transition class="px-4 pb-4 space-y-3">
-                                        <div>
-                                            <label class="block text-xs font-bold text-slate-500 mb-1">Nama Template</label>
-                                            <input type="text" x-model="templateName"
-                                                class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                                                placeholder="Contoh: Reminder Tagihan Bulanan">
-                                        </div>
-                                        <button type="button" @click="saveTemplate()"
-                                            class="w-full inline-flex justify-center items-center rounded-lg bg-emerald-600 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-emerald-500 transition-all">
-                                            <i class="fas fa-check mr-2"></i> Simpan Template
-                                        </button>
-                                    </div>
-                                </div>
-
-                                {{-- WhatsApp Age Selection --}}
-                                <div
-                                    class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-4 border border-green-200">
-                                    <label class="block text-sm font-bold text-slate-900 mb-3">
-                                        <i class="fab fa-whatsapp mr-2 text-green-500"></i>Usia Nomor WhatsApp
-                                    </label>
-                                    <select x-model="whatsappAge" @change="updateLimit()"
-                                        class="block w-full rounded-lg border-0 py-2.5 px-3 text-slate-900 shadow-sm ring-1 ring-inset ring-green-300 focus:ring-2 focus:ring-inset focus:ring-green-500 sm:text-sm font-medium bg-white">
-                                        <option value="1-6">🆕 1-6 Bulan (Max 15 penerima)</option>
-                                        <option value="6-12">📅 6-12 Bulan (Max 50 penerima)</option>
-                                        <option value="12+">✅ 12+ Bulan (Unlimited)</option>
-                                    </select>
-                                    <p class="mt-2 text-xs text-green-700">
-                                        <i class="fas fa-shield-alt mr-1"></i>
-                                        Batasan untuk mencegah blokir WhatsApp pada nomor baru.
-                                    </p>
-                                </div>
-
-                                {{-- Schedule Options --}}
-                                <div
-                                    class="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl p-4 border border-purple-200">
-                                    <label class="block text-sm font-bold text-slate-900 mb-3">
-                                        <i class="fas fa-clock mr-2 text-purple-500"></i>Waktu Pengiriman
-                                    </label>
-                                    <div class="flex gap-4 mb-4">
-                                        <label class="flex items-center cursor-pointer group">
-                                            <input type="radio" x-model="scheduleMode" value="now"
-                                                class="w-4 h-4 text-purple-600 border-slate-300 focus:ring-purple-500">
-                                            <span class="ml-2 text-sm font-medium text-slate-700 group-hover:text-purple-600">
-                                                <i class="fas fa-bolt text-yellow-500 mr-1"></i>Kirim Sekarang
-                                            </span>
-                                        </label>
-                                        <label class="flex items-center cursor-pointer group">
-                                            <input type="radio" x-model="scheduleMode" value="scheduled"
-                                                class="w-4 h-4 text-purple-600 border-slate-300 focus:ring-purple-500">
-                                            <span class="ml-2 text-sm font-medium text-slate-700 group-hover:text-purple-600">
-                                                <i class="fas fa-calendar-alt text-purple-500 mr-1"></i>Jadwalkan
-                                            </span>
-                                        </label>
-                                    </div>
-
-                                    {{-- DateTime Picker --}}
-                                    <div x-show="scheduleMode === 'scheduled'" x-transition class="mt-3">
-                                        <input type="datetime-local" x-model="scheduledAt" id="unpaidScheduledAtInput"
-                                            class="block w-full rounded-lg border-0 py-2.5 px-3 text-slate-900 shadow-sm ring-1 ring-inset ring-purple-300 focus:ring-2 focus:ring-inset focus:ring-purple-500 sm:text-sm font-medium bg-white">
-                                        <p class="mt-2 text-xs text-purple-700">
-                                            <i class="fas fa-info-circle mr-1"></i>
-                                            Pesan akan dikirim otomatis pada waktu yang ditentukan ke pelanggan yang masih
-                                            belum membayar tagihan.
-                                        </p>
-                                    </div>
-                                </div>
-
-                                {{-- Broadcast Button --}}
-                                <button type="button" onclick="startUnpaidBroadcast()"
-                                    class="w-full inline-flex justify-center items-center rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 px-4 py-4 text-sm font-bold text-white shadow-lg hover:from-amber-600 hover:to-orange-600 hover:shadow-xl transition-all transform hover:scale-[1.02] active:scale-100">
-                                    <i class="fab fa-whatsapp mr-2 text-lg"></i>
-                                    <span
-                                        x-text="scheduleMode === 'now' ? 'Mulai Broadcast Reminder' : 'Jadwalkan Broadcast Reminder'"></span>
-                                </button>
-                            </div>
-                        </div>
-
-
-                        <!-- Tab: All Broadcast (Enhanced) -->
-                        <div id="broadcastTab" x-show="activeTab === 'broadcast'" style="display: none;" x-data="{
-                                                                                                            selectionMode: 'all',
-                                                                                                            whatsappAge: '12+',
-                                                                                                            scheduleMode: 'now',
-                                                                                                            selectedCustomers: [],
-                                                                                                            maxRecipients: 9999,
-                                                                                                            scheduledAt: '',
-                                                                                                            getMaxRecipients() {
-                                                                                                                if (this.whatsappAge === '1-6') return 15;
-                                                                                                                if (this.whatsappAge === '6-12') return 50;
-                                                                                                                return 9999;
-                                                                                                            },
-                                                                                                            updateLimit() {
-                                                                                                                this.maxRecipients = this.getMaxRecipients();
-                                                                                                                // Truncate selection if exceeds limit
-                                                                                                                if (this.selectedCustomers.length > this.maxRecipients) {
-                                                                                                                    this.selectedCustomers = this.selectedCustomers.slice(0, this.maxRecipients);
-                                                                                                                    $('#broadcastCustomerSelect').val(this.selectedCustomers).trigger('change');
-                                                                                                                }
-                                                                                                            }
-                                                                                                        }"
-                            x-init="updateLimit()">
-
-                            <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6 rounded-r-lg">
-                                <div class="flex">
-                                    <div class="flex-shrink-0"><i class="fas fa-info-circle text-blue-400"></i></div>
-                                    <div class="ml-3">
-                                        <p class="text-sm text-blue-700">Kirim informasi / pengumuman ke pelanggan dengan opsi
-                                            pilihan pelanggan dan penjadwalan.</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="space-y-5">
-                                <!-- Customer Selection Mode -->
-                                <div class="bg-slate-50 rounded-xl p-4 border border-slate-200">
-                                    <label class="block text-sm font-bold text-slate-900 mb-3">
-                                        <i class="fas fa-users mr-2 text-indigo-500"></i>Pilih Penerima
-                                    </label>
-                                    <div class="flex gap-4 mb-4">
-                                        <label class="flex items-center cursor-pointer group">
-                                            <input type="radio" x-model="selectionMode" value="all"
-                                                class="w-4 h-4 text-indigo-600 border-slate-300 focus:ring-indigo-500">
-                                            <span class="ml-2 text-sm font-medium text-slate-700 group-hover:text-indigo-600">
-                                                Semua Pelanggan
-                                            </span>
-                                        </label>
-                                        <label class="flex items-center cursor-pointer group">
-                                            <input type="radio" x-model="selectionMode" value="custom"
-                                                class="w-4 h-4 text-indigo-600 border-slate-300 focus:ring-indigo-500">
-                                            <span class="ml-2 text-sm font-medium text-slate-700 group-hover:text-indigo-600">
-                                                Pilih Pelanggan
-                                            </span>
-                                        </label>
-                                    </div>
-
-                                    <!-- Custom Customer Selection -->
-                                    <div x-show="selectionMode === 'custom'" x-transition class="mt-3">
-                                        <select id="broadcastCustomerSelect" multiple="multiple"
-                                            class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
-                                            @foreach($customers as $c)
-                                                <option value="{{ $c->id }}">{{ $c->name }} ({{ $c->phone }})</option>
-                                            @endforeach
-                                        </select>
-                                        <div class="mt-2 flex items-center justify-between">
-                                            <span class="text-xs text-slate-500">
-                                                Terpilih: <span class="font-bold text-indigo-600"
-                                                    x-text="selectedCustomers.length"></span> /
-                                                <span x-text="maxRecipients === 9999 ? 'Unlimited' : maxRecipients"></span>
-                                            </span>
-                                            <button type="button"
-                                                @click="selectedCustomers = []; $('#broadcastCustomerSelect').val([]).trigger('change')"
-                                                class="text-xs text-red-500 hover:text-red-700 font-medium">
-                                                <i class="fas fa-times mr-1"></i>Reset
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- WhatsApp Age Selection -->
-                                <div
-                                    class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-4 border border-green-200">
-                                    <label class="block text-sm font-bold text-slate-900 mb-3">
-                                        <i class="fab fa-whatsapp mr-2 text-green-500"></i>Usia Nomor WhatsApp
-                                    </label>
-                                    <select x-model="whatsappAge" @change="updateLimit()"
-                                        class="block w-full rounded-lg border-0 py-2.5 px-3 text-slate-900 shadow-sm ring-1 ring-inset ring-green-300 focus:ring-2 focus:ring-inset focus:ring-green-500 sm:text-sm font-medium bg-white">
-                                        <option value="1-6">🆕 1-6 Bulan (Max 15 penerima)</option>
-                                        <option value="6-12">📅 6-12 Bulan (Max 50 penerima)</option>
-                                        <option value="12+">✅ 12+ Bulan (Unlimited)</option>
-                                    </select>
-                                    <p class="mt-2 text-xs text-green-700">
-                                        <i class="fas fa-shield-alt mr-1"></i>
-                                        Batasan untuk mencegah blokir WhatsApp pada nomor baru.
-                                    </p>
-                                </div>
-
-                                <!-- Schedule Options -->
-                                <div
-                                    class="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl p-4 border border-purple-200">
-                                    <label class="block text-sm font-bold text-slate-900 mb-3">
-                                        <i class="fas fa-clock mr-2 text-purple-500"></i>Waktu Pengiriman
-                                    </label>
-                                    <div class="flex gap-4 mb-4">
-                                        <label class="flex items-center cursor-pointer group">
-                                            <input type="radio" x-model="scheduleMode" value="now"
-                                                class="w-4 h-4 text-purple-600 border-slate-300 focus:ring-purple-500">
-                                            <span class="ml-2 text-sm font-medium text-slate-700 group-hover:text-purple-600">
-                                                <i class="fas fa-bolt text-yellow-500 mr-1"></i>Kirim Sekarang
-                                            </span>
-                                        </label>
-                                        <label class="flex items-center cursor-pointer group">
-                                            <input type="radio" x-model="scheduleMode" value="scheduled"
-                                                class="w-4 h-4 text-purple-600 border-slate-300 focus:ring-purple-500">
-                                            <span class="ml-2 text-sm font-medium text-slate-700 group-hover:text-purple-600">
-                                                <i class="fas fa-calendar-alt text-purple-500 mr-1"></i>Jadwalkan
-                                            </span>
-                                        </label>
-                                    </div>
-
-                                    <!-- DateTime Picker -->
-                                    <div x-show="scheduleMode === 'scheduled'" x-transition class="mt-3">
-                                        <input type="datetime-local" x-model="scheduledAt" id="scheduledAtInput"
-                                            class="block w-full rounded-lg border-0 py-2.5 px-3 text-slate-900 shadow-sm ring-1 ring-inset ring-purple-300 focus:ring-2 focus:ring-inset focus:ring-purple-500 sm:text-sm font-medium bg-white">
-                                        <p class="mt-2 text-xs text-purple-700">
-                                            <i class="fas fa-info-circle mr-1"></i>
-                                            Pesan akan dikirim otomatis pada waktu yang ditentukan.
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <!-- Message Content -->
-                                <div>
-                                    <label class="block text-sm font-bold text-slate-900 mb-1">
-                                        <i class="fas fa-edit mr-2 text-slate-500"></i>Isi Pengumuman
-                                    </label>
-                                    <div class="relative">
-                                        <textarea id="msgAll" rows="5"
-                                            class="block w-full rounded-lg border-0 py-2 px-3 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                                            placeholder="Ketik pesan Anda disini...">Halo {name}, akan ada maintenance jaringan pada tanggal XX jam XX.</textarea>
-                                        <div
-                                            class="absolute bottom-2 right-2 text-xs text-slate-400 bg-white px-2 rounded border border-slate-100 shadow-sm">
-                                            Gunakan {name} untuk nama, {tagihan} untuk tagihan
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Submit Button -->
-                                <button type="button" onclick="startEnhancedBroadcast()"
-                                    class="w-full inline-flex justify-center items-center rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-4 text-sm font-bold text-white shadow-lg hover:from-blue-700 hover:to-indigo-700 hover:shadow-xl transition-all transform hover:scale-[1.02] active:scale-100">
-                                    <i class="fas fa-bullhorn mr-2 text-lg"></i>
-                                    <span
-                                        x-text="scheduleMode === 'now' ? 'Mulai Broadcast Sekarang' : 'Jadwalkan Broadcast'"></span>
-                                </button>
-                            </div>
-                        </div>
-
-
-                        <!-- Tab: Queue -->
-                        <div x-show="activeTab === 'queue'" style="display: none;">
-                            <div class="overflow-hidden bg-white shadow sm:rounded-lg border border-slate-200 mt-4">
-                                <table id="queueTable" class="min-w-full divide-y border-collapse divide-slate-300">
-                                    <thead class="bg-slate-50">
-                                        <tr>
-                                            <th scope="col"
-                                                class="py-3.5 pl-4 pr-3 text-left text-sm font-bold text-slate-900 sm:pl-6 uppercase tracking-wider">
-                                                Jadwal Kirim</th>
-                                            <th scope="col"
-                                                class="px-3 py-3.5 text-left text-sm font-bold text-slate-900 uppercase tracking-wider">
-                                                Penerima</th>
-                                            <th scope="col"
-                                                class="px-3 py-3.5 text-left text-sm font-bold text-slate-900 uppercase tracking-wider">
-                                                Isi Pesan</th>
-                                            <th scope="col"
-                                                class="px-3 py-3.5 text-left text-sm font-bold text-slate-900 uppercase tracking-wider">
-                                                Status</th>
-                                            <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6">
-                                                <span class="sr-only">Aksi</span>
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody class="divide-y divide-slate-200 bg-white">
-                                        @foreach($scheduledMessages as $msg)
-                                            <tr class="hover:bg-slate-50 transition-colors">
-                                                <td
-                                                    class="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-slate-900 sm:pl-6 font-medium">
-                                                    @if($msg->status === 'pending' && $msg->scheduled_at)
-                                                        <div x-data="{ 
-                                                                                                                                                                                                                target: new Date('{{ $msg->scheduled_at->toIso8601String() }}').getTime(),
-                                                                                                                                                                                                                now: new Date().getTime(),
-                                                                                                                                                                                                                countdown: '',
-                                                                                                                                                                                                                update() {
-                                                                                                                                                                                                                    let diff = this.target - this.now;
-                                                                                                                                                                                                                    if (diff <= 0) {
-                                                                                                                                                                                                                        this.countdown = 'Sesaat lagi...';
-                                                                                                                                                                                                                        return;
-                                                                                                                                                                                                                    }
-                                                                                                                                                                                                                    let d = Math.floor(diff / (1000 * 60 * 60 * 24));
-                                                                                                                                                                                                                    let h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                                                                                                                                                                                                                    let m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-                                                                                                                                                                                                                    let s = Math.floor((diff % (1000 * 60)) / 1000);
-                                                                                                                                                                                                                    this.countdown = (d > 0 ? d + 'h ' : '') + h + 'j ' + m + 'm ' + s + 's';
-                                                                                                                                                                                                                }
-                                                                                                                                                                                                            }"
-                                                            x-init="update(); setInterval(() => { now = new Date().getTime(); update() }, 1000)">
-                                                            <div class="font-bold text-slate-900">
-                                                                {{ $msg->scheduled_at->format('d M Y H:i') }}
-                                                            </div>
-                                                            <div class="text-[10px] text-indigo-600 font-mono" x-text="countdown"></div>
-                                                        </div>
-                                                    @else
-                                                        <div class="font-bold text-slate-900">
-                                                            {{ $msg->scheduled_at ? $msg->scheduled_at->format('d M Y H:i') : 'Sekarang' }}
-                                                        </div>
-                                                        <div class="text-[10px] text-slate-400 capitalize">
-                                                            {{ $msg->created_at->diffForHumans() }}
-                                                        </div>
-                                                    @endif
-                                                </td>
-                                                <td class="whitespace-nowrap px-3 py-4 text-sm text-slate-500">
-                                                    <div class="flex gap-1.5 mb-1">
-                                                        <span
-                                                            class="inline-flex items-center rounded-md bg-indigo-50 px-2 py-1 text-xs font-bold text-indigo-700 ring-1 ring-inset ring-indigo-700/10">
-                                                            <i class="fas fa-users mr-1"></i> {{ $msg->total_count }}
-                                                        </span>
-                                                        @if($msg->broadcast_type === 'unpaid')
-                                                            <span
-                                                                class="inline-flex items-center rounded-md bg-amber-50 px-2 py-1 text-xs font-bold text-amber-700 ring-1 ring-inset ring-amber-700/10">
-                                                                <i class="fas fa-file-invoice mr-1"></i> Tagihan
-                                                            </span>
-                                                        @else
-                                                            <span
-                                                                class="inline-flex items-center rounded-md bg-slate-50 px-2 py-1 text-xs font-bold text-slate-700 ring-1 ring-inset ring-slate-700/10">
-                                                                <i class="fas fa-bullhorn mr-1"></i> All
-                                                            </span>
-                                                        @endif
-                                                    </div>
-                                                    <span class="text-[10px] text-slate-400 font-medium">Age:
-                                                        <span class="text-indigo-600">{{ $msg->whatsapp_age }}</span></span>
-                                                </td>
-                                                <td class="px-3 py-4 text-sm text-slate-500">
-                                                    <div class="max-w-xs break-words line-clamp-2" title="{{ $msg->message }}">
-                                                        {{ $msg->message }}
-                                                    </div>
-                                                </td>
-                                                <td class="whitespace-nowrap px-3 py-4 text-sm">
-                                                    @if($msg->status === 'pending')
-                                                        <span
-                                                            class="inline-flex items-center rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-bold text-amber-700 ring-1 ring-inset ring-amber-600/20">
-                                                            <span class="mr-1.5 flex h-2 w-2 items-center justify-center">
-                                                                <span
-                                                                    class="absolute inline-flex h-2 w-2 animate-ping rounded-full bg-amber-400 opacity-75"></span>
-                                                                <span
-                                                                    class="relative inline-flex h-1.5 w-1.5 rounded-full bg-amber-500"></span>
-                                                            </span>
-                                                            Menunggu
-                                                        </span>
-                                                    @elseif($msg->status === 'processing')
-                                                        <span
-                                                            class="inline-flex items-center rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-bold text-indigo-700 ring-1 ring-inset ring-indigo-700/10">
-                                                            <i class="fas fa-spinner fa-spin mr-1.5"></i>
-                                                            Diproses
-                                                        </span>
-                                                    @elseif($msg->status === 'completed')
-                                                        <div class="flex flex-col gap-1">
-                                                            <span
-                                                                class="inline-flex items-center rounded-full bg-green-50 px-2.5 py-0.5 text-xs font-bold text-green-700 ring-1 ring-inset ring-green-600/20">
-                                                                <i class="fas fa-check-circle mr-1.5"></i> Selesai
-                                                            </span>
-                                                            <div class="flex gap-2 text-[10px]">
-                                                                <span class="text-green-600 font-bold"><i class="fas fa-check"></i>
-                                                                    {{ $msg->success_count }}</span>
-                                                                <span class="text-red-500 font-bold"><i class="fas fa-times"></i>
-                                                                    {{ $msg->failed_count }}</span>
-                                                            </div>
-                                                        </div>
-                                                    @elseif($msg->status === 'failed')
-                                                        <div class="flex flex-col gap-1">
-                                                            <span
-                                                                class="inline-flex items-center rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-bold text-red-700 ring-1 ring-inset ring-red-600/20">
-                                                                <i class="fas fa-exclamation-circle mr-1.5"></i> Gagal
-                                                            </span>
-                                                            <span class="text-[10px] text-red-500 font-bold"><i
-                                                                    class="fas fa-times"></i>
-                                                                {{ $msg->failed_count }} Gagal</span>
-                                                        </div>
-                                                    @endif
-                                                </td>
-                                                <td
-                                                    class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                                                    <button onclick="deleteScheduled({{ $msg->id }})"
-                                                        class="inline-flex items-center rounded-lg bg-red-50 p-2 text-red-600 hover:bg-red-100 hover:text-red-700 transition-all border border-red-100">
-                                                        <i class="fas fa-trash-alt"></i>
-                                                    </button>
-                                                </td>
-                                            </tr>
+                                    <label class="block text-sm font-bold text-slate-900 mb-1">Pilih Penerima</label>
+                                    <select name="customer_ids[]" id="multiUserSelect"
+                                        class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 select2-tailwind"
+                                        multiple="multiple" required>
+                                        @foreach($customers as $c)
+                                            <option value="{{ $c->id }}">{{ $c->name }} ({{ $c->phone }})</option>
                                         @endforeach
-                                    </tbody>
-                                </table>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-bold text-slate-900 mb-1">Pesan</label>
+                                    <div class="relative">
+                                        <textarea name="message" rows="5"
+                                            class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                                            required placeholder="Halo {name}, ..."></textarea>
+                                        <div
+                                            class="absolute bottom-2 right-2 text-xs text-slate-400 bg-white px-2 rounded border border-slate-100 shadow-sm">
+                                            Gunakan {name} untuk nama pelanggan</div>
+                                    </div>
+                                </div>
+                                <div class="flex justify-end pt-2">
+                                    <button type="submit"
+                                        class="inline-flex items-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-indigo-500">
+                                        <i class="fas fa-paper-plane mr-2"></i> Kirim Pesan
+                                    </button>
+                                </div>
                             </div>
-                        </div>
+                        </form>
+                    </div>
 
-                        <!-- Tab: Quick Test -->
-                        <div x-show="activeTab === 'test'" style="display: none;">
-                            <div class="max-w-md mx-auto mt-6">
-                                <div class="bg-slate-50 p-6 rounded-xl border border-slate-200">
-                                    <h4 class="text-sm font-bold text-slate-700 mb-4 uppercase tracking-wider">
-                                        Test Koneksi API
-                                    </h4>
-                                    <form action="{{ route('whatsapp.test') }}" method="POST">
-                                        @csrf
-                                        <div class="space-y-4">
-                                            <div>
-                                                <label class="block text-xs font-bold text-slate-500 mb-1">Nomor Tujuan</label>
-                                                <input type="text" name="target"
-                                                    class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                                                    placeholder="081234xxx" required>
-                                            </div>
-                                            <div>
-                                                <label class="block text-xs font-bold text-slate-500 mb-1">Pesan Test</label>
-                                                <textarea name="message" rows="3"
-                                                    class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                                                    required>Ini adalah pesan test dari MikBill.</textarea>
-                                            </div>
-                                            <button type="submit"
-                                                class="w-full inline-flex justify-center items-center rounded-lg bg-slate-800 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-slate-700 transition-all">
-                                                <i class="fas fa-rocket mr-2"></i> Kirim Test
-                                            </button>
-                                        </div>
-                                    </form>
+                    <!-- Tab: Unpaid Reminder (Enhanced with Scheduling) -->
+                    <div id="unpaidTab" x-show="activeTab === 'unpaid'" style="display: none;" x-data="{
+                                                                            selectedTemplateId: '',
+                                                                            previewContent: '',
+                                                                            showSaveForm: false,
+                                                                            templateName: '',
+                                                                            whatsappAge: '12+',
+                                                                            scheduleMode: 'now',
+                                                                            scheduledAt: '',
+                                                                            maxRecipients: 9999,
+                                                                            getMaxRecipients() {
+                                                                                if (this.whatsappAge === '1-6') return 15;
+                                                                                if (this.whatsappAge === '6-12') return 50;
+                                                                                return 9999;
+                                                                            },
+                                                                            updateLimit() {
+                                                                                this.maxRecipients = this.getMaxRecipients();
+                                                                            },
+                                                                            selectTemplate(id) {
+                                                                                this.selectedTemplateId = id;
+                                                                                if (id) {
+                                                                                    const option = document.querySelector('#billTemplateSelect option[value=\'' + id + '\']');
+                                                                                    if (option) {
+                                                                                        this.previewContent = option.dataset.content;
+                                                                                        document.getElementById('msgUnpaid').value = option.dataset.content;
+                                                                                    }
+                                                                                } else {
+                                                                                    this.previewContent = '';
+                                                                                    document.getElementById('msgUnpaid').value = '';
+                                                                                }
+                                                                            }
+                                                                        }" x-init="updateLimit()">
+                        <div class="bg-amber-50 border-l-4 border-amber-400 p-4 mb-6 rounded-r-lg">
+                            <div class="flex">
+                                <div class="flex-shrink-0"><i class="fas fa-exclamation-triangle text-amber-400"></i></div>
+                                <div class="ml-3">
+                                    <p class="text-sm text-amber-700">Kirim pengingat otomatis ke semua pelanggan yang
+                                        status tagihannya <b>BELUM LUNAS</b> (Unpaid). Anda dapat mengirim langsung atau
+                                        menjadwalkan pengiriman.</p>
                                 </div>
                             </div>
                         </div>
+                        <div class="space-y-5">
+                            @if(auth()->user()->role == 'superadmin')
+                                <div>
+                                    <label class="block text-sm font-bold text-slate-900 mb-1">Filter Berdasarkan Admin</label>
+                                    <select id="unpaidAdminFilter"
+                                        class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                                        <option value="">Semua Admin</option>
+                                        @foreach($admins as $admin)
+                                            <option value="{{ $admin->id }}" {{ $selectedAdminId == $admin->id ? 'selected' : '' }}>
+                                                {{ $admin->name }}{{ $admin->id == auth()->id() ? ' (Self)' : '' }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            @endif
 
+                            {{-- Template Select with Search --}}
+                            <div>
+                                <label class="block text-sm font-bold text-slate-900 mb-1">
+                                    <i class="fas fa-file-alt mr-1 text-indigo-500"></i>Pilih Template Tagihan
+                                </label>
+                                <div class="flex gap-2">
+                                    <div class="flex-1">
+                                        <select id="billTemplateSelect"
+                                            class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                                            x-on:change="selectTemplate($event.target.value)">
+                                            <option value="">-- Pilih Template --</option>
+                                            @if(auth()->user()->role == 'superadmin')
+                                                @php
+                                                    $groupedTemplates = $billTemplates->groupBy(function ($t) {
+                                                        return $t->admin ? $t->admin->name : 'Unknown';
+                                                    });
+                                                @endphp
+                                                @foreach($groupedTemplates as $adminName => $templates)
+                                                    <optgroup label="{{ $adminName }}">
+                                                        @foreach($templates as $tpl)
+                                                            <option value="{{ $tpl->id }}" data-content="{{ e($tpl->content) }}">
+                                                                {{ $tpl->name }}
+                                                            </option>
+                                                        @endforeach
+                                                    </optgroup>
+                                                @endforeach
+                                            @else
+                                                @foreach($billTemplates as $tpl)
+                                                    <option value="{{ $tpl->id }}" data-content="{{ e($tpl->content) }}">
+                                                        {{ $tpl->name }}
+                                                    </option>
+                                                @endforeach
+                                            @endif
+                                        </select>
+                                    </div>
+                                    <button type="button" x-show="selectedTemplateId" @click="deleteTemplate()"
+                                        class="inline-flex items-center rounded-lg bg-red-50 px-3 py-1.5 text-red-600 hover:bg-red-100 border border-red-200 transition-all"
+                                        title="Hapus Template">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            {{-- Preview Box --}}
+                            <div x-show="previewContent" x-transition>
+                                <label class="block text-xs font-bold text-indigo-600 mb-1 uppercase tracking-wider">
+                                    <i class="fas fa-eye mr-1"></i>Preview Template
+                                </label>
+                                <div class="bg-gradient-to-br from-indigo-50 to-blue-50 border border-indigo-200 rounded-xl p-4 text-sm text-slate-700 whitespace-pre-wrap leading-relaxed shadow-inner"
+                                    x-text="previewContent">
+                                </div>
+                            </div>
+
+                            {{-- Message Textarea --}}
+                            <div>
+                                <label class="block text-sm font-bold text-slate-900 mb-1">Isi Pesan Template</label>
+                                <div class="relative">
+                                    <textarea id="msgUnpaid" rows="5"
+                                        class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                                        x-on:input="previewContent = $event.target.value"
+                                        placeholder="Halo {name}, tagihan internet Anda sebesar Rp {tagihan} belum terbayar...">Halo {name}, tagihan internet Anda sebesar Rp {tagihan} belum terbayar. Mohon segera lunasi.</textarea>
+                                    <div
+                                        class="absolute bottom-2 right-2 text-xs text-slate-400 bg-white px-2 rounded border border-slate-100 shadow-sm">
+                                        Gunakan {name} untuk nama, {tagihan} untuk tagihan
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{-- Save as Template Toggle --}}
+                            <div class="bg-slate-50 rounded-xl border border-slate-200 overflow-hidden">
+                                <button type="button" @click="showSaveForm = !showSaveForm"
+                                    class="w-full flex items-center justify-between px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-100 transition-colors">
+                                    <span><i class="fas fa-save mr-2 text-emerald-500"></i>Simpan sebagai Template</span>
+                                    <i class="fas fa-chevron-down transition-transform"
+                                        :class="showSaveForm ? 'rotate-180' : ''"></i>
+                                </button>
+                                <div x-show="showSaveForm" x-transition class="px-4 pb-4 space-y-3">
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-500 mb-1">Nama Template</label>
+                                        <input type="text" x-model="templateName"
+                                            class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                                            placeholder="Contoh: Reminder Tagihan Bulanan">
+                                    </div>
+                                    <button type="button" @click="saveTemplate()"
+                                        class="w-full inline-flex justify-center items-center rounded-lg bg-emerald-600 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-emerald-500 transition-all">
+                                        <i class="fas fa-check mr-2"></i> Simpan Template
+                                    </button>
+                                </div>
+                            </div>
+
+                            {{-- WhatsApp Age Selection --}}
+                            <div
+                                class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-4 border border-green-200">
+                                <label class="block text-sm font-bold text-slate-900 mb-3">
+                                    <i class="fab fa-whatsapp mr-2 text-green-500"></i>Usia Nomor WhatsApp
+                                </label>
+                                <select x-model="whatsappAge" @change="updateLimit()"
+                                    class="block w-full rounded-lg border-0 py-2.5 px-3 text-slate-900 shadow-sm ring-1 ring-inset ring-green-300 focus:ring-2 focus:ring-inset focus:ring-green-500 sm:text-sm font-medium bg-white">
+                                    <option value="1-6">🆕 1-6 Bulan (Max 15 penerima)</option>
+                                    <option value="6-12">📅 6-12 Bulan (Max 50 penerima)</option>
+                                    <option value="12+">✅ 12+ Bulan (Unlimited)</option>
+                                </select>
+                                <p class="mt-2 text-xs text-green-700">
+                                    <i class="fas fa-shield-alt mr-1"></i>
+                                    Batasan untuk mencegah blokir WhatsApp pada nomor baru.
+                                </p>
+                            </div>
+
+                            {{-- Schedule Options --}}
+                            <div
+                                class="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl p-4 border border-purple-200">
+                                <label class="block text-sm font-bold text-slate-900 mb-3">
+                                    <i class="fas fa-clock mr-2 text-purple-500"></i>Waktu Pengiriman
+                                </label>
+                                <div class="flex gap-4 mb-4">
+                                    <label class="flex items-center cursor-pointer group">
+                                        <input type="radio" x-model="scheduleMode" value="now"
+                                            class="w-4 h-4 text-purple-600 border-slate-300 focus:ring-purple-500">
+                                        <span class="ml-2 text-sm font-medium text-slate-700 group-hover:text-purple-600">
+                                            <i class="fas fa-bolt text-yellow-500 mr-1"></i>Kirim Sekarang
+                                        </span>
+                                    </label>
+                                    <label class="flex items-center cursor-pointer group">
+                                        <input type="radio" x-model="scheduleMode" value="scheduled"
+                                            class="w-4 h-4 text-purple-600 border-slate-300 focus:ring-purple-500">
+                                        <span class="ml-2 text-sm font-medium text-slate-700 group-hover:text-purple-600">
+                                            <i class="fas fa-calendar-alt text-purple-500 mr-1"></i>Jadwalkan
+                                        </span>
+                                    </label>
+                                </div>
+
+                                {{-- DateTime Picker --}}
+                                <div x-show="scheduleMode === 'scheduled'" x-transition class="mt-3">
+                                    <input type="datetime-local" x-model="scheduledAt" id="unpaidScheduledAtInput"
+                                        class="block w-full rounded-lg border-0 py-2.5 px-3 text-slate-900 shadow-sm ring-1 ring-inset ring-purple-300 focus:ring-2 focus:ring-inset focus:ring-purple-500 sm:text-sm font-medium bg-white">
+                                    <p class="mt-2 text-xs text-purple-700">
+                                        <i class="fas fa-info-circle mr-1"></i>
+                                        Pesan akan dikirim otomatis pada waktu yang ditentukan ke pelanggan yang masih
+                                        belum membayar tagihan.
+                                    </p>
+                                </div>
+                            </div>
+
+                            {{-- Broadcast Button --}}
+                            <button type="button" onclick="startUnpaidBroadcast()"
+                                class="w-full inline-flex justify-center items-center rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 px-4 py-4 text-sm font-bold text-white shadow-lg hover:from-amber-600 hover:to-orange-600 hover:shadow-xl transition-all transform hover:scale-[1.02] active:scale-100">
+                                <i class="fab fa-whatsapp mr-2 text-lg"></i>
+                                <span
+                                    x-text="scheduleMode === 'now' ? 'Mulai Broadcast Reminder' : 'Jadwalkan Broadcast Reminder'"></span>
+                            </button>
+                        </div>
                     </div>
 
 
-                    <!-- Monitor Area (Broadcast Progress) -->
-                    <div id="monitorArea" class="mt-8 border-t border-slate-200 pt-6" style="display: none;">
-                        <div class="flex items-center justify-between mb-2">
-                            <h4 class="text-sm font-bold text-slate-700 uppercase tracking-wider">Proses Broadcast</h4>
-                            <div class="text-xs font-mono">
-                                <span class="text-green-600 font-bold px-2 py-1 bg-green-50 rounded">OK: <span
-                                        id="statSuccess">0</span></span>
-                                <span class="text-red-600 font-bold px-2 py-1 bg-red-50 rounded ml-2">Fail: <span
-                                        id="statFail">0</span></span>
+                    <!-- Tab: All Broadcast (Enhanced) -->
+                    <div id="broadcastTab" x-show="activeTab === 'broadcast'" style="display: none;" x-data="{
+                                                                                                                selectionMode: 'all',
+                                                                                                                whatsappAge: '12+',
+                                                                                                                scheduleMode: 'now',
+                                                                                                                selectedCustomers: [],
+                                                                                                                maxRecipients: 9999,
+                                                                                                                scheduledAt: '',
+                                                                                                                getMaxRecipients() {
+                                                                                                                    if (this.whatsappAge === '1-6') return 15;
+                                                                                                                    if (this.whatsappAge === '6-12') return 50;
+                                                                                                                    return 9999;
+                                                                                                                },
+                                                                                                                updateLimit() {
+                                                                                                                    this.maxRecipients = this.getMaxRecipients();
+                                                                                                                    // Truncate selection if exceeds limit
+                                                                                                                    if (this.selectedCustomers.length > this.maxRecipients) {
+                                                                                                                        this.selectedCustomers = this.selectedCustomers.slice(0, this.maxRecipients);
+                                                                                                                        $('#broadcastCustomerSelect').val(this.selectedCustomers).trigger('change');
+                                                                                                                    }
+                                                                                                                }
+                                                                                                            }"
+                        x-init="updateLimit()">
+
+                        <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6 rounded-r-lg">
+                            <div class="flex">
+                                <div class="flex-shrink-0"><i class="fas fa-info-circle text-blue-400"></i></div>
+                                <div class="ml-3">
+                                    <p class="text-sm text-blue-700">Kirim informasi / pengumuman ke pelanggan dengan opsi
+                                        pilihan pelanggan dan penjadwalan.</p>
+                                </div>
                             </div>
                         </div>
-                        <div class="w-full bg-slate-200 rounded-full h-2.5 mb-4 overflow-hidden">
-                            <div id="progressBar" class="bg-indigo-600 h-2.5 rounded-full transition-all duration-300"
-                                style="width: 0%"></div>
+
+                        <div class="space-y-5">
+                            <!-- Customer Selection Mode -->
+                            <div class="bg-slate-50 rounded-xl p-4 border border-slate-200">
+                                <label class="block text-sm font-bold text-slate-900 mb-3">
+                                    <i class="fas fa-users mr-2 text-indigo-500"></i>Pilih Penerima
+                                </label>
+                                <div class="flex gap-4 mb-4">
+                                    <label class="flex items-center cursor-pointer group">
+                                        <input type="radio" x-model="selectionMode" value="all"
+                                            class="w-4 h-4 text-indigo-600 border-slate-300 focus:ring-indigo-500">
+                                        <span class="ml-2 text-sm font-medium text-slate-700 group-hover:text-indigo-600">
+                                            Semua Pelanggan
+                                        </span>
+                                    </label>
+                                    <label class="flex items-center cursor-pointer group">
+                                        <input type="radio" x-model="selectionMode" value="custom"
+                                            class="w-4 h-4 text-indigo-600 border-slate-300 focus:ring-indigo-500">
+                                        <span class="ml-2 text-sm font-medium text-slate-700 group-hover:text-indigo-600">
+                                            Pilih Pelanggan
+                                        </span>
+                                    </label>
+                                </div>
+
+                                <!-- Custom Customer Selection -->
+                                <div x-show="selectionMode === 'custom'" x-transition class="mt-3">
+                                    <select id="broadcastCustomerSelect" multiple="multiple"
+                                        class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                                        @foreach($customers as $c)
+                                            <option value="{{ $c->id }}">{{ $c->name }} ({{ $c->phone }})</option>
+                                        @endforeach
+                                    </select>
+                                    <div class="mt-2 flex items-center justify-between">
+                                        <span class="text-xs text-slate-500">
+                                            Terpilih: <span class="font-bold text-indigo-600"
+                                                x-text="selectedCustomers.length"></span> /
+                                            <span x-text="maxRecipients === 9999 ? 'Unlimited' : maxRecipients"></span>
+                                        </span>
+                                        <button type="button"
+                                            @click="selectedCustomers = []; $('#broadcastCustomerSelect').val([]).trigger('change')"
+                                            class="text-xs text-red-500 hover:text-red-700 font-medium">
+                                            <i class="fas fa-times mr-1"></i>Reset
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- WhatsApp Age Selection -->
+                            <div
+                                class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-4 border border-green-200">
+                                <label class="block text-sm font-bold text-slate-900 mb-3">
+                                    <i class="fab fa-whatsapp mr-2 text-green-500"></i>Usia Nomor WhatsApp
+                                </label>
+                                <select x-model="whatsappAge" @change="updateLimit()"
+                                    class="block w-full rounded-lg border-0 py-2.5 px-3 text-slate-900 shadow-sm ring-1 ring-inset ring-green-300 focus:ring-2 focus:ring-inset focus:ring-green-500 sm:text-sm font-medium bg-white">
+                                    <option value="1-6">🆕 1-6 Bulan (Max 15 penerima)</option>
+                                    <option value="6-12">📅 6-12 Bulan (Max 50 penerima)</option>
+                                    <option value="12+">✅ 12+ Bulan (Unlimited)</option>
+                                </select>
+                                <p class="mt-2 text-xs text-green-700">
+                                    <i class="fas fa-shield-alt mr-1"></i>
+                                    Batasan untuk mencegah blokir WhatsApp pada nomor baru.
+                                </p>
+                            </div>
+
+                            <!-- Schedule Options -->
+                            <div
+                                class="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl p-4 border border-purple-200">
+                                <label class="block text-sm font-bold text-slate-900 mb-3">
+                                    <i class="fas fa-clock mr-2 text-purple-500"></i>Waktu Pengiriman
+                                </label>
+                                <div class="flex gap-4 mb-4">
+                                    <label class="flex items-center cursor-pointer group">
+                                        <input type="radio" x-model="scheduleMode" value="now"
+                                            class="w-4 h-4 text-purple-600 border-slate-300 focus:ring-purple-500">
+                                        <span class="ml-2 text-sm font-medium text-slate-700 group-hover:text-purple-600">
+                                            <i class="fas fa-bolt text-yellow-500 mr-1"></i>Kirim Sekarang
+                                        </span>
+                                    </label>
+                                    <label class="flex items-center cursor-pointer group">
+                                        <input type="radio" x-model="scheduleMode" value="scheduled"
+                                            class="w-4 h-4 text-purple-600 border-slate-300 focus:ring-purple-500">
+                                        <span class="ml-2 text-sm font-medium text-slate-700 group-hover:text-purple-600">
+                                            <i class="fas fa-calendar-alt text-purple-500 mr-1"></i>Jadwalkan
+                                        </span>
+                                    </label>
+                                </div>
+
+                                <!-- DateTime Picker -->
+                                <div x-show="scheduleMode === 'scheduled'" x-transition class="mt-3">
+                                    <input type="datetime-local" x-model="scheduledAt" id="scheduledAtInput"
+                                        class="block w-full rounded-lg border-0 py-2.5 px-3 text-slate-900 shadow-sm ring-1 ring-inset ring-purple-300 focus:ring-2 focus:ring-inset focus:ring-purple-500 sm:text-sm font-medium bg-white">
+                                    <p class="mt-2 text-xs text-purple-700">
+                                        <i class="fas fa-info-circle mr-1"></i>
+                                        Pesan akan dikirim otomatis pada waktu yang ditentukan.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- Message Content -->
+                            <div>
+                                <label class="block text-sm font-bold text-slate-900 mb-1">
+                                    <i class="fas fa-edit mr-2 text-slate-500"></i>Isi Pengumuman
+                                </label>
+                                <div class="relative">
+                                    <textarea id="msgAll" rows="5"
+                                        class="block w-full rounded-lg border-0 py-2 px-3 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                                        placeholder="Ketik pesan Anda disini...">Halo {name}, akan ada maintenance jaringan pada tanggal XX jam XX.</textarea>
+                                    <div
+                                        class="absolute bottom-2 right-2 text-xs text-slate-400 bg-white px-2 rounded border border-slate-100 shadow-sm">
+                                        Gunakan {name} untuk nama, {tagihan} untuk tagihan
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Submit Button -->
+                            <button type="button" onclick="startEnhancedBroadcast()"
+                                class="w-full inline-flex justify-center items-center rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-4 text-sm font-bold text-white shadow-lg hover:from-blue-700 hover:to-indigo-700 hover:shadow-xl transition-all transform hover:scale-[1.02] active:scale-100">
+                                <i class="fas fa-bullhorn mr-2 text-lg"></i>
+                                <span
+                                    x-text="scheduleMode === 'now' ? 'Mulai Broadcast Sekarang' : 'Jadwalkan Broadcast'"></span>
+                            </button>
                         </div>
-                        <div id="logList"
-                            class="bg-slate-900 rounded-lg p-4 h-48 overflow-y-auto font-mono text-xs text-slate-300 space-y-1">
-                            <!-- Logs here -->
+                    </div>
+
+
+                    <!-- Tab: Queue -->
+                    <div x-show="activeTab === 'queue'" style="display: none;">
+                        <div class="overflow-hidden bg-white shadow sm:rounded-lg border border-slate-200 mt-4">
+                            <table id="queueTable" class="min-w-full divide-y border-collapse divide-slate-300">
+                                <thead class="bg-slate-50">
+                                    <tr>
+                                        <th scope="col"
+                                            class="py-3.5 pl-4 pr-3 text-left text-sm font-bold text-slate-900 sm:pl-6 uppercase tracking-wider">
+                                            Jadwal Kirim</th>
+                                        <th scope="col"
+                                            class="px-3 py-3.5 text-left text-sm font-bold text-slate-900 uppercase tracking-wider">
+                                            Penerima</th>
+                                        <th scope="col"
+                                            class="px-3 py-3.5 text-left text-sm font-bold text-slate-900 uppercase tracking-wider">
+                                            Isi Pesan</th>
+                                        <th scope="col"
+                                            class="px-3 py-3.5 text-left text-sm font-bold text-slate-900 uppercase tracking-wider">
+                                            Status</th>
+                                        <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6">
+                                            <span class="sr-only">Aksi</span>
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-200 bg-white">
+                                    @foreach($scheduledMessages as $msg)
+                                        <tr class="hover:bg-slate-50 transition-colors">
+                                            <td
+                                                class="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-slate-900 sm:pl-6 font-medium">
+                                                @if($msg->status === 'pending' && $msg->scheduled_at)
+                                                    <div x-data="{ 
+                                                                                                                                                                                                                            target: new Date('{{ $msg->scheduled_at->toIso8601String() }}').getTime(),
+                                                                                                                                                                                                                            now: new Date().getTime(),
+                                                                                                                                                                                                                            countdown: '',
+                                                                                                                                                                                                                            update() {
+                                                                                                                                                                                                                                let diff = this.target - this.now;
+                                                                                                                                                                                                                                if (diff <= 0) {
+                                                                                                                                                                                                                                    this.countdown = 'Sesaat lagi...';
+                                                                                                                                                                                                                                    return;
+                                                                                                                                                                                                                                }
+                                                                                                                                                                                                                                let d = Math.floor(diff / (1000 * 60 * 60 * 24));
+                                                                                                                                                                                                                                let h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                                                                                                                                                                                                                                let m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                                                                                                                                                                                                                                let s = Math.floor((diff % (1000 * 60)) / 1000);
+                                                                                                                                                                                                                                this.countdown = (d > 0 ? d + 'h ' : '') + h + 'j ' + m + 'm ' + s + 's';
+                                                                                                                                                                                                                            }
+                                                                                                                                                                                                                        }"
+                                                        x-init="update(); setInterval(() => { now = new Date().getTime(); update() }, 1000)">
+                                                        <div class="font-bold text-slate-900">
+                                                            {{ $msg->scheduled_at->format('d M Y H:i') }}
+                                                        </div>
+                                                        <div class="text-[10px] text-indigo-600 font-mono" x-text="countdown"></div>
+                                                    </div>
+                                                @else
+                                                    <div class="font-bold text-slate-900">
+                                                        {{ $msg->scheduled_at ? $msg->scheduled_at->format('d M Y H:i') : 'Sekarang' }}
+                                                    </div>
+                                                    <div class="text-[10px] text-slate-400 capitalize">
+                                                        {{ $msg->created_at->diffForHumans() }}
+                                                    </div>
+                                                @endif
+                                            </td>
+                                            <td class="whitespace-nowrap px-3 py-4 text-sm text-slate-500">
+                                                <div class="flex gap-1.5 mb-1">
+                                                    <span
+                                                        class="inline-flex items-center rounded-md bg-indigo-50 px-2 py-1 text-xs font-bold text-indigo-700 ring-1 ring-inset ring-indigo-700/10">
+                                                        <i class="fas fa-users mr-1"></i> {{ $msg->total_count }}
+                                                    </span>
+                                                    @if($msg->broadcast_type === 'unpaid')
+                                                        <span
+                                                            class="inline-flex items-center rounded-md bg-amber-50 px-2 py-1 text-xs font-bold text-amber-700 ring-1 ring-inset ring-amber-700/10">
+                                                            <i class="fas fa-file-invoice mr-1"></i> Tagihan
+                                                        </span>
+                                                    @else
+                                                        <span
+                                                            class="inline-flex items-center rounded-md bg-slate-50 px-2 py-1 text-xs font-bold text-slate-700 ring-1 ring-inset ring-slate-700/10">
+                                                            <i class="fas fa-bullhorn mr-1"></i> All
+                                                        </span>
+                                                    @endif
+                                                </div>
+                                                <span class="text-[10px] text-slate-400 font-medium">Age:
+                                                    <span class="text-indigo-600">{{ $msg->whatsapp_age }}</span></span>
+                                            </td>
+                                            <td class="px-3 py-4 text-sm text-slate-500">
+                                                <div class="max-w-xs break-words line-clamp-2" title="{{ $msg->message }}">
+                                                    {{ $msg->message }}
+                                                </div>
+                                            </td>
+                                            <td class="whitespace-nowrap px-3 py-4 text-sm">
+                                                @if($msg->status === 'pending')
+                                                    <span
+                                                        class="inline-flex items-center rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-bold text-amber-700 ring-1 ring-inset ring-amber-600/20">
+                                                        <span class="mr-1.5 flex h-2 w-2 items-center justify-center">
+                                                            <span
+                                                                class="absolute inline-flex h-2 w-2 animate-ping rounded-full bg-amber-400 opacity-75"></span>
+                                                            <span
+                                                                class="relative inline-flex h-1.5 w-1.5 rounded-full bg-amber-500"></span>
+                                                        </span>
+                                                        Menunggu
+                                                    </span>
+                                                @elseif($msg->status === 'processing')
+                                                    <span
+                                                        class="inline-flex items-center rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-bold text-indigo-700 ring-1 ring-inset ring-indigo-700/10">
+                                                        <i class="fas fa-spinner fa-spin mr-1.5"></i>
+                                                        Diproses
+                                                    </span>
+                                                @elseif($msg->status === 'completed')
+                                                    <div class="flex flex-col gap-1">
+                                                        <span
+                                                            class="inline-flex items-center rounded-full bg-green-50 px-2.5 py-0.5 text-xs font-bold text-green-700 ring-1 ring-inset ring-green-600/20">
+                                                            <i class="fas fa-check-circle mr-1.5"></i> Selesai
+                                                        </span>
+                                                        <div class="flex gap-2 text-[10px]">
+                                                            <span class="text-green-600 font-bold"><i class="fas fa-check"></i>
+                                                                {{ $msg->success_count }}</span>
+                                                            <span class="text-red-500 font-bold"><i class="fas fa-times"></i>
+                                                                {{ $msg->failed_count }}</span>
+                                                        </div>
+                                                    </div>
+                                                @elseif($msg->status === 'failed')
+                                                    <div class="flex flex-col gap-1">
+                                                        <span
+                                                            class="inline-flex items-center rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-bold text-red-700 ring-1 ring-inset ring-red-600/20">
+                                                            <i class="fas fa-exclamation-circle mr-1.5"></i> Gagal
+                                                        </span>
+                                                        <span class="text-[10px] text-red-500 font-bold"><i
+                                                                class="fas fa-times"></i>
+                                                            {{ $msg->failed_count }} Gagal</span>
+                                                    </div>
+                                                @endif
+                                            </td>
+                                            <td
+                                                class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+                                                <button onclick="deleteScheduled({{ $msg->id }})"
+                                                    class="inline-flex items-center rounded-lg bg-red-50 p-2 text-red-600 hover:bg-red-100 hover:text-red-700 transition-all border border-red-100">
+                                                    <i class="fas fa-trash-alt"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Tab: Quick Test -->
+                    <div x-show="activeTab === 'test'" style="display: none;">
+                        <div class="max-w-md mx-auto mt-6">
+                            <div class="bg-slate-50 p-6 rounded-xl border border-slate-200">
+                                <h4 class="text-sm font-bold text-slate-700 mb-4 uppercase tracking-wider">
+                                    Test Koneksi API
+                                </h4>
+                                <form action="{{ route('whatsapp.test') }}" method="POST">
+                                    @csrf
+                                    <div class="space-y-4">
+                                        <div>
+                                            <label class="block text-xs font-bold text-slate-500 mb-1">Nomor Tujuan</label>
+                                            <input type="text" name="target"
+                                                class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                                                placeholder="081234xxx" required>
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-bold text-slate-500 mb-1">Pesan Test</label>
+                                            <textarea name="message" rows="3"
+                                                class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                                                required>Ini adalah pesan test dari MikBill.</textarea>
+                                        </div>
+                                        <button type="submit"
+                                            class="w-full inline-flex justify-center items-center rounded-lg bg-slate-800 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-slate-700 transition-all">
+                                            <i class="fas fa-rocket mr-2"></i> Kirim Test
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
                         </div>
                     </div>
 
                 </div>
+
+
+                <!-- Monitor Area (Broadcast Progress) -->
+                <div id="monitorArea" class="mt-8 border-t border-slate-200 pt-6" style="display: none;">
+                    <div class="flex items-center justify-between mb-2">
+                        <h4 class="text-sm font-bold text-slate-700 uppercase tracking-wider">Proses Broadcast</h4>
+                        <div class="text-xs font-mono">
+                            <span class="text-green-600 font-bold px-2 py-1 bg-green-50 rounded">OK: <span
+                                    id="statSuccess">0</span></span>
+                            <span class="text-red-600 font-bold px-2 py-1 bg-red-50 rounded ml-2">Fail: <span
+                                    id="statFail">0</span></span>
+                        </div>
+                    </div>
+                    <div class="w-full bg-slate-200 rounded-full h-2.5 mb-4 overflow-hidden">
+                        <div id="progressBar" class="bg-indigo-600 h-2.5 rounded-full transition-all duration-300"
+                            style="width: 0%"></div>
+                    </div>
+                    <div id="logList"
+                        class="bg-slate-900 rounded-lg p-4 h-48 overflow-y-auto font-mono text-xs text-slate-300 space-y-1">
+                        <!-- Logs here -->
+                    </div>
+                </div>
+
             </div>
         </div>
-        </div>
+    </div>
+    </div>
 
 
 @endsection
@@ -971,75 +977,75 @@
         }
     </style>
     <script>
-        function whatsappGateway() {
-            return {
-                status: 'disconnected',
-                number: null,
-                qr: null,
-                polling: null,
+            function whatsappGateway             () {
+                return {
+                    status: 'disconnected',
+                    number: null,
+                    qr: null,
+                    polling: null,
 
-                init() {
-                    this.fetchStatus();
-                    this.polling = setInterval(() => this.fetchStatus(), 5000);
-                },
+                    init() {
+                        this.fetchStatus();
+                        this.polling = setInterval(() => this.fetchStatus(), 5000);
+                    },
 
-                fetchStatus() {
-                    fetch('{{ route('whatsapp.gateway.status') }}')
-                        .then(res => res.json())
-                        .then(data => {
-                            this.status = data.status;
-                            this.qr = data.qr;
-                            this.number = data.number;
-                        })
-                        .catch(err => {
-                            this.status = 'disconnected';
-                            this.qr = null;
-                            this.number = null;
-                        });
-                },
+                    fetchStatus() {
+                        fetch('{{ route('whatsapp.gateway.status') }}')
+                            .then(res => res.json())
+                            .then(data => {
+                                this.status = data.status;
+                                this.qr = data.qr;
+                                this.number = data.number;
+                            })
+                            .catch(err => {
+                                this.status = 'disconnected';
+                                this.qr = null;
+                                this.number = null;
+                            });
+                    },
 
-                logout() {
-                    if (!confirm('Apakah Anda yakin ingin memutuskan koneksi WhatsApp?')) return;
+                    logout() {
+                        if (!confirm('Apakah Anda yakin ingin memutuskan koneksi WhatsApp?')) return;
 
-                    fetch('{{ route('whatsapp.gateway.logout') }}', {
-                        method: 'POST',
-                        headers: {
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                            'Content-Type': 'application/json'
-                        }
-                    })
-                        .then(res => res.json())
-                        .then(data => {
-                            if (data.status) {
-                                this.fetchStatus();
-                                Swal.fire('Berhasil', 'WhatsApp telah diputus.', 'success');
+                        fetch('{{ route('whatsapp.gateway.logout') }}', {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                'Content-Type': 'application/json'
                             }
-                        });
-                },
+                        })
+                            .then(res => res.json())
+                            .then(data => {
+                                if (data.status) {
+                                    this.fetchStatus();
+                                    Swal.fire('Berhasil', 'WhatsApp telah diputus.', 'success');
+                                }
+                            });
+                    },
 
-                destroy() {
-                    if (this.polling) clearInterval(this.polling);
+                    destroy() {
+                        if (this.polling) clearInterval(this.polling);
+                    }
                 }
             }
-        }
-    </script>
-    <style>
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
+        </script>
+        <style>
+            @keyframes fadeIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(10px);
+                }
+
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
             }
 
-            to {
-                opacity: 1;
-                transform: translateY(0);
+            .animate-fade-in {
+                animation: fadeIn 0.5s ease-out forwards;
             }
-        }
-
-        .animate-fade-in {
-            animation: fadeIn 0.5s ease-out forwards;
-        }
-    </style>
+        </style>
 @endpush
 
 @push('scripts')
