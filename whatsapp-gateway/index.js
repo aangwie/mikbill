@@ -114,10 +114,23 @@ async function connectToWhatsApp() {
                 connectionStatus = "disconnected";
                 connectedNumber = null;
 
-                // Only auto-reconnect if:
-                // - Not manually logging out (logout handler manages its own reconnect)
-                // - Should reconnect (not a loggedOut event)
-                // - This is still the active connection
+                // Handle stale auth: if loggedOut (401) but NOT user-initiated,
+                // clear auth data and reconnect to get a fresh QR code
+                if (!isLoggingOut && !shouldReconnect && myConnectionId === connectionId) {
+                    qrCode = null;
+                    const authPath = path.join(__dirname, "auth_info_baileys");
+                    if (fs.existsSync(authPath)) {
+                        fs.rmSync(authPath, { recursive: true, force: true });
+                        logToFile("Stale auth detected (401). Auth data cleared, reconnecting for fresh QR...");
+                    }
+                    setTimeout(() => {
+                        if (myConnectionId === connectionId) {
+                            connectToWhatsApp();
+                        }
+                    }, 3000);
+                }
+
+                // Auto-reconnect on other disconnect reasons (network errors, etc.)
                 if (!isLoggingOut && shouldReconnect && myConnectionId === connectionId) {
                     qrCode = null;
                     logToFile("Auto-reconnecting...");
