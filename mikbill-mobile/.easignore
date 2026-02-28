@@ -1,0 +1,19 @@
+# Exclude node_modules by default
+node_modules/
+
+# Files created by Expo
+.expo/
+*.jks
+*.p12
+*.key
+*.mobileprovision
+
+# Distribution / Build folders
+dist/
+web-build/
+
+# PHP project files (since this is inside the mikbill root)
+../vendor/
+../storage/
+../node_modules/
+../.git/
