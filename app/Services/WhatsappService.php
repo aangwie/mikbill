@@ -35,7 +35,17 @@ class WhatsappService
         // 3. Cek Provider: API atau Gateway
         if ($setting->wa_provider === 'gateway') {
             // KIRIM VIA SELF-HOSTED GATEWAY (BAILEYS)
-            $url = ($setting->wa_gateway_url ?? 'http://localhost:3000') . '/send';
+            $gatewayUrl = $setting->wa_gateway_url;
+            if (empty($gatewayUrl)) {
+                $saSetting = WhatsappSetting::withoutGlobalScopes()
+                    ->whereHas('admin', function ($q) {
+                        $q->where('role', 'superadmin'); })
+                    ->first();
+                $gatewayUrl = $saSetting->wa_gateway_url ?? 'http://localhost:3000';
+            }
+            $gatewayUrl = $gatewayUrl ?? 'http://localhost:3000';
+
+            $url = rtrim($gatewayUrl, '/') . '/send';
             $data = [
                 'number' => $targetNumber,
                 'message' => $message,
@@ -50,6 +60,7 @@ class WhatsappService
                         'x-api-key' => $setting->api_key_gateway,
                     ],
                     'timeout' => 15,
+                    'verify' => false,
                     'http_errors' => false
                 ]);
 

@@ -609,7 +609,17 @@ class WhatsappController extends Controller
             $setting = WhatsappSetting::first();
         }
 
-        $gatewayUrl = $setting->wa_gateway_url ?? 'http://localhost:3000';
+        if (!$setting) {
+            return response()->json(['status' => 'disconnected', 'message' => 'Settings not found']);
+        }
+
+        $gatewayUrl = $setting->wa_gateway_url;
+        if (empty($gatewayUrl) && $user->role != 'superadmin') {
+            $saSetting = WhatsappSetting::withoutGlobalScopes()->whereHas('admin', function ($q) {
+                $q->where('role', 'superadmin'); })->first();
+            $gatewayUrl = $saSetting->wa_gateway_url ?? 'http://localhost:3000';
+        }
+        $gatewayUrl = $gatewayUrl ?? 'http://localhost:3000';
         $sessionId = $setting->gateway_session;
 
         if (!$sessionId) {
@@ -620,7 +630,8 @@ class WhatsappController extends Controller
             $client = new \GuzzleHttp\Client();
             $response = $client->get($gatewayUrl . '/status', [
                 'query' => ['session' => $sessionId],
-                'timeout' => 5
+                'timeout' => 5,
+                'verify' => false
             ]);
             return response()->json(json_decode($response->getBody()->getContents(), true));
         } catch (\Exception $e) {
@@ -637,7 +648,17 @@ class WhatsappController extends Controller
             $setting = WhatsappSetting::first();
         }
 
-        $gatewayUrl = $setting->wa_gateway_url ?? 'http://localhost:3000';
+        if (!$setting) {
+            return response()->json(['status' => false, 'message' => 'Settings not found']);
+        }
+
+        $gatewayUrl = $setting->wa_gateway_url;
+        if (empty($gatewayUrl) && $user->role != 'superadmin') {
+            $saSetting = WhatsappSetting::withoutGlobalScopes()->whereHas('admin', function ($q) {
+                $q->where('role', 'superadmin'); })->first();
+            $gatewayUrl = $saSetting->wa_gateway_url ?? 'http://localhost:3000';
+        }
+        $gatewayUrl = $gatewayUrl ?? 'http://localhost:3000';
         $sessionId = $setting->gateway_session;
 
         if (!$sessionId) {
@@ -648,7 +669,8 @@ class WhatsappController extends Controller
             $client = new \GuzzleHttp\Client();
             $response = $client->post($gatewayUrl . '/logout', [
                 'json' => ['session' => $sessionId],
-                'timeout' => 5
+                'timeout' => 5,
+                'verify' => false
             ]);
             return response()->json(json_decode($response->getBody()->getContents(), true));
         } catch (\Exception $e) {
@@ -669,7 +691,13 @@ class WhatsappController extends Controller
             return response()->json(['logs' => []]);
         }
 
-        $gatewayUrl = $setting->wa_gateway_url ?? 'http://localhost:3000';
+        $gatewayUrl = $setting->wa_gateway_url;
+        if (empty($gatewayUrl) && $user->role != 'superadmin') {
+            $saSetting = WhatsappSetting::withoutGlobalScopes()->whereHas('admin', function ($q) {
+                $q->where('role', 'superadmin'); })->first();
+            $gatewayUrl = $saSetting->wa_gateway_url ?? 'http://localhost:3000';
+        }
+        $gatewayUrl = $gatewayUrl ?? 'http://localhost:3000';
         $sessionId = $setting->gateway_session;
 
         if (!$sessionId) {
@@ -680,7 +708,8 @@ class WhatsappController extends Controller
             $client = new \GuzzleHttp\Client();
             $response = $client->get($gatewayUrl . '/logs', [
                 'query' => ['session' => $sessionId],
-                'timeout' => 5
+                'timeout' => 5,
+                'verify' => false
             ]);
             return response()->json(json_decode($response->getBody()->getContents(), true));
         } catch (\Exception $e) {
