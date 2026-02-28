@@ -39,6 +39,7 @@ class WhatsappService
             $data = [
                 'number' => $targetNumber,
                 'message' => $message,
+                'session' => 'session_' . $setting->admin_id,
             ];
 
             try {
@@ -46,7 +47,7 @@ class WhatsappService
                 $response = $client->post($url, [
                     'json' => $data,
                     'headers' => [
-                        'x-api-key' => $setting->api_key,
+                        'x-api-key' => $setting->api_key_gateway,
                     ],
                     'timeout' => 15,
                     'http_errors' => false
@@ -68,7 +69,7 @@ class WhatsappService
 
         // --- KIRIM VIA API EXTERNAL (Provider Lama) ---
         $url = $setting->target_url;
-        $apiKey = $setting->api_key;
+        $apiKey = $setting->api_key_external;
         $sender = $setting->sender_number;
 
         $data = [

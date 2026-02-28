@@ -83,7 +83,8 @@ class WhatsappController extends Controller
         $rules = [
             'wa_provider' => 'required|in:api,gateway',
             'target_url' => 'nullable|url',
-            'api_key' => 'nullable|string',
+            'api_key_external' => 'nullable|string',
+            'api_key_gateway' => 'nullable|string',
             'sender_number' => 'nullable|string',
             'wa_gateway_url' => 'nullable|url',
         ];
@@ -95,9 +96,9 @@ class WhatsappController extends Controller
 
         $data = $request->validate($rules);
 
-        // Auto generate API Key if empty and provider is gateway
-        if ($data['wa_provider'] === 'gateway' && empty($data['api_key'])) {
-            $data['api_key'] = \Illuminate\Support\Str::random(32);
+        // Auto generate API Key Gateway if empty and provider is gateway
+        if ($data['wa_provider'] === 'gateway' && empty($data['api_key_gateway'])) {
+            $data['api_key_gateway'] = \Illuminate\Support\Str::random(32);
         }
 
         if ($user->role == 'superadmin') {
@@ -585,7 +586,7 @@ class WhatsappController extends Controller
         }
 
         $setting->update([
-            'api_key' => \Illuminate\Support\Str::random(32)
+            'api_key_gateway' => \Illuminate\Support\Str::random(32)
         ]);
 
         return back()->with('success', 'WhatsApp Gateway API Key regenerated successfully.');
@@ -595,12 +596,22 @@ class WhatsappController extends Controller
 
     public function getGatewayStatus()
     {
-        $setting = WhatsappSetting::first();
+        $user = auth()->user();
+        if ($user->role == 'superadmin') {
+            $setting = WhatsappSetting::withoutGlobalScopes()->where('admin_id', $user->id)->first();
+        } else {
+            $setting = WhatsappSetting::first();
+        }
+
         $gatewayUrl = $setting->wa_gateway_url ?? 'http://localhost:3000';
+        $sessionId = "session_" . $user->id;
 
         try {
             $client = new \GuzzleHttp\Client();
-            $response = $client->get($gatewayUrl . '/status', ['timeout' => 5]);
+            $response = $client->get($gatewayUrl . '/status', [
+                'query' => ['session' => $sessionId],
+                'timeout' => 5
+            ]);
             return response()->json(json_decode($response->getBody()->getContents(), true));
         } catch (\Exception $e) {
             return response()->json(['status' => 'disconnected', 'message' => 'Gateway offline']);
@@ -609,12 +620,22 @@ class WhatsappController extends Controller
 
     public function logoutGateway()
     {
-        $setting = WhatsappSetting::first();
+        $user = auth()->user();
+        if ($user->role == 'superadmin') {
+            $setting = WhatsappSetting::withoutGlobalScopes()->where('admin_id', $user->id)->first();
+        } else {
+            $setting = WhatsappSetting::first();
+        }
+
         $gatewayUrl = $setting->wa_gateway_url ?? 'http://localhost:3000';
+        $sessionId = "session_" . $user->id;
 
         try {
             $client = new \GuzzleHttp\Client();
-            $response = $client->post($gatewayUrl . '/logout', ['timeout' => 5]);
+            $response = $client->post($gatewayUrl . '/logout', [
+                'json' => ['session' => $sessionId],
+                'timeout' => 5
+            ]);
             return response()->json(json_decode($response->getBody()->getContents(), true));
         } catch (\Exception $e) {
             return response()->json(['status' => false, 'message' => 'Gateway offline']);
