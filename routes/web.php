@@ -145,6 +145,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/whatsapp/gateway-api-key', [WhatsappController::class, 'regenerateGatewayApiKey'])->name('whatsapp.gateway.apikey');
         Route::get('/whatsapp/gateway-status', [WhatsappController::class, 'getGatewayStatus'])->name('whatsapp.gateway.status');
         Route::post('/whatsapp/gateway-logout', [WhatsappController::class, 'logoutGateway'])->name('whatsapp.gateway.logout');
+        Route::get('/whatsapp/gateway-logs', [WhatsappController::class, 'getGatewayLogs'])->name('whatsapp.gateway.logs');
 
         // Bill Template CRUD (AJAX)
         Route::post('/whatsapp/bill-template', [WhatsappController::class, 'storeBillTemplate'])->name('whatsapp.billTemplate.store');

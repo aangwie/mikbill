@@ -655,4 +655,36 @@ class WhatsappController extends Controller
             return response()->json(['status' => false, 'message' => 'Gateway offline']);
         }
     }
+
+    public function getGatewayLogs()
+    {
+        $user = auth()->user();
+        if ($user->role == 'superadmin') {
+            $setting = WhatsappSetting::withoutGlobalScopes()->where('admin_id', $user->id)->first();
+        } else {
+            $setting = WhatsappSetting::first();
+        }
+
+        if (!$setting) {
+            return response()->json(['logs' => []]);
+        }
+
+        $gatewayUrl = $setting->wa_gateway_url ?? 'http://localhost:3000';
+        $sessionId = $setting->gateway_session;
+
+        if (!$sessionId) {
+            return response()->json(['logs' => []]);
+        }
+
+        try {
+            $client = new \GuzzleHttp\Client();
+            $response = $client->get($gatewayUrl . '/logs', [
+                'query' => ['session' => $sessionId],
+                'timeout' => 5
+            ]);
+            return response()->json(json_decode($response->getBody()->getContents(), true));
+        } catch (\Exception $e) {
+            return response()->json(['logs' => []]);
+        }
+    }
 }

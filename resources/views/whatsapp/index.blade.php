@@ -145,10 +145,10 @@
                                             <span
                                                 class="flex items-center gap-1.5 text-[10px] font-black text-white bg-white/20 px-2 py-0.5 rounded-full">
                                                 <span class="h-2 w-2 rounded-full" :class="{
-                                                                                                        'bg-white': status === 'connected',
-                                                                                                        'bg-amber-300': status === 'connecting' || status === 'qr',
-                                                                                                        'bg-red-300': status === 'disconnected'
-                                                                                                    }"></span>
+                                                                                                            'bg-white': status === 'connected',
+                                                                                                            'bg-amber-300': status === 'connecting' || status === 'qr',
+                                                                                                            'bg-red-300': status === 'disconnected'
+                                                                                                        }"></span>
                                                 <span x-text="status.toUpperCase()"></span>
                                             </span>
                                         </div>
@@ -195,6 +195,33 @@
                                                     </button>
                                                 </div>
                                             </template>
+
+                                            <!-- Terminal Log Simulator -->
+                                            <div
+                                                class="mt-4 w-full border border-slate-900 rounded-lg overflow-hidden bg-black shadow-2xl">
+                                                <div class="bg-slate-800 px-3 py-1 flex items-center justify-between">
+                                                    <div class="flex gap-1">
+                                                        <div class="w-2.5 h-2.5 rounded-full bg-red-500"></div>
+                                                        <div class="w-2.5 h-2.5 rounded-full bg-amber-500"></div>
+                                                        <div class="w-2.5 h-2.5 rounded-full bg-emerald-500"></div>
+                                                    </div>
+                                                    <span
+                                                        class="text-[10px] font-mono text-slate-400 uppercase tracking-tighter">Gateway
+                                                        Terminal</span>
+                                                </div>
+                                                <div class="p-3 font-mono text-[10px] h-48 overflow-y-auto scrolling-touch flex flex-col font-medium"
+                                                    id="terminal-screen" x-ref="logsContainer">
+                                                    <template x-if="logs.length === 0">
+                                                        <div class="text-slate-500 italic">Listening for events...</div>
+                                                    </template>
+                                                    <template x-for="(log, index) in logs" :key="index">
+                                                        <div class="mb-1">
+                                                            <span class="text-emerald-400">[$]</span>
+                                                            <span class="text-slate-100" x-text="log"></span>
+                                                        </div>
+                                                    </template>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -325,36 +352,36 @@
 
                     <!-- Tab: Unpaid Reminder (Enhanced with Scheduling) -->
                     <div id="unpaidTab" x-show="activeTab === 'unpaid'" style="display: none;" x-data="{
-                                                                            selectedTemplateId: '',
-                                                                            previewContent: '',
-                                                                            showSaveForm: false,
-                                                                            templateName: '',
-                                                                            whatsappAge: '12+',
-                                                                            scheduleMode: 'now',
-                                                                            scheduledAt: '',
-                                                                            maxRecipients: 9999,
-                                                                            getMaxRecipients() {
-                                                                                if (this.whatsappAge === '1-6') return 15;
-                                                                                if (this.whatsappAge === '6-12') return 50;
-                                                                                return 9999;
-                                                                            },
-                                                                            updateLimit() {
-                                                                                this.maxRecipients = this.getMaxRecipients();
-                                                                            },
-                                                                            selectTemplate(id) {
-                                                                                this.selectedTemplateId = id;
-                                                                                if (id) {
-                                                                                    const option = document.querySelector('#billTemplateSelect option[value=\'' + id + '\']');
-                                                                                    if (option) {
-                                                                                        this.previewContent = option.dataset.content;
-                                                                                        document.getElementById('msgUnpaid').value = option.dataset.content;
+                                                                                selectedTemplateId: '',
+                                                                                previewContent: '',
+                                                                                showSaveForm: false,
+                                                                                templateName: '',
+                                                                                whatsappAge: '12+',
+                                                                                scheduleMode: 'now',
+                                                                                scheduledAt: '',
+                                                                                maxRecipients: 9999,
+                                                                                getMaxRecipients() {
+                                                                                    if (this.whatsappAge === '1-6') return 15;
+                                                                                    if (this.whatsappAge === '6-12') return 50;
+                                                                                    return 9999;
+                                                                                },
+                                                                                updateLimit() {
+                                                                                    this.maxRecipients = this.getMaxRecipients();
+                                                                                },
+                                                                                selectTemplate(id) {
+                                                                                    this.selectedTemplateId = id;
+                                                                                    if (id) {
+                                                                                        const option = document.querySelector('#billTemplateSelect option[value=\'' + id + '\']');
+                                                                                        if (option) {
+                                                                                            this.previewContent = option.dataset.content;
+                                                                                            document.getElementById('msgUnpaid').value = option.dataset.content;
+                                                                                        }
+                                                                                    } else {
+                                                                                        this.previewContent = '';
+                                                                                        document.getElementById('msgUnpaid').value = '';
                                                                                     }
-                                                                                } else {
-                                                                                    this.previewContent = '';
-                                                                                    document.getElementById('msgUnpaid').value = '';
                                                                                 }
-                                                                            }
-                                                                        }" x-init="updateLimit()">
+                                                                            }" x-init="updateLimit()">
                         <div class="bg-amber-50 border-l-4 border-amber-400 p-4 mb-6 rounded-r-lg">
                             <div class="flex">
                                 <div class="flex-shrink-0"><i class="fas fa-exclamation-triangle text-amber-400"></i></div>
@@ -537,26 +564,26 @@
 
                     <!-- Tab: All Broadcast (Enhanced) -->
                     <div id="broadcastTab" x-show="activeTab === 'broadcast'" style="display: none;" x-data="{
-                                                                                                                selectionMode: 'all',
-                                                                                                                whatsappAge: '12+',
-                                                                                                                scheduleMode: 'now',
-                                                                                                                selectedCustomers: [],
-                                                                                                                maxRecipients: 9999,
-                                                                                                                scheduledAt: '',
-                                                                                                                getMaxRecipients() {
-                                                                                                                    if (this.whatsappAge === '1-6') return 15;
-                                                                                                                    if (this.whatsappAge === '6-12') return 50;
-                                                                                                                    return 9999;
-                                                                                                                },
-                                                                                                                updateLimit() {
-                                                                                                                    this.maxRecipients = this.getMaxRecipients();
-                                                                                                                    // Truncate selection if exceeds limit
-                                                                                                                    if (this.selectedCustomers.length > this.maxRecipients) {
-                                                                                                                        this.selectedCustomers = this.selectedCustomers.slice(0, this.maxRecipients);
-                                                                                                                        $('#broadcastCustomerSelect').val(this.selectedCustomers).trigger('change');
+                                                                                                                    selectionMode: 'all',
+                                                                                                                    whatsappAge: '12+',
+                                                                                                                    scheduleMode: 'now',
+                                                                                                                    selectedCustomers: [],
+                                                                                                                    maxRecipients: 9999,
+                                                                                                                    scheduledAt: '',
+                                                                                                                    getMaxRecipients() {
+                                                                                                                        if (this.whatsappAge === '1-6') return 15;
+                                                                                                                        if (this.whatsappAge === '6-12') return 50;
+                                                                                                                        return 9999;
+                                                                                                                    },
+                                                                                                                    updateLimit() {
+                                                                                                                        this.maxRecipients = this.getMaxRecipients();
+                                                                                                                        // Truncate selection if exceeds limit
+                                                                                                                        if (this.selectedCustomers.length > this.maxRecipients) {
+                                                                                                                            this.selectedCustomers = this.selectedCustomers.slice(0, this.maxRecipients);
+                                                                                                                            $('#broadcastCustomerSelect').val(this.selectedCustomers).trigger('change');
+                                                                                                                        }
                                                                                                                     }
-                                                                                                                }
-                                                                                                            }"
+                                                                                                                }"
                         x-init="updateLimit()">
 
                         <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6 rounded-r-lg">
@@ -724,22 +751,22 @@
                                                 class="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-slate-900 sm:pl-6 font-medium">
                                                 @if($msg->status === 'pending' && $msg->scheduled_at)
                                                     <div x-data="{ 
-                                                                                                                                                                                                                            target: new Date('{{ $msg->scheduled_at->toIso8601String() }}').getTime(),
-                                                                                                                                                                                                                            now: new Date().getTime(),
-                                                                                                                                                                                                                            countdown: '',
-                                                                                                                                                                                                                            update() {
-                                                                                                                                                                                                                                let diff = this.target - this.now;
-                                                                                                                                                                                                                                if (diff <= 0) {
-                                                                                                                                                                                                                                    this.countdown = 'Sesaat lagi...';
-                                                                                                                                                                                                                                    return;
-                                                                                                                                                                                                                                }
-                                                                                                                                                                                                                                let d = Math.floor(diff / (1000 * 60 * 60 * 24));
-                                                                                                                                                                                                                                let h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                                                                                                                                                                                                                                let m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-                                                                                                                                                                                                                                let s = Math.floor((diff % (1000 * 60)) / 1000);
-                                                                                                                                                                                                                                this.countdown = (d > 0 ? d + 'h ' : '') + h + 'j ' + m + 'm ' + s + 's';
-                                                                                                                                                                                                                            }
-                                                                                                                                                                                                                        }"
+                                                                                                                                                                                                                                        target: new Date('{{ $msg->scheduled_at->toIso8601String() }}').getTime(),
+                                                                                                                                                                                                                                        now: new Date().getTime(),
+                                                                                                                                                                                                                                        countdown: '',
+                                                                                                                                                                                                                                        update() {
+                                                                                                                                                                                                                                            let diff = this.target - this.now;
+                                                                                                                                                                                                                                            if (diff <= 0) {
+                                                                                                                                                                                                                                                this.countdown = 'Sesaat lagi...';
+                                                                                                                                                                                                                                                return;
+                                                                                                                                                                                                                                            }
+                                                                                                                                                                                                                                            let d = Math.floor(diff / (1000 * 60 * 60 * 24));
+                                                                                                                                                                                                                                            let h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                                                                                                                                                                                                                                            let m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                                                                                                                                                                                                                                            let s = Math.floor((diff % (1000 * 60)) / 1000);
+                                                                                                                                                                                                                                            this.countdown = (d > 0 ? d + 'h ' : '') + h + 'j ' + m + 'm ' + s + 's';
+                                                                                                                                                                                                                                        }
+                                                                                                                                                                                                                                    }"
                                                         x-init="update(); setInterval(() => { now = new Date().getTime(); update() }, 1000)">
                                                         <div class="font-bold text-slate-900">
                                                             {{ $msg->scheduled_at->format('d M Y H:i') }}
@@ -977,16 +1004,20 @@
         }
     </style>
     <script>
-            function whatsappGateway             () {
-                return {
-                    status: 'disconnected',
+                 function whatsappGateway             () {
+                    return {
+                        status: 'disconnected',
                     number: null,
                     qr: null,
                     polling: null,
+                    logPolling: null,
+                    logs: [],
 
                     init() {
                         this.fetchStatus();
+                        this.fetchLogs();
                         this.polling = setInterval(() => this.fetchStatus(), 5000);
+                        this.logPolling = setInterval(() => this.fetchLogs(), 3000);
                     },
 
                     fetchStatus() {
@@ -1004,48 +1035,68 @@
                             });
                     },
 
-                    logout() {
-                        if (!confirm('Apakah Anda yakin ingin memutuskan koneksi WhatsApp?')) return;
-
-                        fetch('{{ route('whatsapp.gateway.logout') }}', {
-                            method: 'POST',
-                            headers: {
-                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                                'Content-Type': 'application/json'
-                            }
-                        })
+                    fetchLogs() {
+                        fetch('{{ route('whatsapp.gateway.logs') }}')
                             .then(res => res.json())
                             .then(data => {
-                                if (data.status) {
-                                    this.fetchStatus();
-                                    Swal.fire('Berhasil', 'WhatsApp telah diputus.', 'success');
+                                if (data.logs && Array.isArray(data.logs)) {
+                                    this.logs = data.logs;
+                                    this.$nextTick(() => {
+                                        const container = this.$refs.logsContainer;
+                                        if (container) {
+                                            container.scrollTop = container.scrollHeight;
+                                        }
+                                    });
                                 }
+                            })
+                            .catch(err => {
+                                // Silently fail log fetching
                             });
                     },
 
-                    destroy() {
+                        logout() {
+                            if (!confirm('Apakah Anda yakin ingin memutuskan koneksi WhatsApp?')) return;
+
+                            fetch('{{ route('whatsapp.gateway.logout') }}', {
+                                method: 'POST',
+                                headers: {
+                                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                    'Content-Type': 'application/json'
+                                }
+                            })
+                                .then(res => res.json())
+                                .then(data => {
+                                    if (data.status) {
+                                        this.fetchStatus();
+                                        Swal.fire('Berhasil', 'WhatsApp telah diputus.', 'success');
+                                    }
+                                });
+                        },
+
+                        destroy() {
                         if (this.polling) clearInterval(this.polling);
+                        if (this.logPolling) clearInterval(this.logPolling);
+                    }
                     }
                 }
-            }
-        </script>
-        <style>
-            @keyframes fadeIn {
-                from {
-                    opacity: 0;
-                    transform: translateY(10px);
+            </script>
+            <style>
+                @keyframes fadeIn {
+                    from {
+                        opacity: 0;
+                        transform: translateY(10px);
+                    }
+
+                    to {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
                 }
 
-                to {
-                    opacity: 1;
-                    transform: translateY(0);
+                .animate-fade-in {
+                    animation: fadeIn 0.5s ease-out forwards;
                 }
-            }
-
-            .animate-fade-in {
-                animation: fadeIn 0.5s ease-out forwards;
-            }
-        </style>
+            </style>
 @endpush
 
 @push('scripts')
