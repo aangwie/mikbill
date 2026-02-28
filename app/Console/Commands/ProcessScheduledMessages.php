@@ -39,6 +39,7 @@ class ProcessScheduledMessages extends Command
         $this->info("📬 Found {$pendingMessages->count()} scheduled message(s) to process.");
 
         foreach ($pendingMessages as $scheduledMessage) {
+            /** @var ScheduledMessage $scheduledMessage */
             $this->processMessage($scheduledMessage);
         }
 
@@ -88,7 +89,7 @@ class ProcessScheduledMessages extends Command
                 $msg = str_replace('{tagihan}', number_format($customer->monthly_price, 0, ',', '.'), $msg);
 
                 // Send message
-                $result = $this->waService->send($customer->phone, $msg);
+                $result = $this->waService->send($customer->phone, $msg, $scheduledMessage->admin_id);
 
                 if ($result['status']) {
                     $successCount++;

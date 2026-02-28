@@ -119,6 +119,23 @@
                                             server yang sama.</p>
                                     </div>
 
+                                    <div>
+                                        <label class="block text-sm font-bold text-slate-900 mb-1">Gateway API Key
+                                            (Self)</label>
+                                        <div class="flex gap-2">
+                                            <input type="text" name="api_key" id="gatewayApiKey"
+                                                class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 bg-slate-50 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-emerald-600 sm:text-sm sm:leading-6"
+                                                placeholder="Unique Gateway Key"
+                                                value="{{ optional($setting)->api_key ?? '' }}" readonly>
+                                            <button type="button" onclick="regenerateGatewayKey()"
+                                                class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-bold rounded-md text-emerald-700 bg-emerald-100 hover:bg-emerald-200 transition-all shadow-sm">
+                                                <i class="fas fa-sync-alt mr-1"></i> Ganti
+                                            </button>
+                                        </div>
+                                        <p class="mt-1 text-[10px] text-slate-500 italic">API Key ini digunakan oleh gateway
+                                            Anda untuk otentikasi.</p>
+                                    </div>
+
                                     <!-- Gateway Connection Panel -->
                                     <div class="mt-4 border border-emerald-100 rounded-xl bg-emerald-50/30 overflow-hidden">
                                         <div class="bg-emerald-500 px-4 py-2 flex items-center justify-between">
@@ -127,10 +144,10 @@
                                             <span
                                                 class="flex items-center gap-1.5 text-[10px] font-black text-white bg-white/20 px-2 py-0.5 rounded-full">
                                                 <span class="h-2 w-2 rounded-full" :class="{
-                                                                                    'bg-white': status === 'connected',
-                                                                                    'bg-amber-300': status === 'connecting',
-                                                                                    'bg-red-300': status === 'disconnected'
-                                                                                }"></span>
+                                                                                            'bg-white': status === 'connected',
+                                                                                            'bg-amber-300': status === 'connecting',
+                                                                                            'bg-red-300': status === 'disconnected'
+                                                                                        }"></span>
                                                 <span x-text="status.toUpperCase()"></span>
                                             </span>
                                         </div>
@@ -301,36 +318,36 @@
 
                     <!-- Tab: Unpaid Reminder (Enhanced with Scheduling) -->
                     <div id="unpaidTab" x-show="activeTab === 'unpaid'" style="display: none;" x-data="{
-                                                        selectedTemplateId: '',
-                                                        previewContent: '',
-                                                        showSaveForm: false,
-                                                        templateName: '',
-                                                        whatsappAge: '12+',
-                                                        scheduleMode: 'now',
-                                                        scheduledAt: '',
-                                                        maxRecipients: 9999,
-                                                        getMaxRecipients() {
-                                                            if (this.whatsappAge === '1-6') return 15;
-                                                            if (this.whatsappAge === '6-12') return 50;
-                                                            return 9999;
-                                                        },
-                                                        updateLimit() {
-                                                            this.maxRecipients = this.getMaxRecipients();
-                                                        },
-                                                        selectTemplate(id) {
-                                                            this.selectedTemplateId = id;
-                                                            if (id) {
-                                                                const option = document.querySelector('#billTemplateSelect option[value=\'' + id + '\']');
-                                                                if (option) {
-                                                                    this.previewContent = option.dataset.content;
-                                                                    document.getElementById('msgUnpaid').value = option.dataset.content;
+                                                                selectedTemplateId: '',
+                                                                previewContent: '',
+                                                                showSaveForm: false,
+                                                                templateName: '',
+                                                                whatsappAge: '12+',
+                                                                scheduleMode: 'now',
+                                                                scheduledAt: '',
+                                                                maxRecipients: 9999,
+                                                                getMaxRecipients() {
+                                                                    if (this.whatsappAge === '1-6') return 15;
+                                                                    if (this.whatsappAge === '6-12') return 50;
+                                                                    return 9999;
+                                                                },
+                                                                updateLimit() {
+                                                                    this.maxRecipients = this.getMaxRecipients();
+                                                                },
+                                                                selectTemplate(id) {
+                                                                    this.selectedTemplateId = id;
+                                                                    if (id) {
+                                                                        const option = document.querySelector('#billTemplateSelect option[value=\'' + id + '\']');
+                                                                        if (option) {
+                                                                            this.previewContent = option.dataset.content;
+                                                                            document.getElementById('msgUnpaid').value = option.dataset.content;
+                                                                        }
+                                                                    } else {
+                                                                        this.previewContent = '';
+                                                                        document.getElementById('msgUnpaid').value = '';
+                                                                    }
                                                                 }
-                                                            } else {
-                                                                this.previewContent = '';
-                                                                document.getElementById('msgUnpaid').value = '';
-                                                            }
-                                                        }
-                                                    }" x-init="updateLimit()">
+                                                            }" x-init="updateLimit()">
                         <div class="bg-amber-50 border-l-4 border-amber-400 p-4 mb-6 rounded-r-lg">
                             <div class="flex">
                                 <div class="flex-shrink-0"><i class="fas fa-exclamation-triangle text-amber-400"></i></div>
@@ -513,26 +530,26 @@
 
                     <!-- Tab: All Broadcast (Enhanced) -->
                     <div id="broadcastTab" x-show="activeTab === 'broadcast'" style="display: none;" x-data="{
-                                                                                            selectionMode: 'all',
-                                                                                            whatsappAge: '12+',
-                                                                                            scheduleMode: 'now',
-                                                                                            selectedCustomers: [],
-                                                                                            maxRecipients: 9999,
-                                                                                            scheduledAt: '',
-                                                                                            getMaxRecipients() {
-                                                                                                if (this.whatsappAge === '1-6') return 15;
-                                                                                                if (this.whatsappAge === '6-12') return 50;
-                                                                                                return 9999;
-                                                                                            },
-                                                                                            updateLimit() {
-                                                                                                this.maxRecipients = this.getMaxRecipients();
-                                                                                                // Truncate selection if exceeds limit
-                                                                                                if (this.selectedCustomers.length > this.maxRecipients) {
-                                                                                                    this.selectedCustomers = this.selectedCustomers.slice(0, this.maxRecipients);
-                                                                                                    $('#broadcastCustomerSelect').val(this.selectedCustomers).trigger('change');
-                                                                                                }
-                                                                                            }
-                                                                                        }" x-init="updateLimit()">
+                                                                                                    selectionMode: 'all',
+                                                                                                    whatsappAge: '12+',
+                                                                                                    scheduleMode: 'now',
+                                                                                                    selectedCustomers: [],
+                                                                                                    maxRecipients: 9999,
+                                                                                                    scheduledAt: '',
+                                                                                                    getMaxRecipients() {
+                                                                                                        if (this.whatsappAge === '1-6') return 15;
+                                                                                                        if (this.whatsappAge === '6-12') return 50;
+                                                                                                        return 9999;
+                                                                                                    },
+                                                                                                    updateLimit() {
+                                                                                                        this.maxRecipients = this.getMaxRecipients();
+                                                                                                        // Truncate selection if exceeds limit
+                                                                                                        if (this.selectedCustomers.length > this.maxRecipients) {
+                                                                                                            this.selectedCustomers = this.selectedCustomers.slice(0, this.maxRecipients);
+                                                                                                            $('#broadcastCustomerSelect').val(this.selectedCustomers).trigger('change');
+                                                                                                        }
+                                                                                                    }
+                                                                                                }" x-init="updateLimit()">
 
                         <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6 rounded-r-lg">
                             <div class="flex">
@@ -699,22 +716,22 @@
                                                 class="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-slate-900 sm:pl-6 font-medium">
                                                 @if($msg->status === 'pending' && $msg->scheduled_at)
                                                     <div x-data="{ 
-                                                                                                                                                                        target: new Date('{{ $msg->scheduled_at->toIso8601String() }}').getTime(),
-                                                                                                                                                                        now: new Date().getTime(),
-                                                                                                                                                                        countdown: '',
-                                                                                                                                                                        update() {
-                                                                                                                                                                            let diff = this.target - this.now;
-                                                                                                                                                                            if (diff <= 0) {
-                                                                                                                                                                                this.countdown = 'Sesaat lagi...';
-                                                                                                                                                                                return;
-                                                                                                                                                                            }
-                                                                                                                                                                            let d = Math.floor(diff / (1000 * 60 * 60 * 24));
-                                                                                                                                                                            let h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                                                                                                                                                                            let m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-                                                                                                                                                                            let s = Math.floor((diff % (1000 * 60)) / 1000);
-                                                                                                                                                                            this.countdown = (d > 0 ? d + 'h ' : '') + h + 'j ' + m + 'm ' + s + 's';
-                                                                                                                                                                        }
-                                                                                                                                                                    }"
+                                                                                                                                                                                                target: new Date('{{ $msg->scheduled_at->toIso8601String() }}').getTime(),
+                                                                                                                                                                                                now: new Date().getTime(),
+                                                                                                                                                                                                countdown: '',
+                                                                                                                                                                                                update() {
+                                                                                                                                                                                                    let diff = this.target - this.now;
+                                                                                                                                                                                                    if (diff <= 0) {
+                                                                                                                                                                                                        this.countdown = 'Sesaat lagi...';
+                                                                                                                                                                                                        return;
+                                                                                                                                                                                                    }
+                                                                                                                                                                                                    let d = Math.floor(diff / (1000 * 60 * 60 * 24));
+                                                                                                                                                                                                    let h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                                                                                                                                                                                                    let m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                                                                                                                                                                                                    let s = Math.floor((diff % (1000 * 60)) / 1000);
+                                                                                                                                                                                                    this.countdown = (d > 0 ? d + 'h ' : '') + h + 'j ' + m + 'm ' + s + 's';
+                                                                                                                                                                                                }
+                                                                                                                                                                                            }"
                                                         x-init="update(); setInterval(() => { now = new Date().getTime(); update() }, 1000)">
                                                         <div class="font-bold text-slate-900">
                                                             {{ $msg->scheduled_at->format('d M Y H:i') }}
@@ -1378,10 +1395,10 @@
                                 icon: 'success',
                                 title: 'Broadcast Dijadwalkan!',
                                 html: `
-                                                                                    <p>Pesan akan dikirim pada:</p>
-                                                                                    <p class="text-lg font-bold text-indigo-600">${response.scheduled_at}</p>
-                                                                                    <p class="text-sm text-gray-500 mt-2">Total: ${response.total} penerima</p>
-                                                                                `,
+                                                                                            <p>Pesan akan dikirim pada:</p>
+                                                                                            <p class="text-lg font-bold text-indigo-600">${response.scheduled_at}</p>
+                                                                                            <p class="text-sm text-gray-500 mt-2">Total: ${response.total} penerima</p>
+                                                                                        `,
                                 confirmButtonColor: '#4f46e5'
                             }).then(() => {
                                 location.reload();
@@ -1516,11 +1533,11 @@
                                 icon: 'success',
                                 title: 'Broadcast Tagihan Dijadwalkan!',
                                 html: `
-                                                        <p>Pesan akan dikirim pada:</p>
-                                                        <p class="text-lg font-bold text-amber-600">${response.scheduled_at}</p>
-                                                        <p class="text-sm text-gray-500 mt-2">Total: ${response.total} penerima (unpaid saat ini)</p>
-                                                        <p class="text-xs text-gray-400 mt-1">Catatan: Daftar penerima akan diperbarui saat waktu pengiriman tiba.</p>
-                                                    `,
+                                                                <p>Pesan akan dikirim pada:</p>
+                                                                <p class="text-lg font-bold text-amber-600">${response.scheduled_at}</p>
+                                                                <p class="text-sm text-gray-500 mt-2">Total: ${response.total} penerima (unpaid saat ini)</p>
+                                                                <p class="text-xs text-gray-400 mt-1">Catatan: Daftar penerima akan diperbarui saat waktu pengiriman tiba.</p>
+                                                            `,
                                 confirmButtonColor: '#f59e0b'
                             }).then(() => {
                                 location.reload();
@@ -1622,7 +1639,7 @@
                     icon: 'success',
                     title: 'Broadcast Selesai!',
                     html: `<p>Sukses: <span class="text-green-600 font-bold">${successCount}</span></p>
-                                                                           <p>Gagal: <span class="text-red-600 font-bold">${failCount}</span></p>`,
+                                                                                   <p>Gagal: <span class="text-red-600 font-bold">${failCount}</span></p>`,
                     confirmButtonColor: '#4f46e5'
                 });
 
@@ -1705,5 +1722,37 @@
                 }
             });
         }
-    </script>
+    // Regenerate Gateway API Key via POST
+            function regenerateGatewayKey() {
+                Swal.fire({
+                    title: 'Regenerasi API Key?',
+                    text: 'API Key lama tidak akan berlaku lagi. Anda harus memperbarui konfigurasi pada gateway Anda.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#10b981',
+                    cancelButtonColor: '#64748b',
+                    confirmButtonText: 'Ya, Regenerasi',
+                    cancelButtonText: 'Batal'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.post("{{ route('whatsapp.gateway.apikey') }}", {
+                            _token: $('meta[name="csrf-token"]').attr('content')
+                        }).done(function (response) {
+                            if (response.status !== false) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Berhasil!',
+                                    text: 'API Key baru telah dibuat. Silakan simpan konfigurasi.',
+                                    confirmButtonColor: '#10b981'
+                                }).then(() => {
+                                    location.reload();
+                                });
+                            }
+                        }).fail(function () {
+                            Swal.fire('Error', 'Gagal regenerasi API Key.', 'error');
+                        });
+                    }
+                });
+            }
+        </script>
 @endpush

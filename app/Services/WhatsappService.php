@@ -7,10 +7,19 @@ use Illuminate\Support\Facades\Log;
 
 class WhatsappService
 {
-    public static function send($targetNumber, $message)
+    public static function send($targetNumber, $message, $adminId = null)
     {
         // 1. Ambil Pengaturan dari Database
-        $setting = WhatsappSetting::first();
+        if ($adminId) {
+            // Jika adminId diberikan (misal dari cron), ambil secara eksplisit
+            $setting = WhatsappSetting::withoutGlobalScopes()
+                ->where('admin_id', $adminId)
+                ->first();
+        } else {
+            // Jika tidak ada adminId, gunakan scope default (yg login)
+            $setting = WhatsappSetting::first();
+        }
+
         if (!$setting) {
             return ['status' => false, 'message' => 'Pengaturan WhatsApp belum dikonfigurasi.'];
         }
@@ -36,6 +45,9 @@ class WhatsappService
                 $client = new \GuzzleHttp\Client();
                 $response = $client->post($url, [
                     'json' => $data,
+                    'headers' => [
+                        'x-api-key' => $setting->api_key,
+                    ],
                     'timeout' => 15,
                     'http_errors' => false
                 ]);

@@ -33,7 +33,12 @@ class WhatsappController extends Controller
             }
         }
 
-        $setting = WhatsappSetting::first();
+        // Ambil setting milik admin sendiri (termasuk superadmin)
+        if ($user->role == 'superadmin') {
+            $setting = WhatsappSetting::withoutGlobalScopes()->where('admin_id', $user->id)->first();
+        } else {
+            $setting = WhatsappSetting::first();
+        }
 
         // Global Adsense: Fetch any record that has adsense content (bypassing all scopes)
         $globalAdsense = WhatsappSetting::withoutGlobalScopes()
@@ -90,10 +95,24 @@ class WhatsappController extends Controller
 
         $data = $request->validate($rules);
 
-        $setting = WhatsappSetting::first();
+        // Auto generate API Key if empty and provider is gateway
+        if ($data['wa_provider'] === 'gateway' && empty($data['api_key'])) {
+            $data['api_key'] = \Illuminate\Support\Str::random(32);
+        }
+
+        if ($user->role == 'superadmin') {
+            $setting = WhatsappSetting::withoutGlobalScopes()->where('admin_id', $user->id)->first();
+        } else {
+            $setting = WhatsappSetting::first();
+        }
+
         if ($setting) {
             $setting->update($data);
         } else {
+            // Set admin_id eksplisit jika superadmin (karena trait BelongsToTenant biasanya handle ini tapi kita pastikan)
+            if ($user->role == 'superadmin') {
+                $data['admin_id'] = $user->id;
+            }
             WhatsappSetting::create($data);
         }
 
@@ -105,7 +124,8 @@ class WhatsappController extends Controller
     {
         $request->validate(['target' => 'required', 'message' => 'required']);
 
-        $result = $this->waService->send($request->target, $request->message);
+        $adminId = auth()->id();
+        $result = $this->waService->send($request->target, $request->message, $adminId);
 
         if ($result['status']) {
             return back()->with('success', 'Pesan terkirim! Response: ' . $result['response']);
@@ -146,7 +166,8 @@ class WhatsappController extends Controller
                 $msg = str_replace('{name}', $target['name'], $messageTemplate);
                 $msg = str_replace('{tagihan}', number_format($target['bill']), $msg);
 
-                $this->waService->send($target['phone'], $msg);
+                $adminId = auth()->id();
+                $this->waService->send($target['phone'], $msg, $adminId);
                 $count++;
             }
         }
@@ -178,7 +199,8 @@ class WhatsappController extends Controller
                 $msg = str_replace('{tagihan}', number_format($customer->monthly_price, 0, ',', '.'), $msg);
 
                 // Kirim Pesan
-                $result = $this->waService->send($customer->phone, $msg);
+                $adminId = auth()->id();
+                $result = $this->waService->send($customer->phone, $msg, $adminId);
 
                 if ($result['status']) {
                     $successCount++;
@@ -228,7 +250,8 @@ class WhatsappController extends Controller
 
         // Kirim WA
         try {
-            $result = $this->waService->send($customer->phone, $msg);
+            $adminId = auth()->id();
+            $result = $this->waService->send($customer->phone, $msg, $adminId);
 
             if ($result['status']) {
                 return response()->json([
@@ -544,7 +567,28 @@ class WhatsappController extends Controller
         $user->api_token = \Illuminate\Support\Str::random(60);
         $user->save();
 
-        return back()->with('success', 'API Key Generated successfully.');
+        return back()->with('success', 'User API Token generated successfully.');
+    }
+
+    public function regenerateGatewayApiKey()
+    {
+        $user = auth()->user();
+
+        if ($user->role == 'superadmin') {
+            $setting = WhatsappSetting::withoutGlobalScopes()->where('admin_id', $user->id)->first();
+        } else {
+            $setting = WhatsappSetting::first();
+        }
+
+        if (!$setting) {
+            return back()->with('error', 'Silakan simpan konfigurasi WhatsApp terlebih dahulu.');
+        }
+
+        $setting->update([
+            'api_key' => \Illuminate\Support\Str::random(32)
+        ]);
+
+        return back()->with('success', 'WhatsApp Gateway API Key regenerated successfully.');
     }
 
     // --- GATEWAY HELPERS (AJAX) ---
