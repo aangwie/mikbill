@@ -33,6 +33,7 @@ let sock;
 let qrCode = null;
 let connectionStatus = "disconnected";
 let connectedNumber = null;
+let isLoggingOut = false;
 
 async function connectToWhatsApp() {
     logToFile("Starting connection to WhatsApp...");
@@ -66,13 +67,15 @@ async function connectToWhatsApp() {
                 const statusCode = lastDisconnect?.error?.output?.statusCode;
                 const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
 
-                logToFile(`Connection closed. Reason: ${statusCode}, Reconnecting: ${shouldReconnect}`);
+                logToFile(`Connection closed. Reason: ${statusCode}, Reconnecting: ${shouldReconnect}, isLoggingOut: ${isLoggingOut}`);
 
                 connectionStatus = "disconnected";
-                qrCode = null;
                 connectedNumber = null;
 
-                if (shouldReconnect) {
+                // Only auto-reconnect if not manually logging out
+                // (logout handler manages its own reconnect with delay)
+                if (!isLoggingOut && shouldReconnect) {
+                    qrCode = null;
                     connectToWhatsApp();
                 }
             } else if (connection === "open") {
@@ -122,10 +125,36 @@ app.post("/send", async (req, res) => {
 
 app.post("/logout", async (req, res) => {
     try {
-        await sock.logout();
-        fs.rmSync(path.join(__dirname, "auth_info_baileys"), { recursive: true, force: true });
+        // Set flag to prevent close handler from auto-reconnecting
+        isLoggingOut = true;
+
+        // Reset state immediately
+        connectionStatus = "disconnected";
+        qrCode = null;
+        connectedNumber = null;
+
+        try {
+            if (sock) {
+                await sock.logout();
+            }
+        } catch (logoutErr) {
+            logToFile("Logout error (non-fatal): " + logoutErr.message);
+        }
+
+        // Remove auth data to force fresh QR on reconnect
+        const authPath = path.join(__dirname, "auth_info_baileys");
+        if (fs.existsSync(authPath)) {
+            fs.rmSync(authPath, { recursive: true, force: true });
+        }
+
         res.json({ status: true, message: "Logged out" });
-        connectToWhatsApp();
+
+        // Wait for old socket close events to finish before reconnecting
+        setTimeout(() => {
+            isLoggingOut = false;
+            logToFile("Reconnecting after logout...");
+            connectToWhatsApp();
+        }, 2000);
     } catch (error) {
         res.status(500).json({ status: false, message: error.message });
     }
