@@ -39,7 +39,7 @@ class WhatsappService
             $data = [
                 'number' => $targetNumber,
                 'message' => $message,
-                'session' => 'session_' . $setting->admin_id,
+                'session' => $setting->gateway_session,
             ];
 
             try {

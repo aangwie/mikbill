@@ -97,14 +97,20 @@ class WhatsappController extends Controller
         $data = $request->validate($rules);
 
         // Auto generate API Key Gateway if empty and provider is gateway
-        if ($data['wa_provider'] === 'gateway' && empty($data['api_key_gateway'])) {
-            $data['api_key_gateway'] = \Illuminate\Support\Str::random(32);
-        }
-
         if ($user->role == 'superadmin') {
             $setting = WhatsappSetting::withoutGlobalScopes()->where('admin_id', $user->id)->first();
         } else {
             $setting = WhatsappSetting::first();
+        }
+
+        // Auto generate API Key Gateway if empty and provider is gateway
+        if ($data['wa_provider'] === 'gateway' && empty($data['api_key_gateway'])) {
+            $data['api_key_gateway'] = \Illuminate\Support\Str::random(32);
+        }
+
+        // Always ensure a unique Gateway Session exists
+        if (!$setting || empty($setting->gateway_session)) {
+            $data['gateway_session'] = 'sess_' . \Illuminate\Support\Str::random(12);
         }
 
         if ($setting) {
@@ -604,7 +610,11 @@ class WhatsappController extends Controller
         }
 
         $gatewayUrl = $setting->wa_gateway_url ?? 'http://localhost:3000';
-        $sessionId = "session_" . $user->id;
+        $sessionId = $setting->gateway_session;
+
+        if (!$sessionId) {
+            return response()->json(['status' => 'disconnected', 'message' => 'Session not initialized']);
+        }
 
         try {
             $client = new \GuzzleHttp\Client();
@@ -628,7 +638,11 @@ class WhatsappController extends Controller
         }
 
         $gatewayUrl = $setting->wa_gateway_url ?? 'http://localhost:3000';
-        $sessionId = "session_" . $user->id;
+        $sessionId = $setting->gateway_session;
+
+        if (!$sessionId) {
+            return response()->json(['status' => false, 'message' => 'Session not initialized']);
+        }
 
         try {
             $client = new \GuzzleHttp\Client();
