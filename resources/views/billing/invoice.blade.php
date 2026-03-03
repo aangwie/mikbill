@@ -223,20 +223,22 @@
                             @else
                                 <td>
                                     <div
-                                        style="font-size: 28px; font-weight: bold; color: #4f46e5; margin-right: 10px; letter-spacing: 1px;">
+                                        style="font-size: 28px; font-weight: bold; color: #7c3aed; margin-right: 10px; letter-spacing: 1px;">
                                         BillNesia
                                     </div>
                                 </td>
                             @endif
                             <td class="company-info">
-                                <p class="name">{{ $company->company_name ?? 'BillNesia' }}</p>
+                                <p class="name">{{ $companyName }}</p>
                             </td>
                         </tr>
                     </table>
                     <div class="company-info">
                         <p class="details">
-                            {{ $company->address ?? 'Alamat Perusahaan belum diatur' }}<br>
-                            {{ $company->phone ?? '' }} | {{ $company->email ?? '' }}
+                            {{ $displayCompany->address ?? 'Alamat Perusahaan belum diatur' }}<br>
+                            {{ $displayCompany->phone ?? '' }}
+                            {{ !empty($displayCompany->phone) && !empty($displayCompany->email) ? '|' : '' }}
+                            {{ $displayCompany->email ?? '' }}
                         </p>
                     </div>
                 </td>
@@ -264,7 +266,8 @@
                 <td style="text-align: right;">
                     <p class="section-label">Tanggal Invoice:</p>
                     <p style="font-size: 14px; font-weight: bold; margin-bottom: 10px;">
-                        {{ $invoice->created_at->format('d/m/Y') }}</p>
+                        {{ $invoice->created_at->format('d/m/Y') }}
+                    </p>
 
                     <p class="section-label">Jatuh Tempo:</p>
                     <p

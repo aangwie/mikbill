@@ -533,10 +533,25 @@ class BillingController extends Controller
             ->where('admin_id', $companyAdminId)
             ->first();
 
-        // Convert Logo to Base64 (Optional for print, but keeps view logic simple)
+        // Fallback to superadmin's company if admin has no logo or company_name
+        $fallbackCompany = null;
+        if (!$user->isSuperAdmin() && (!$company || empty($company->logo_path) || empty($company->company_name))) {
+            $fallbackCompany = Company::withoutGlobalScope(\App\Scopes\TenantScope::class)
+                ->whereHas('admin', function ($q) {
+                    $q->where('role', 'superadmin');
+                })
+                ->first();
+        }
+
+        // Determine which logo and company name to use
+        $displayCompany = $company ?? $fallbackCompany;
+        $logoSource = ($company && !empty($company->logo_path)) ? $company : $fallbackCompany;
+        $nameSource = ($company && !empty($company->company_name)) ? $company : $fallbackCompany;
+
+        // Convert Logo to Base64
         $logoBase64 = null;
-        if ($company && !empty($company->logo_path)) {
-            $path = public_path('uploads/' . $company->logo_path);
+        if ($logoSource && !empty($logoSource->logo_path)) {
+            $path = public_path('uploads/' . $logoSource->logo_path);
             if (file_exists($path)) {
                 $type = pathinfo($path, PATHINFO_EXTENSION);
                 $data = file_get_contents($path);
@@ -544,7 +559,10 @@ class BillingController extends Controller
             }
         }
 
-        return view('billing.invoice', compact('invoice', 'company', 'logoBase64'));
+        // Build display name (admin's own or superadmin fallback)
+        $companyName = $nameSource->company_name ?? 'BillNesia';
+
+        return view('billing.invoice', compact('invoice', 'company', 'logoBase64', 'companyName', 'displayCompany'));
     }
 
     public function bulkUpdateDueDate(Request $request)
