@@ -323,6 +323,76 @@ class SystemController extends Controller
     }
 
     /**
+     * Create storage symlink for shared hosting
+     * Links: DOCUMENT_ROOT/storage -> laravel_base/storage/app/public
+     */
+    public function createSymlink()
+    {
+        $log = [];
+
+        try {
+            // Target: Laravel's storage/app/public
+            $target = storage_path('app/public');
+
+            // Link: DOCUMENT_ROOT/storage (public_html/storage on shared hosting)
+            $link = (isset($_SERVER['DOCUMENT_ROOT']) && !empty($_SERVER['DOCUMENT_ROOT']))
+                ? $_SERVER['DOCUMENT_ROOT'] . '/storage'
+                : public_path('storage');
+
+            $log[] = ">>> STORAGE SYMLINK";
+            $log[] = "Target : " . $target;
+            $log[] = "Link   : " . $link;
+            $log[] = "--------------------------------------------------";
+
+            // Check if target directory exists
+            if (!is_dir($target)) {
+                mkdir($target, 0755, true);
+                $log[] = "Created target directory: " . $target;
+            }
+
+            // Remove existing symlink or directory
+            if (is_link($link)) {
+                unlink($link);
+                $log[] = "Removed existing symlink.";
+            } elseif (is_dir($link)) {
+                // If it's a real directory (not symlink), rename it as backup
+                rename($link, $link . '_backup_' . date('Ymd_His'));
+                $log[] = "Existing directory renamed to backup.";
+            }
+
+            // Create symlink
+            if (symlink($target, $link)) {
+                $log[] = ">>> Symlink created successfully!";
+
+                return back()->with([
+                    'status' => 'success',
+                    'message' => 'Storage symlink berhasil dibuat!',
+                    'log' => implode("\n", $log)
+                ]);
+            } else {
+                $log[] = ">>> Failed to create symlink. Trying alternative method...";
+
+                // Alternative: Use Artisan command
+                $artisanOutput = $this->runCommandSafe('php artisan storage:link 2>&1');
+                $log[] = $artisanOutput;
+
+                return back()->with([
+                    'status' => 'success',
+                    'message' => 'Storage symlink dibuat via artisan!',
+                    'log' => implode("\n", $log)
+                ]);
+            }
+        } catch (\Exception $e) {
+            $log[] = ">>> ERROR: " . $e->getMessage();
+            return back()->with([
+                'status' => 'error',
+                'message' => 'Gagal membuat storage symlink.',
+                'log' => implode("\n", $log)
+            ]);
+        }
+    }
+
+    /**
      * Run command without throwing exception
      */
     private function runCommandSafe($command)

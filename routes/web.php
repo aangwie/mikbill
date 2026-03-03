@@ -184,6 +184,7 @@ Route::middleware(['auth'])->group(function () {
             Route::post('/system/update', [SystemController::class, 'update'])->name('system.update');
             Route::post('/system/update-token', [SystemController::class, 'saveToken'])->name('system.saveToken');
             Route::post('/system/clear-cache', [SystemController::class, 'clearCache'])->name('system.clear-cache');
+            Route::post('/system/symlink', [SystemController::class, 'createSymlink'])->name('system.symlink');
 
             Route::post('/system/migrate', [SystemController::class, 'migrate'])->name('system.migrate');
             Route::get('/system/backup', [SystemController::class, 'backup'])->name('system.backup');

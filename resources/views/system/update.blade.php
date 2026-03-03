@@ -76,6 +76,15 @@
                             <i class="fas fa-broom mr-2 text-amber-500"></i> Clear Cache
                         </button>
                     </form>
+
+                    <form action="{{ route('system.symlink') }}" method="POST"
+                        onsubmit="return confirm('Buat symlink storage? Ini diperlukan agar file upload dapat diakses dari web.');">
+                        @csrf
+                        <button type="submit"
+                            class="w-full sm:w-auto inline-flex items-center justify-center rounded-lg bg-white border border-purple-300 px-6 py-3 text-sm font-bold text-purple-700 shadow-sm hover:bg-purple-50 hover:text-purple-900 transition-all transform hover:-translate-y-0.5">
+                            <i class="fas fa-link mr-2 text-purple-500"></i> Storage Symlink
+                        </button>
+                    </form>
                 </div>
             </div>
         </div>
