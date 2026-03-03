@@ -554,24 +554,23 @@ class BillingController extends Controller
         $companyEmail = (!empty($company->email) ? $company->email : null)
             ?? ($fallbackCompany->email ?? '');
 
-        // Convert Logo to Base64
+        // Convert Logo to Base64 using Storage disk (works on shared hosting)
         $logoBase64 = null;
+        $hostingDisk = \Illuminate\Support\Facades\Storage::disk('hosting');
         if ($logoSource && !empty($logoSource->logo_path)) {
-            $path = public_path('uploads/' . $logoSource->logo_path);
-            if (file_exists($path)) {
-                $type = pathinfo($path, PATHINFO_EXTENSION);
-                $data = file_get_contents($path);
+            if ($hostingDisk->exists($logoSource->logo_path)) {
+                $type = pathinfo($logoSource->logo_path, PATHINFO_EXTENSION);
+                $data = $hostingDisk->get($logoSource->logo_path);
                 $logoBase64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
             }
         }
 
-        // If still no logo, embed the BillNesia default logo as base64
+        // If still no logo, use BillNesia default logo
         if (!$logoBase64) {
-            $defaultLogoPath = public_path('img/billnesia_logo.png');
-            if (file_exists($defaultLogoPath)) {
-                $type = pathinfo($defaultLogoPath, PATHINFO_EXTENSION);
-                $data = file_get_contents($defaultLogoPath);
-                $logoBase64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
+            $billnesiaPath = rtrim($hostingDisk->path(''), '/\\') . '/../img/billnesia_logo.png';
+            if (file_exists($billnesiaPath)) {
+                $data = file_get_contents($billnesiaPath);
+                $logoBase64 = 'data:image/png;base64,' . base64_encode($data);
             }
         }
 
