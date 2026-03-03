@@ -526,8 +526,11 @@ class BillingController extends Controller
             if ($invoice->customer->operator_id != Auth::user()->id)
                 abort(403);
         }
+        // Get company based on authenticated user's role
+        $user = Auth::user();
+        $companyAdminId = $user->isOperator() ? $user->parent_id : $user->id;
         $company = Company::withoutGlobalScope(\App\Scopes\TenantScope::class)
-            ->where('admin_id', $invoice->admin_id)
+            ->where('admin_id', $companyAdminId)
             ->first();
 
         // Convert Logo to Base64 (Optional for print, but keeps view logic simple)

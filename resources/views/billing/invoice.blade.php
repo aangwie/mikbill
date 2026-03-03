@@ -7,9 +7,9 @@
     <title>Invoice #INV-{{ str_pad($invoice->id, 5, '0', STR_PAD_LEFT) }}</title>
     <!-- Favicon -->
     <link rel="icon" href="{{ $global_favicon ?? asset('favicon.ico') }}">
-    
+
     @if(!isset($isPdf))
-    <script src="https://cdn.tailwindcss.com"></script>
+        <script src="https://cdn.tailwindcss.com"></script>
     @endif
 
     <style>
@@ -31,14 +31,13 @@
         }
 
         @if(isset($isPdf))
-        .invoice-box {
-            margin: 0;
-            box-shadow: none;
-            max-width: 100%;
-        }
-        @endif
+            .invoice-box {
+                margin: 0;
+                box-shadow: none;
+                max-width: 100%;
+            }
 
-        table {
+        @endif table {
             width: 100%;
             line-height: inherit;
             text-align: left;
@@ -197,6 +196,7 @@
             .no-print {
                 display: none;
             }
+
             .invoice-box {
                 margin: 0;
                 box-shadow: none;
@@ -215,18 +215,21 @@
                     <table style="width: auto;">
                         <tr>
                             @if(isset($logoBase64))
-                                <td><img src="{{ $logoBase64 }}" style="height: 45px; width: auto; margin-right: 15px; border-radius: 6px;"></td>
+                                <td><img src="{{ $logoBase64 }}"
+                                        style="height: 45px; width: auto; margin-right: 15px; border-radius: 6px;"></td>
                             @elseif(!empty($company->logo_path))
-                                <td><img src="{{ asset('uploads/' . $company->logo_path) }}" style="height: 45px; width: auto; margin-right: 15px; border-radius: 6px;"></td>
+                                <td><img src="{{ asset('uploads/' . $company->logo_path) }}"
+                                        style="height: 45px; width: auto; margin-right: 15px; border-radius: 6px;"></td>
                             @else
                                 <td>
-                                    <div style="height: 40px; width: 40px; background-color: #4f46e5; color: white; border-radius: 8px; text-align: center; line-height: 40px; font-weight: bold; font-size: 20px; margin-right: 10px;">
-                                        {{ substr($company->company_name ?? 'M', 0, 1) }}
+                                    <div
+                                        style="font-size: 28px; font-weight: bold; color: #4f46e5; margin-right: 10px; letter-spacing: 1px;">
+                                        BillNesia
                                     </div>
                                 </td>
                             @endif
                             <td class="company-info">
-                                <p class="name">{{ $company->company_name ?? 'MIKBILL' }}</p>
+                                <p class="name">{{ $company->company_name ?? 'BillNesia' }}</p>
                             </td>
                         </tr>
                     </table>
@@ -260,10 +263,12 @@
                 </td>
                 <td style="text-align: right;">
                     <p class="section-label">Tanggal Invoice:</p>
-                    <p style="font-size: 14px; font-weight: bold; margin-bottom: 10px;">{{ $invoice->created_at->format('d/m/Y') }}</p>
-                    
+                    <p style="font-size: 14px; font-weight: bold; margin-bottom: 10px;">
+                        {{ $invoice->created_at->format('d/m/Y') }}</p>
+
                     <p class="section-label">Jatuh Tempo:</p>
-                    <p style="font-size: 14px; font-weight: bold; {{ $invoice->status != 'paid' && now() > $invoice->due_date ? 'color: #b91c1c;' : '' }}">
+                    <p
+                        style="font-size: 14px; font-weight: bold; {{ $invoice->status != 'paid' && now() > $invoice->due_date ? 'color: #b91c1c;' : '' }}">
                         {{ \Carbon\Carbon::parse($invoice->due_date)->format('d/m/Y') }}
                     </p>
                 </td>
@@ -314,11 +319,11 @@
                     <p>Harap melakukan pembayaran sebelum tanggal jatuh tempo.</p>
                 </td>
                 @if(!isset($isPdf))
-                <td style="text-align: right;" class="no-print">
-                    <button onclick="window.print()" class="btn-print">
-                        <i class="fas fa-print"></i> Cetak Invoice
-                    </button>
-                </td>
+                    <td style="text-align: right;" class="no-print">
+                        <button onclick="window.print()" class="btn-print">
+                            <i class="fas fa-print"></i> Cetak Invoice
+                        </button>
+                    </td>
                 @endif
             </tr>
         </table>
