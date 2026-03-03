@@ -533,9 +533,9 @@ class BillingController extends Controller
             ->where('admin_id', $companyAdminId)
             ->first();
 
-        // Fallback to superadmin's company if admin has no logo or company_name
+        // Fallback to superadmin's company if admin has missing data
         $fallbackCompany = null;
-        if (!$user->isSuperAdmin() && (!$company || empty($company->logo_path) || empty($company->company_name))) {
+        if (!$user->isSuperAdmin()) {
             $fallbackCompany = Company::withoutGlobalScope(\App\Scopes\TenantScope::class)
                 ->whereHas('admin', function ($q) {
                     $q->where('role', 'superadmin');
@@ -543,10 +543,16 @@ class BillingController extends Controller
                 ->first();
         }
 
-        // Determine which logo and company name to use
-        $displayCompany = $company ?? $fallbackCompany;
+        // Per-field fallback: admin's own data → superadmin's data → default
         $logoSource = ($company && !empty($company->logo_path)) ? $company : $fallbackCompany;
-        $nameSource = ($company && !empty($company->company_name)) ? $company : $fallbackCompany;
+        $companyName = (!empty($company->company_name) ? $company->company_name : null)
+            ?? ($fallbackCompany->company_name ?? 'BillNesia');
+        $companyAddress = (!empty($company->address) ? $company->address : null)
+            ?? ($fallbackCompany->address ?? '');
+        $companyPhone = (!empty($company->phone) ? $company->phone : null)
+            ?? ($fallbackCompany->phone ?? '');
+        $companyEmail = (!empty($company->email) ? $company->email : null)
+            ?? ($fallbackCompany->email ?? '');
 
         // Convert Logo to Base64
         $logoBase64 = null;
@@ -559,10 +565,25 @@ class BillingController extends Controller
             }
         }
 
-        // Build display name (admin's own or superadmin fallback)
-        $companyName = $nameSource->company_name ?? 'BillNesia';
+        // If still no logo, embed the BillNesia default logo as base64
+        if (!$logoBase64) {
+            $defaultLogoPath = public_path('img/billnesia_logo.png');
+            if (file_exists($defaultLogoPath)) {
+                $type = pathinfo($defaultLogoPath, PATHINFO_EXTENSION);
+                $data = file_get_contents($defaultLogoPath);
+                $logoBase64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
+            }
+        }
 
-        return view('billing.invoice', compact('invoice', 'company', 'logoBase64', 'companyName', 'displayCompany'));
+        return view('billing.invoice', compact(
+            'invoice',
+            'company',
+            'logoBase64',
+            'companyName',
+            'companyAddress',
+            'companyPhone',
+            'companyEmail'
+        ));
     }
 
     public function bulkUpdateDueDate(Request $request)

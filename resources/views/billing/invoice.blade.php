@@ -214,17 +214,9 @@
                 <td>
                     <table style="width: auto;">
                         <tr>
-                            @if(isset($logoBase64))
+                            @if($logoBase64)
                                 <td><img src="{{ $logoBase64 }}"
                                         style="height: 45px; width: auto; margin-right: 15px; border-radius: 6px;"></td>
-                            @elseif(!empty($company->logo_path))
-                                <td><img src="{{ asset('uploads/' . $company->logo_path) }}"
-                                        style="height: 45px; width: auto; margin-right: 15px; border-radius: 6px;"></td>
-                            @else
-                                <td>
-                                    <img src="{{ asset('img/billnesia_logo.png') }}"
-                                        style="height: 45px; width: auto; margin-right: 15px; border-radius: 6px;">
-                                </td>
                             @endif
                             <td class="company-info">
                                 <p class="name">{{ $companyName }}</p>
@@ -233,10 +225,11 @@
                     </table>
                     <div class="company-info">
                         <p class="details">
-                            {{ $displayCompany->address ?? 'Alamat Perusahaan belum diatur' }}<br>
-                            {{ $displayCompany->phone ?? '' }}
-                            {{ !empty($displayCompany->phone) && !empty($displayCompany->email) ? '|' : '' }}
-                            {{ $displayCompany->email ?? '' }}
+                            @if(!empty($companyAddress))
+                                {{ $companyAddress }}<br>
+                            @endif
+                            {{ $companyPhone }} {{ !empty($companyPhone) && !empty($companyEmail) ? '|' : '' }}
+                            {{ $companyEmail }}
                         </p>
                     </div>
                 </td>
