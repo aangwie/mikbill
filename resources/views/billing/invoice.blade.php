@@ -222,10 +222,8 @@
                                         style="height: 45px; width: auto; margin-right: 15px; border-radius: 6px;"></td>
                             @else
                                 <td>
-                                    <div
-                                        style="font-size: 28px; font-weight: bold; color: #7c3aed; margin-right: 10px; letter-spacing: 1px;">
-                                        BillNesia
-                                    </div>
+                                    <img src="{{ asset('img/billnesia_logo.png') }}"
+                                        style="height: 45px; width: auto; margin-right: 15px; border-radius: 6px;">
                                 </td>
                             @endif
                             <td class="company-info">
