@@ -36,8 +36,8 @@ class SystemController extends Controller
     private function getVersion()
     {
         try {
-            // Check if .git folder exists
-            if (!is_dir(base_path('.git'))) {
+            // Check if git folder exists and is valid
+            if (!is_dir(base_path('.git')) || !$this->isValidGitRepo()) {
                 return 'Manual Upload (No Git)';
             }
             return $this->runCommand('git log -1 --format="%h - %s (%cd)" --date=short');
@@ -57,8 +57,8 @@ class SystemController extends Controller
         $githubRepo = env('GITHUB_REPO', 'aangwie/mikbill'); // default repo
         $branch = env('GITHUB_BRANCH', 'main');
 
-        // If no .git folder, try to initialize it
-        if (!is_dir(base_path('.git'))) {
+        // If no .git folder or not a valid repo, try to initialize it
+        if (!is_dir(base_path('.git')) || !$this->isValidGitRepo()) {
             if (empty($githubToken)) {
                 return back()->with([
                     'status' => 'warning',
@@ -70,19 +70,25 @@ class SystemController extends Controller
             // Initialize git with token
             try {
                 $log[] = ">>> INITIALIZING GIT...";
-                $this->runCommandSafe('git init');
+                // Use runCommand instead of runCommandSafe to throw on failure here
+                $log[] = $this->runCommand('git init 2>&1');
+
                 $remoteUrl = "https://{$githubToken}@github.com/{$githubRepo}.git";
-                $this->runCommandSafe("git remote add origin {$remoteUrl}");
-                $this->runCommandSafe('git fetch origin');
-                $this->runCommandSafe("git checkout -f origin/{$branch}");
-                $this->runCommandSafe("git branch -M {$branch}");
-                $this->runCommandSafe("git reset --hard origin/{$branch}");
+
+                // Remove remote if exists
+                $this->runCommandSafe('git remote remove origin 2>&1');
+
+                $log[] = $this->runCommand("git remote add origin {$remoteUrl} 2>&1");
+                $log[] = $this->runCommand("git fetch origin {$branch} 2>&1");
+                $log[] = $this->runCommand("git checkout -f -B {$branch} origin/{$branch} 2>&1");
+                $log[] = $this->runCommand("git reset --hard origin/{$branch} 2>&1");
+
                 $log[] = "Git repository initialized successfully!";
             } catch (\Exception $e) {
                 return back()->with([
                     'status' => 'error',
                     'message' => 'Gagal inisialisasi git repository.',
-                    'log' => $e->getMessage()
+                    'log' => implode("\n", $log) . "\n\n>>> ERROR:\n" . $e->getMessage()
                 ]);
             }
         }
@@ -400,5 +406,15 @@ class SystemController extends Controller
         $process = Process::fromShellCommandline($command, base_path());
         $process->run();
         return trim($process->getOutput() ?: $process->getErrorOutput());
+    }
+
+    /**
+     * Check if current directory is a valid git repository
+     */
+    private function isValidGitRepo()
+    {
+        $process = Process::fromShellCommandline('git rev-parse --is-inside-work-tree', base_path());
+        $process->run();
+        return trim($process->getOutput()) === 'true';
     }
 }
