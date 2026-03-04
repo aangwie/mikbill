@@ -32,8 +32,7 @@ class DashboardController extends Controller
                 $q->where('operator_id', $user->id);
             });
         } elseif ($user->role === 'admin' || $user->role === 'superadmin') {
-            $customerQuery->where('admin_id', $user->id);
-            $invoiceQuery->where('admin_id', $user->id);
+            // Already handled natively by TenantScope for both Admin and Superadmin
         }
 
         // ── Customer Stats (Optimized: Fetch from Mikrotik for real-time status) ──

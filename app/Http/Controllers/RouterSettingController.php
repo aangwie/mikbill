@@ -12,10 +12,10 @@ class RouterSettingController extends Controller
     public function index(Request $request)
     {
         $ownership = $request->input('ownership', 'semua');
-        $query = RouterSetting::orderBy('is_active', 'desc');
-
-        // Jika superadmin, beri opsi filter kepemilikan
+        // Jika superadmin, bypass global scope agar bisa melihat semua router
         if (auth()->user()->isSuperAdmin()) {
+            $query = RouterSetting::withoutGlobalScope(\App\Scopes\TenantScope::class)->orderBy('is_active', 'desc');
+
             if ($ownership === 'superadmin') {
                 $query->whereHas('admin', function ($q) {
                     $q->where('role', 'superadmin');
@@ -25,6 +25,8 @@ class RouterSettingController extends Controller
                     $q->where('role', 'admin')->orWhere('role', 'operator');
                 });
             }
+        } else {
+            $query = RouterSetting::orderBy('is_active', 'desc');
         }
 
         $routers = $query->with('admin')->get(); // Eager load admin info
@@ -72,11 +74,14 @@ class RouterSettingController extends Controller
 
         // Cek ID (jika ada ID berarti Edit, jika tidak berarti Baru)
         if ($request->id) {
-            $router = RouterSetting::find($request->id);
+            $router = $user->isSuperAdmin()
+                ? RouterSetting::withoutGlobalScope(\App\Scopes\TenantScope::class)->find($request->id)
+                : RouterSetting::find($request->id);
+
             $router->update($data);
             $msg = 'Konfigurasi berhasil diperbarui.';
         } else {
-            // Jika ini router pertama, langsung set aktif
+            // Jika ini router pertama untuk user ini, langsung set aktif
             if (RouterSetting::count() == 0) {
                 $data['is_active'] = true;
             }
@@ -91,11 +96,23 @@ class RouterSettingController extends Controller
     // AKTIFKAN ROUTER (GUNAKAN)
     public function activate($id)
     {
-        // 1. Matikan semua dulu
-        RouterSetting::query()->update(['is_active' => false]);
+        $user = auth()->user();
+
+        $router = $user->isSuperAdmin()
+            ? RouterSetting::withoutGlobalScope(\App\Scopes\TenantScope::class)->find($id)
+            : RouterSetting::find($id);
+
+        if (!$router) {
+            return back()->with('error', 'Router tidak ditemukan.');
+        }
+
+        // 1. Matikan semua router milik admin_id yang sama dengan router yang akan diaktifkan
+        // Ini memastikan aktivasi router superadmin tidak mematikan router admin, dan sebaliknya.
+        RouterSetting::withoutGlobalScope(\App\Scopes\TenantScope::class)
+            ->where('admin_id', $router->admin_id)
+            ->update(['is_active' => false]);
 
         // 2. Aktifkan yang dipilih
-        $router = RouterSetting::find($id);
         $router->update(['is_active' => true]);
 
         return back()->with('success', "Berhasil beralih ke router: {$router->label} ({$router->host})");
@@ -104,7 +121,10 @@ class RouterSettingController extends Controller
     // HAPUS ROUTER
     public function destroy($id)
     {
-        $router = RouterSetting::find($id);
+        $user = auth()->user();
+        $router = $user->isSuperAdmin()
+            ? RouterSetting::withoutGlobalScope(\App\Scopes\TenantScope::class)->find($id)
+            : RouterSetting::find($id);
 
         if ($router->is_active) {
             return back()->with('error', 'Tidak bisa menghapus router yang sedang digunakan (Aktif). Pindahkan koneksi dulu.');
