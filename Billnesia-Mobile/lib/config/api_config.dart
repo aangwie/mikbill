@@ -1,7 +1,7 @@
 /// Centralized API configuration constants for the Billnesia Mobile app.
 class ApiConfig {
   /// Default API base URL (Android emulator points to host machine's localhost).
-  static const String defaultBaseUrl = 'http://10.0.2.2:8000';
+  static const String defaultBaseUrl = 'http://localhost:8000';
 
   /// API route prefix appended after the base URL.
   static const String apiPrefix = '/api/mobile';

@@ -31,8 +31,7 @@ class StorageService {
   }
 
   static Future<String> getApiUrl() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_apiUrlKey) ?? ApiConfig.defaultBaseUrl;
+    return ApiConfig.defaultBaseUrl;
   }
 
   // ── User Info ──

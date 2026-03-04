@@ -3,13 +3,17 @@ import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'services/auth_service.dart';
+import 'services/notification_service.dart';
 import 'screens/login_screen.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/customers/customer_list_screen.dart';
 import 'screens/invoices/invoice_list_screen.dart';
+import 'screens/maps/online_users_map_screen.dart';
 import 'screens/settings/settings_screen.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await NotificationService.initialize();
   runApp(const BillnesiaApp());
 }
 
@@ -111,6 +115,7 @@ class _HomeScreenState extends State<HomeScreen> {
     DashboardScreen(),
     CustomerListScreen(),
     InvoiceListScreen(),
+    OnlineUsersMapScreen(),
     SettingsScreen(),
   ];
 
@@ -118,6 +123,7 @@ class _HomeScreenState extends State<HomeScreen> {
     'Dashboard',
     'Pelanggan',
     'Tagihan',
+    'Peta Online',
     'Pengaturan',
   ];
 
@@ -230,6 +236,10 @@ class _HomeScreenState extends State<HomeScreen> {
             BottomNavigationBarItem(
               icon: Icon(Icons.receipt_long_rounded),
               label: 'Tagihan',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.map_rounded),
+              label: 'Peta',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.settings_rounded),

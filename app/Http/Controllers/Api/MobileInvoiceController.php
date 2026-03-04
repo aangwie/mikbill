@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
 use App\Models\Invoice;
+use App\Services\WhatsappService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -28,6 +29,8 @@ class MobileInvoiceController extends Controller
 
         if ($user->role === 'operator') {
             $query->whereHas('customer', fn($q) => $q->where('operator_id', $user->id));
+        } elseif ($user->role === 'admin' || $user->role === 'superadmin') {
+            $query->whereHas('customer', fn($q) => $q->where('admin_id', $user->id));
         }
 
         // Search
@@ -51,6 +54,8 @@ class MobileInvoiceController extends Controller
 
         if ($user->role === 'operator') {
             $totalsQuery->whereHas('customer', fn($q) => $q->where('operator_id', $user->id));
+        } elseif ($user->role === 'admin' || $user->role === 'superadmin') {
+            $totalsQuery->whereHas('customer', fn($q) => $q->where('admin_id', $user->id));
         }
 
         $allInvoices = $totalsQuery->with('customer')->get();
@@ -93,6 +98,8 @@ class MobileInvoiceController extends Controller
         // Permission check
         if ($user->role === 'operator' && $customer->operator_id !== $user->id) {
             return response()->json(['success' => false, 'message' => 'Akses ditolak.'], 403);
+        } elseif ($user->role === 'admin' && $customer->admin_id !== $user->id) {
+            return response()->json(['success' => false, 'message' => 'Akses ditolak.'], 403);
         }
 
         if ($invoice->status === 'paid') {
@@ -105,9 +112,30 @@ class MobileInvoiceController extends Controller
         $invoice->update(['status' => 'paid']);
         $customer->update(['is_active' => true]);
 
+        // Kirim WhatsApp Notifikasi
+        if (!empty($customer->phone)) {
+            try {
+                $monthName = Carbon::parse($invoice->due_date)->locale('id')->isoFormat('MMMM YYYY');
+                $priceFormatted = number_format($invoice->price > 0 ? $invoice->price : ($customer->monthly_price ?? 0), 0, ',', '.');
+                $message = "Terima kasih, pembayaran tagihan internet atas nama {$customer->name} sebesar Rp {$priceFormatted} untuk periode {$monthName} telah kami terima dan lunas.";
+
+                $res = WhatsappService::send($customer->phone, $message);
+                $waStatus = $res['status'] ?? false;
+                $waMessage = $res['message'] ?? 'OK';
+            } catch (\Exception $e) {
+                // Ignore error WA so the API still succeeds indicating it's paid.
+                \Illuminate\Support\Facades\Log::error('WA Error in Pay API: ' . $e->getMessage());
+                $waStatus = false;
+                $waMessage = $e->getMessage();
+            }
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'Pembayaran berhasil dicatat.',
+            'wa_sent' => clone $invoice->fresh(),
+            'wa_status' => $waStatus ?? false,
+            'wa_error' => $waMessage ?? 'No number provided',
             'data' => $invoice->fresh(),
         ]);
     }
@@ -125,6 +153,8 @@ class MobileInvoiceController extends Controller
         // Permission check
         if ($user->role === 'operator' && $customer->operator_id !== $user->id) {
             return response()->json(['success' => false, 'message' => 'Akses ditolak.'], 403);
+        } elseif ($user->role === 'admin' && $customer->admin_id !== $user->id) {
+            return response()->json(['success' => false, 'message' => 'Akses ditolak.'], 403);
         }
 
         if ($invoice->status !== 'paid') {
@@ -137,9 +167,29 @@ class MobileInvoiceController extends Controller
         $invoice->update(['status' => 'unpaid']);
         $customer->update(['is_active' => false]);
 
+        $waStatus = false;
+        $waMessage = 'No number provided';
+        // Kirim WhatsApp Notifikasi Rollback
+        if (!empty($customer->phone)) {
+            try {
+                $monthName = Carbon::parse($invoice->due_date)->locale('id')->isoFormat('MMMM YYYY');
+                $message = "Mohon maaf, status pembayaran tagihan internet atas nama {$customer->name} untuk periode {$monthName} telah DIKEMBALIKAN menjadi BELUM LUNAS. Silakan hubungi admin untuk informasi lebih lanjut.";
+
+                $res = WhatsappService::send($customer->phone, $message);
+                $waStatus = $res['status'] ?? false;
+                $waMessage = $res['message'] ?? 'OK';
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error('WA Error in Cancel API: ' . $e->getMessage());
+                $waStatus = false;
+                $waMessage = $e->getMessage();
+            }
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'Pembayaran dibatalkan.',
+            'wa_status' => $waStatus,
+            'wa_error' => $waMessage,
             'data' => $invoice->fresh(),
         ]);
     }

@@ -20,8 +20,8 @@ class Invoice {
   factory Invoice.fromJson(Map<String, dynamic> json) {
     final customer = json['customer'];
     return Invoice(
-      id: json['id'],
-      customerId: json['customer_id'],
+      id: int.tryParse(json['id']?.toString() ?? '0') ?? 0,
+      customerId: int.tryParse(json['customer_id']?.toString() ?? '0') ?? 0,
       dueDate: json['due_date'],
       price: double.tryParse(json['price']?.toString() ?? '0') ?? 0,
       status: json['status'] ?? 'unpaid',

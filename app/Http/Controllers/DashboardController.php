@@ -31,7 +31,7 @@ class DashboardController extends Controller
             $invoiceQuery->whereHas('customer', function ($q) use ($user) {
                 $q->where('operator_id', $user->id);
             });
-        } elseif ($user->role === 'admin' || $user->role === 'superadmin') {
+        } elseif ($user->role === 'admin') {
             $customerQuery->where('admin_id', $user->id);
             $invoiceQuery->where('admin_id', $user->id);
         }

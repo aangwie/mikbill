@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../models/invoice.dart';
 import '../../services/api_service.dart';
+import '../../services/notification_service.dart';
 import '../../widgets/invoice_tile.dart';
 
 class InvoiceListScreen extends StatefulWidget {
@@ -121,17 +122,100 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> {
     if (confirmed != true) return;
 
     try {
-      await ApiService.post('/invoices/${invoice.id}/pay');
+      final result = await ApiService.post('/invoices/${invoice.id}/pay');
       if (mounted) {
+        String message = result['message'] ?? 'Pembayaran berhasil!';
+        if (result['wa_status'] == false) {
+          message += '\nInfo WA: ${result['wa_error'] ?? 'Gagal kirim'}';
+        }
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Pembayaran berhasil!'),
+            content: Text(message),
             backgroundColor: const Color(0xFF10B981),
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
           ),
+        );
+
+        // Show Android notification bar
+        NotificationService.showPaymentNotification(
+          customerName: invoice.customerName ?? '-',
+          waSent: result['wa_status'] == true,
+          waError: result['wa_error']?.toString(),
+        );
+      }
+      _loadInvoices();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  Future<void> _cancelInvoice(Invoice invoice) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1E293B),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text(
+          'Batalkan Pembayaran',
+          style: TextStyle(color: Colors.white),
+        ),
+        content: Text(
+          'Batalkan status lunas tagihan ${invoice.customerName} sebesar ${currencyFormat.format(invoice.price)}?',
+          style: const TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Batal', style: TextStyle(color: Colors.white70)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFEF4444),
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text(
+              'Ya, Batalkan',
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    try {
+      final result = await ApiService.post('/invoices/${invoice.id}/cancel');
+      if (mounted) {
+        String message = result['message'] ?? 'Pembayaran dibatalkan.';
+        if (result['wa_status'] == false) {
+          message += '\nInfo WA: ${result['wa_error'] ?? 'Gagal kirim'}';
+        }
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(message),
+            backgroundColor: const Color(0xFFEF4444),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        );
+
+        // Show Android notification bar
+        NotificationService.showRollbackNotification(
+          customerName: invoice.customerName ?? '-',
+          waSent: result['wa_status'] == true,
+          waError: result['wa_error']?.toString(),
         );
       }
       _loadInvoices();
@@ -290,6 +374,7 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> {
                         invoice: inv,
                         currencyFormat: currencyFormat,
                         onPay: inv.isPaid ? null : () => _payInvoice(inv),
+                        onCancel: inv.isPaid ? () => _cancelInvoice(inv) : null,
                       );
                     },
                   ),

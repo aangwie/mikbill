@@ -16,6 +16,9 @@ dependencies:
   intl: ^0.20.0
   fl_chart: ^0.70.0
   google_fonts: ^6.2.0
+  flutter_map: ^8.2.2
+  latlong2: ^0.9.1
+  flutter_local_notifications: ^19.0.0
 
 dev_dependencies:
   flutter_test:

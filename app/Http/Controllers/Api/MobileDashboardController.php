@@ -25,6 +25,9 @@ class MobileDashboardController extends Controller
         if ($user->role === 'operator') {
             $customerQuery->where('operator_id', $user->id);
             $invoiceQuery->whereHas('customer', fn($q) => $q->where('operator_id', $user->id));
+        } elseif ($user->role === 'admin') {
+            $customerQuery->where('admin_id', $user->id);
+            $invoiceQuery->whereHas('customer', fn($q) => $q->where('admin_id', $user->id));
         }
 
         $totalCustomers = (clone $customerQuery)->count();

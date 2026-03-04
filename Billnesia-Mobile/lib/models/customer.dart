@@ -27,7 +27,7 @@ class Customer {
 
   factory Customer.fromJson(Map<String, dynamic> json) {
     return Customer(
-      id: json['id'],
+      id: int.tryParse(json['id']?.toString() ?? '0') ?? 0,
       name: json['name'] ?? '',
       internetNumber: json['internet_number'],
       pppoeUsername: json['pppoe_username'],
@@ -38,8 +38,12 @@ class Customer {
           ? double.tryParse(json['monthly_price'].toString())
           : null,
       isActive: json['is_active'] == true || json['is_active'] == 1,
-      operatorId: json['operator_id'],
-      adminId: json['admin_id'],
+      operatorId: json['operator_id'] != null
+          ? int.tryParse(json['operator_id'].toString())
+          : null,
+      adminId: json['admin_id'] != null
+          ? int.tryParse(json['admin_id'].toString())
+          : null,
     );
   }
 

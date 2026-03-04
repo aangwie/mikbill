@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\MobileCustomerController;
 use App\Http\Controllers\Api\MobileInvoiceController;
 use App\Http\Controllers\Api\MobileCompanyController;
 use App\Http\Controllers\Api\MobileSettingController;
+use App\Http\Controllers\Api\MobileMapController;
 
 // Existing WhatsApp API
 Route::post('/send-message', [WhatsappController::class, 'sendMessage']);
@@ -51,5 +52,7 @@ Route::prefix('mobile')->group(function () {
 
         // Company Info
         Route::get('/company', [MobileCompanyController::class, 'index']);
+
+        Route::get('/maps/online-users', [MobileMapController::class, 'index']);
     });
 });

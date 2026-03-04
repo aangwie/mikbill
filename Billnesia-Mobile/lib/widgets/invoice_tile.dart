@@ -5,6 +5,7 @@ import '../models/invoice.dart';
 class InvoiceTile extends StatelessWidget {
   final Invoice invoice;
   final VoidCallback? onPay;
+  final VoidCallback? onCancel;
   final NumberFormat currencyFormat;
 
   const InvoiceTile({
@@ -12,6 +13,7 @@ class InvoiceTile extends StatelessWidget {
     required this.invoice,
     required this.currencyFormat,
     this.onPay,
+    this.onCancel,
   });
 
   @override
@@ -64,13 +66,29 @@ class InvoiceTile extends StatelessWidget {
                   color: const Color(0xFF10B981).withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Text(
-                  'Lunas',
-                  style: TextStyle(
-                    color: Color(0xFF10B981),
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                  ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      'Lunas',
+                      style: TextStyle(
+                        color: Color(0xFF10B981),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    if (onCancel != null) ...[
+                      const SizedBox(width: 8),
+                      GestureDetector(
+                        onTap: onCancel,
+                        child: const Icon(
+                          Icons.undo,
+                          color: Color(0xFFEF4444),
+                          size: 14,
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               )
             : SizedBox(

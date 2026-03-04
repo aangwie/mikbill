@@ -15,9 +15,10 @@ class TenantScope implements Scope
      */
     public function apply(Builder $builder, Model $model): void
     {
-        if (Auth::check()) {
-            $user = Auth::user();
+        $user = Auth::user() ?? (Auth::guard('sanctum')->check() ? Auth::guard('sanctum')->user() : null);
+        \Illuminate\Support\Facades\Log::info('TenantScope Triggered. User ID: ' . ($user ? $user->id : 'NULL'));
 
+        if ($user) {
             if ($user->isSuperAdmin()) {
                 // Superadmin sees everything.
                 // Optional: Check if we want to filter by specific admin if viewing their "dashboard" context?

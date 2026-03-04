@@ -19,6 +19,8 @@ class MobileCustomerController extends Controller
 
         if ($user->role === 'operator') {
             $query->where('operator_id', $user->id);
+        } elseif ($user->role === 'admin' || $user->role === 'superadmin') {
+            $query->where('admin_id', $user->id);
         }
 
         // Search
@@ -60,6 +62,8 @@ class MobileCustomerController extends Controller
 
         // Permission check
         if ($user->role === 'operator' && $customer->operator_id !== $user->id) {
+            return response()->json(['success' => false, 'message' => 'Akses ditolak.'], 403);
+        } elseif ($user->role === 'admin' && $customer->admin_id !== $user->id) {
             return response()->json(['success' => false, 'message' => 'Akses ditolak.'], 403);
         }
 
@@ -126,6 +130,8 @@ class MobileCustomerController extends Controller
         // Permission check
         if ($user->role === 'operator' && $customer->operator_id !== $user->id) {
             return response()->json(['success' => false, 'message' => 'Akses ditolak.'], 403);
+        } elseif ($user->role === 'admin' && $customer->admin_id !== $user->id) {
+            return response()->json(['success' => false, 'message' => 'Akses ditolak.'], 403);
         }
 
         $request->validate([
@@ -168,6 +174,8 @@ class MobileCustomerController extends Controller
 
         // Permission check
         if ($user->role === 'operator' && $customer->operator_id !== $user->id) {
+            return response()->json(['success' => false, 'message' => 'Akses ditolak.'], 403);
+        } elseif ($user->role === 'admin' && $customer->admin_id !== $user->id) {
             return response()->json(['success' => false, 'message' => 'Akses ditolak.'], 403);
         }
 
