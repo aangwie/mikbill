@@ -32,10 +32,12 @@
                 </div>
 
                 <!-- Connection Mode Section -->
-                <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+                <div
+                    class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
                     <div class="p-6 border-b border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50">
                         <div class="flex items-center gap-3">
-                            <div class="h-10 w-10 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600">
+                            <div
+                                class="h-10 w-10 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600">
                                 <i class="fas fa-shield-alt"></i>
                             </div>
                             <h3 class="font-bold text-slate-900 dark:text-white">Protokol Koneksi</h3>
@@ -44,30 +46,37 @@
                     <div class="p-6">
                         <label class="block text-sm font-medium text-slate-500 mb-4">Paksa Protokol Koneksi</label>
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <label class="relative flex cursor-pointer rounded-xl border border-slate-200 dark:border-slate-700 p-4 focus:outline-none transition-all hover:bg-slate-50 dark:hover:bg-slate-900/50">
+                            <label
+                                class="relative flex cursor-pointer rounded-xl border border-slate-200 dark:border-slate-700 p-4 focus:outline-none transition-all hover:bg-slate-50 dark:hover:bg-slate-900/50">
                                 <input type="radio" name="connection_mode" value="auto" class="sr-only" {{ ($setting->connection_mode ?? 'auto') == 'auto' ? 'checked' : '' }}>
                                 <div class="flex flex-col">
                                     <span class="block text-sm font-bold text-slate-900 dark:text-white">Automatic</span>
-                                    <span class="mt-1 flex items-center text-xs text-slate-50">Gunakan protokol yang sedang berjalan.</span>
+                                    <span class="mt-1 flex items-center text-xs text-slate-50">Gunakan protokol yang sedang
+                                        berjalan.</span>
                                 </div>
-                                <div class="absolute -top-px -right-px h-6 w-6 rounded-tr-xl rounded-bl-xl bg-primary-600 flex items-center justify-center opacity-0 transition-opacity peer-checked:opacity-100" style="display: none;">
+                                <div class="absolute -top-px -right-px h-6 w-6 rounded-tr-xl rounded-bl-xl bg-primary-600 flex items-center justify-center opacity-0 transition-opacity peer-checked:opacity-100"
+                                    style="display: none;">
                                     <i class="fas fa-check text-[10px] text-white"></i>
                                 </div>
                             </label>
-                            
-                            <label class="relative flex cursor-pointer rounded-xl border border-slate-200 dark:border-slate-700 p-4 focus:outline-none transition-all hover:bg-slate-50 dark:hover:bg-slate-900/50">
+
+                            <label
+                                class="relative flex cursor-pointer rounded-xl border border-slate-200 dark:border-slate-700 p-4 focus:outline-none transition-all hover:bg-slate-50 dark:hover:bg-slate-900/50">
                                 <input type="radio" name="connection_mode" value="http" class="sr-only" {{ ($setting->connection_mode ?? 'auto') == 'http' ? 'checked' : '' }}>
                                 <div class="flex flex-col">
                                     <span class="block text-sm font-bold text-slate-900 dark:text-white">Force HTTP</span>
-                                    <span class="mt-1 flex items-center text-xs text-slate-50">Paksa semua akses menggunakan HTTP.</span>
+                                    <span class="mt-1 flex items-center text-xs text-slate-50">Paksa semua akses menggunakan
+                                        HTTP.</span>
                                 </div>
                             </label>
 
-                            <label class="relative flex cursor-pointer rounded-xl border border-slate-200 dark:border-slate-700 p-4 focus:outline-none transition-all hover:bg-slate-50 dark:hover:bg-slate-900/50">
+                            <label
+                                class="relative flex cursor-pointer rounded-xl border border-slate-200 dark:border-slate-700 p-4 focus:outline-none transition-all hover:bg-slate-50 dark:hover:bg-slate-900/50">
                                 <input type="radio" name="connection_mode" value="https" class="sr-only" {{ ($setting->connection_mode ?? 'auto') == 'https' ? 'checked' : '' }}>
                                 <div class="flex flex-col">
                                     <span class="block text-sm font-bold text-slate-900 dark:text-white">Force HTTPS</span>
-                                    <span class="mt-1 flex items-center text-xs text-slate-50">Paksa semua akses menggunakan HTTPS.</span>
+                                    <span class="mt-1 flex items-center text-xs text-slate-50">Paksa semua akses menggunakan
+                                        HTTPS.</span>
                                 </div>
                             </label>
                         </div>
@@ -75,10 +84,11 @@
                 </div>
 
                 <style>
-                    input[type="radio"]:checked + div, 
-                    input[type="radio"]:checked ~ div {
+                    input[type="radio"]:checked+div,
+                    input[type="radio"]:checked~div {
                         border-color: rgb(var(--primary-600));
                     }
+
                     label:has(input[type="radio"]:checked) {
                         border-color: #3b82f6;
                         background-color: rgba(59, 130, 246, 0.05);
@@ -105,6 +115,34 @@
                             placeholder="Tuliskan aturan penggunaan layanan, kebijakan privasi, dll...">{{ $setting->terms_conditions }}</textarea>
                         <p class="mt-2 text-xs text-slate-400 italic">Pastikan informasi jelas dan transparan untuk
                             pelanggan Anda.</p>
+                    </div>
+                </div>
+
+                <!-- Mobile API URL Section -->
+                <div
+                    class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+                    <div class="p-6 border-b border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50">
+                        <div class="flex items-center gap-3">
+                            <div
+                                class="h-10 w-10 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600">
+                                <i class="fas fa-mobile-alt"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-slate-900 dark:text-white">Mobile API URL</h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">URL untuk koneksi aplikasi mobile
+                                    Billnesia</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <label class="block text-sm font-medium text-slate-500 mb-2">Base URL API</label>
+                        <input type="url" name="mobile_api_url" value="{{ $setting->mobile_api_url }}"
+                            class="block w-full rounded-xl border-slate-300 dark:bg-slate-700 dark:border-slate-600 dark:text-white focus:ring-primary-500 focus:border-primary-500 transition-all"
+                            placeholder="https://yourdomain.com">
+                        <p class="mt-2 text-xs text-slate-400 italic">
+                            Masukkan URL lengkap server Anda (contoh: https://billing.example.com). URL ini akan digunakan
+                            oleh aplikasi mobile Billnesia untuk terhubung ke server.
+                        </p>
                     </div>
                 </div>
 

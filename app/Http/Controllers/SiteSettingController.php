@@ -14,7 +14,8 @@ class SiteSettingController extends Controller
             $setting = SiteSetting::create([
                 'about_us' => 'Selamat datang di layanan kami.',
                 'terms_conditions' => 'Syarat dan ketentuan berlaku.',
-                'connection_mode' => 'auto'
+                'connection_mode' => 'auto',
+                'mobile_api_url' => null,
             ]);
         }
         return view('superadmin.settings.site', compact('setting'));
@@ -23,7 +24,7 @@ class SiteSettingController extends Controller
     public function update(Request $request)
     {
         $setting = SiteSetting::first();
-        $setting->update($request->only(['about_us', 'terms_conditions', 'connection_mode']));
+        $setting->update($request->only(['about_us', 'terms_conditions', 'connection_mode', 'mobile_api_url']));
 
         return back()->with('success', 'Informasi situs berhasil diperbarui.');
     }
