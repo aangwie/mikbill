@@ -20,9 +20,9 @@ class TenantScope implements Scope
 
         if ($user) {
             if ($user->isSuperAdmin()) {
-                // Superadmin sees everything.
-                // Optional: Check if we want to filter by specific admin if viewing their "dashboard" context?
-                // For now, global view.
+                // By default, superadmin also only sees their own data
+                // This ensures charts and lists are filtered to the logged-in superadmin
+                $builder->where('admin_id', $user->id);
                 return;
             }
 
