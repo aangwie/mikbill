@@ -30,14 +30,15 @@ class AppServiceProvider extends ServiceProvider
             // Cek apakah kolom admin_id sudah ada (karena ditambahkan lewat migrasi)
             if (Schema::hasColumn('companies', 'admin_id')) {
                 // Kita ambil company milik user yang punya role superadmin
-                $company = Company::whereHas('admin', function ($q) {
+                // Use withoutGlobalScopes to bypass TenantScope for this global view share
+                $company = Company::withoutGlobalScopes()->whereHas('admin', function ($q) {
                     $q->where('role', 'superadmin');
                 })->first();
             }
 
             // Jika tidak ada (mungkin belum set atau kolom belum ada), ambil yang pertama saja
             if (!$company) {
-                $company = Company::first();
+                $company = Company::withoutGlobalScopes()->first();
             }
 
             // Jika ada logo di database, pakai itu. Jika tidak, pakai default laravel (favicon.ico)

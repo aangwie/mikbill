@@ -16,16 +16,19 @@
     {{-- Sidebar Header --}}
     <div
         class="flex h-16 items-center justify-between px-4 border-b border-slate-200 dark:border-slate-700 flex-shrink-0">
-        {{-- Mini logo when collapsed --}}
-        <a href="{{ route('pppoe.dashboard') }}" class="flex items-center gap-2 group min-w-0"
+        {{-- Logo when expanded --}}
+        <a href="{{ route('dashboard.index') }}" class="flex items-center gap-2 group min-w-0"
             :class="sidebarCollapsed ? 'lg:justify-center lg:w-full' : ''">
-            <div
-                class="bg-[#352f99] text-white p-2 rounded-lg shadow-md group-hover:bg-indigo-700 transition flex-shrink-0">
-                <i class="fas fa-wifi text-sm"></i>
-            </div>
+            @if(isset($company) && !empty($company->logo_path))
+                <img src="{{ asset('uploads/' . $company->logo_path) }}" alt="Logo"
+                    class="h-8 w-auto rounded-lg flex-shrink-0" :class="sidebarCollapsed ? 'h-6' : 'h-8'">
+            @else
+                <img src="{{ asset('img/billnesia_logo.png') }}" alt="BillNesia" class="h-8 w-auto rounded-lg flex-shrink-0"
+                    :class="sidebarCollapsed ? 'h-6' : 'h-8'">
+            @endif
             <span class="text-lg font-bold text-slate-800 dark:text-white tracking-tight truncate"
                 :class="sidebarCollapsed ? 'lg:hidden' : ''" x-cloak>
-                Menu
+                {{ $company->company_name ?? 'BillNesia' }}
             </span>
         </a>
         {{-- Close button (mobile only) --}}
@@ -59,7 +62,7 @@
             @if(auth()->user()->isSuperAdmin())
                 <a href="{{ route('control.index') }}"
                     class="group relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200
-                                    {{ request()->routeIs('control.index') ? 'bg-[#352f99]/10 text-[#352f99] dark:bg-indigo-900/40 dark:text-indigo-300 border-l-[3px] border-[#352f99]' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50 hover:text-slate-900 dark:hover:text-white' }}"
+                                        {{ request()->routeIs('control.index') ? 'bg-[#352f99]/10 text-[#352f99] dark:bg-indigo-900/40 dark:text-indigo-300 border-l-[3px] border-[#352f99]' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50 hover:text-slate-900 dark:hover:text-white' }}"
                     :class="sidebarCollapsed ? 'lg:justify-center lg:px-0' : ''">
                     <i
                         class="fas fa-hammer w-5 text-center flex-shrink-0 {{ request()->routeIs('control.index') ? 'text-[#352f99] dark:text-indigo-400' : 'text-slate-400' }}"></i>
@@ -87,7 +90,7 @@
             @if(auth()->user()->role == 'admin')
                 <a href="{{ route('plans.public') }}"
                     class="group relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200
-                                    {{ request()->routeIs('plans.public') ? 'bg-[#352f99]/10 text-[#352f99] dark:bg-indigo-900/40 dark:text-indigo-300 border-l-[3px] border-[#352f99]' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50 hover:text-slate-900 dark:hover:text-white' }}"
+                                        {{ request()->routeIs('plans.public') ? 'bg-[#352f99]/10 text-[#352f99] dark:bg-indigo-900/40 dark:text-indigo-300 border-l-[3px] border-[#352f99]' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50 hover:text-slate-900 dark:hover:text-white' }}"
                     :class="sidebarCollapsed ? 'lg:justify-center lg:px-0' : ''">
                     <i
                         class="fas fa-box w-5 text-center flex-shrink-0 {{ request()->routeIs('plans.public') ? 'text-[#352f99] dark:text-indigo-400' : 'text-slate-400' }}"></i>
@@ -111,7 +114,7 @@
                 @if(auth()->user()->role == 'operator' || auth()->user()->isSuperAdmin() || auth()->user()->isAdmin())
                     <a href="{{ route('customers.index') }}"
                         class="group relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200
-                                                            {{ request()->routeIs('customers.index') ? 'bg-[#352f99]/10 text-[#352f99] dark:bg-indigo-900/40 dark:text-indigo-300 border-l-[3px] border-[#352f99]' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50 hover:text-slate-900 dark:hover:text-white' }}"
+                                                                    {{ request()->routeIs('customers.index') ? 'bg-[#352f99]/10 text-[#352f99] dark:bg-indigo-900/40 dark:text-indigo-300 border-l-[3px] border-[#352f99]' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50 hover:text-slate-900 dark:hover:text-white' }}"
                         :class="sidebarCollapsed ? 'lg:justify-center lg:px-0' : ''">
                         <i
                             class="fas fa-users w-5 text-center flex-shrink-0 {{ request()->routeIs('customers.index') ? 'text-[#352f99] dark:text-indigo-400' : 'text-slate-400' }}"></i>
@@ -123,7 +126,7 @@
 
                     <a href="{{ route('billing.index') }}"
                         class="group relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200
-                                                            {{ request()->routeIs('billing.index') ? 'bg-[#352f99]/10 text-[#352f99] dark:bg-indigo-900/40 dark:text-indigo-300 border-l-[3px] border-[#352f99]' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50 hover:text-slate-900 dark:hover:text-white' }}"
+                                                                    {{ request()->routeIs('billing.index') ? 'bg-[#352f99]/10 text-[#352f99] dark:bg-indigo-900/40 dark:text-indigo-300 border-l-[3px] border-[#352f99]' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50 hover:text-slate-900 dark:hover:text-white' }}"
                         :class="sidebarCollapsed ? 'lg:justify-center lg:px-0' : ''">
                         <i
                             class="fas fa-file-invoice-dollar w-5 text-center flex-shrink-0 {{ request()->routeIs('billing.index') ? 'text-[#352f99] dark:text-indigo-400' : 'text-slate-400' }}"></i>
@@ -137,7 +140,7 @@
                 @if(auth()->user()->isAdmin() || auth()->user()->isSuperAdmin())
                     <a href="{{ route('accounting.index') }}"
                         class="group relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200
-                                                            {{ request()->routeIs('accounting.index') ? 'bg-[#352f99]/10 text-[#352f99] dark:bg-indigo-900/40 dark:text-indigo-300 border-l-[3px] border-[#352f99]' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50 hover:text-slate-900 dark:hover:text-white' }}"
+                                                                    {{ request()->routeIs('accounting.index') ? 'bg-[#352f99]/10 text-[#352f99] dark:bg-indigo-900/40 dark:text-indigo-300 border-l-[3px] border-[#352f99]' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50 hover:text-slate-900 dark:hover:text-white' }}"
                         :class="sidebarCollapsed ? 'lg:justify-center lg:px-0' : ''">
                         <i
                             class="fas fa-money-bill-wave w-5 text-center flex-shrink-0 {{ request()->routeIs('accounting.index') ? 'text-[#352f99] dark:text-indigo-400' : 'text-slate-400' }}"></i>
@@ -149,7 +152,7 @@
 
                     <a href="{{ route('report.index') }}"
                         class="group relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200
-                                                            {{ request()->routeIs('report.index') ? 'bg-[#352f99]/10 text-[#352f99] dark:bg-indigo-900/40 dark:text-indigo-300 border-l-[3px] border-[#352f99]' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50 hover:text-slate-900 dark:hover:text-white' }}"
+                                                                    {{ request()->routeIs('report.index') ? 'bg-[#352f99]/10 text-[#352f99] dark:bg-indigo-900/40 dark:text-indigo-300 border-l-[3px] border-[#352f99]' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50 hover:text-slate-900 dark:hover:text-white' }}"
                         :class="sidebarCollapsed ? 'lg:justify-center lg:px-0' : ''">
                         <i
                             class="fas fa-print w-5 text-center flex-shrink-0 {{ request()->routeIs('report.index') ? 'text-[#352f99] dark:text-indigo-400' : 'text-slate-400' }}"></i>
@@ -175,7 +178,7 @@
                 <div x-data="{ open: {{ request()->routeIs('hotspot.*') ? 'true' : 'false' }} }">
                     <button @click="open = !open" type="button"
                         class="group relative w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200
-                                        {{ request()->routeIs('hotspot.*') ? 'bg-[#352f99]/10 text-[#352f99] dark:bg-indigo-900/40 dark:text-indigo-300' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50' }}"
+                                            {{ request()->routeIs('hotspot.*') ? 'bg-[#352f99]/10 text-[#352f99] dark:bg-indigo-900/40 dark:text-indigo-300' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50' }}"
                         :class="sidebarCollapsed ? 'lg:justify-center lg:px-0' : ''">
                         <span class="flex items-center gap-3">
                             <i
@@ -192,13 +195,13 @@
                         class="ml-5 mt-1 space-y-0.5 border-l-2 border-slate-200 dark:border-slate-700 pl-3">
                         <a href="{{ route('hotspot.monitor') }}"
                             class="flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-all duration-200
-                                            {{ request()->routeIs('hotspot.monitor') ? 'text-[#352f99] dark:text-indigo-300 font-semibold bg-[#352f99]/5' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-700/30' }}">
+                                                {{ request()->routeIs('hotspot.monitor') ? 'text-[#352f99] dark:text-indigo-300 font-semibold bg-[#352f99]/5' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-700/30' }}">
                             <i class="fas fa-desktop w-4 text-center text-xs"></i>
                             Monitor
                         </a>
                         <a href="{{ route('hotspot.generate') }}"
                             class="flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-all duration-200
-                                            {{ request()->routeIs('hotspot.generate') ? 'text-[#352f99] dark:text-indigo-300 font-semibold bg-[#352f99]/5' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-700/30' }}">
+                                                {{ request()->routeIs('hotspot.generate') ? 'text-[#352f99] dark:text-indigo-300 font-semibold bg-[#352f99]/5' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-700/30' }}">
                             <i class="fas fa-user-plus w-4 text-center text-xs"></i>
                             Generate Akun
                         </a>
@@ -210,7 +213,7 @@
                     x-data="{ open: {{ request()->routeIs('monitor.*') || request()->routeIs('pppoe.dashboard') ? 'true' : 'false' }} }">
                     <button @click="open = !open" type="button"
                         class="group relative w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200
-                                        {{ request()->routeIs('monitor.*') || request()->routeIs('pppoe.dashboard') ? 'bg-[#352f99]/10 text-[#352f99] dark:bg-indigo-900/40 dark:text-indigo-300' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50' }}"
+                                            {{ request()->routeIs('monitor.*') || request()->routeIs('pppoe.dashboard') ? 'bg-[#352f99]/10 text-[#352f99] dark:bg-indigo-900/40 dark:text-indigo-300' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50' }}"
                         :class="sidebarCollapsed ? 'lg:justify-center lg:px-0' : ''">
                         <span class="flex items-center gap-3">
                             <i
@@ -227,25 +230,25 @@
                         class="ml-5 mt-1 space-y-0.5 border-l-2 border-slate-200 dark:border-slate-700 pl-3">
                         <a href="{{ route('pppoe.dashboard') }}"
                             class="flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-all duration-200
-                                        {{ request()->routeIs('pppoe.dashboard') ? 'text-[#352f99] dark:text-indigo-300 font-semibold bg-[#352f99]/5' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-700/30' }}">
+                                            {{ request()->routeIs('pppoe.dashboard') ? 'text-[#352f99] dark:text-indigo-300 font-semibold bg-[#352f99]/5' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-700/30' }}">
                             <i class="fas fa-tachometer-alt w-4 text-center text-xs"></i>
                             PPPoE Monitoring
                         </a>
                         <a href="{{ route('monitor.dhcp-leases') }}"
                             class="flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-all duration-200
-                                            {{ request()->routeIs('monitor.dhcp-leases') ? 'text-[#352f99] dark:text-indigo-300 font-semibold bg-[#352f99]/5' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-700/30' }}">
+                                                {{ request()->routeIs('monitor.dhcp-leases') ? 'text-[#352f99] dark:text-indigo-300 font-semibold bg-[#352f99]/5' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-700/30' }}">
                             <i class="fas fa-network-wired w-4 text-center text-xs"></i>
                             DHCP Leases
                         </a>
                         <a href="{{ route('monitor.static-users') }}"
                             class="flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-all duration-200
-                                            {{ request()->routeIs('monitor.static-users') ? 'text-[#352f99] dark:text-indigo-300 font-semibold bg-[#352f99]/5' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-700/30' }}">
+                                                {{ request()->routeIs('monitor.static-users') ? 'text-[#352f99] dark:text-indigo-300 font-semibold bg-[#352f99]/5' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-700/30' }}">
                             <i class="fas fa-user-tag w-4 text-center text-xs"></i>
                             Static Users
                         </a>
                         <a href="{{ route('monitor.simple-queues') }}"
                             class="flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-all duration-200
-                                            {{ request()->routeIs('monitor.simple-queues') ? 'text-[#352f99] dark:text-indigo-300 font-semibold bg-[#352f99]/5' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-700/30' }}">
+                                                {{ request()->routeIs('monitor.simple-queues') ? 'text-[#352f99] dark:text-indigo-300 font-semibold bg-[#352f99]/5' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-700/30' }}">
                             <i class="fas fa-stream w-4 text-center text-xs"></i>
                             Simple Queues
                         </a>
@@ -265,7 +268,7 @@
 
                 <a href="{{ route('traffic.index') }}"
                     class="group relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200
-                                    {{ request()->routeIs('traffic.index') ? 'bg-[#352f99]/10 text-[#352f99] dark:bg-indigo-900/40 dark:text-indigo-300 border-l-[3px] border-[#352f99]' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50 hover:text-slate-900 dark:hover:text-white' }}"
+                                        {{ request()->routeIs('traffic.index') ? 'bg-[#352f99]/10 text-[#352f99] dark:bg-indigo-900/40 dark:text-indigo-300 border-l-[3px] border-[#352f99]' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50 hover:text-slate-900 dark:hover:text-white' }}"
                     :class="sidebarCollapsed ? 'lg:justify-center lg:px-0' : ''">
                     <i
                         class="fas fa-chart-area w-5 text-center flex-shrink-0 {{ request()->routeIs('traffic.index') ? 'text-[#352f99] dark:text-indigo-400' : 'text-slate-400' }}"></i>
@@ -277,7 +280,7 @@
 
                 <a href="{{ route('router.index') }}"
                     class="group relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200
-                                    {{ request()->routeIs('router.index') ? 'bg-[#352f99]/10 text-[#352f99] dark:bg-indigo-900/40 dark:text-indigo-300 border-l-[3px] border-[#352f99]' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50 hover:text-slate-900 dark:hover:text-white' }}"
+                                        {{ request()->routeIs('router.index') ? 'bg-[#352f99]/10 text-[#352f99] dark:bg-indigo-900/40 dark:text-indigo-300 border-l-[3px] border-[#352f99]' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50 hover:text-slate-900 dark:hover:text-white' }}"
                     :class="sidebarCollapsed ? 'lg:justify-center lg:px-0' : ''">
                     <i
                         class="fas fa-network-wired w-5 text-center flex-shrink-0 {{ request()->routeIs('router.index') ? 'text-[#352f99] dark:text-indigo-400' : 'text-slate-400' }}"></i>
@@ -289,7 +292,7 @@
 
                 <a href="{{ route('company.index') }}"
                     class="group relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200
-                                    {{ request()->routeIs('company.index') ? 'bg-[#352f99]/10 text-[#352f99] dark:bg-indigo-900/40 dark:text-indigo-300 border-l-[3px] border-[#352f99]' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50 hover:text-slate-900 dark:hover:text-white' }}"
+                                        {{ request()->routeIs('company.index') ? 'bg-[#352f99]/10 text-[#352f99] dark:bg-indigo-900/40 dark:text-indigo-300 border-l-[3px] border-[#352f99]' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50 hover:text-slate-900 dark:hover:text-white' }}"
                     :class="sidebarCollapsed ? 'lg:justify-center lg:px-0' : ''">
                     <i
                         class="fas fa-building w-5 text-center flex-shrink-0 {{ request()->routeIs('company.index') ? 'text-[#352f99] dark:text-indigo-400' : 'text-slate-400' }}"></i>
@@ -301,7 +304,7 @@
 
                 <a href="{{ route('users.index') }}"
                     class="group relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200
-                                    {{ request()->routeIs('users.index') ? 'bg-[#352f99]/10 text-[#352f99] dark:bg-indigo-900/40 dark:text-indigo-300 border-l-[3px] border-[#352f99]' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50 hover:text-slate-900 dark:hover:text-white' }}"
+                                        {{ request()->routeIs('users.index') ? 'bg-[#352f99]/10 text-[#352f99] dark:bg-indigo-900/40 dark:text-indigo-300 border-l-[3px] border-[#352f99]' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50 hover:text-slate-900 dark:hover:text-white' }}"
                     :class="sidebarCollapsed ? 'lg:justify-center lg:px-0' : ''">
                     <i
                         class="fas fa-user-shield w-5 text-center flex-shrink-0 {{ request()->routeIs('users.index') ? 'text-[#352f99] dark:text-indigo-400' : 'text-slate-400' }}"></i>
@@ -313,7 +316,7 @@
 
                 <a href="{{ route('whatsapp.index') }}"
                     class="group relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200
-                                    {{ request()->routeIs('whatsapp.index') ? 'bg-[#352f99]/10 text-[#352f99] dark:bg-indigo-900/40 dark:text-indigo-300 border-l-[3px] border-[#352f99]' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50 hover:text-slate-900 dark:hover:text-white' }}"
+                                        {{ request()->routeIs('whatsapp.index') ? 'bg-[#352f99]/10 text-[#352f99] dark:bg-indigo-900/40 dark:text-indigo-300 border-l-[3px] border-[#352f99]' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50 hover:text-slate-900 dark:hover:text-white' }}"
                     :class="sidebarCollapsed ? 'lg:justify-center lg:px-0' : ''">
                     <i
                         class="fab fa-whatsapp w-5 text-center flex-shrink-0 {{ request()->routeIs('whatsapp.index') ? 'text-[#352f99] dark:text-indigo-400' : 'text-slate-400' }}"></i>
@@ -326,7 +329,7 @@
                 @if(auth()->user()->isSuperAdmin())
                     <a href="{{ route('mail.index') }}"
                         class="group relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200
-                                                            {{ request()->routeIs('mail.index') ? 'bg-[#352f99]/10 text-[#352f99] dark:bg-indigo-900/40 dark:text-indigo-300 border-l-[3px] border-[#352f99]' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50 hover:text-slate-900 dark:hover:text-white' }}"
+                                                                    {{ request()->routeIs('mail.index') ? 'bg-[#352f99]/10 text-[#352f99] dark:bg-indigo-900/40 dark:text-indigo-300 border-l-[3px] border-[#352f99]' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50 hover:text-slate-900 dark:hover:text-white' }}"
                         :class="sidebarCollapsed ? 'lg:justify-center lg:px-0' : ''">
                         <i
                             class="fas fa-mail-bulk w-5 text-center flex-shrink-0 {{ request()->routeIs('mail.index') ? 'text-[#352f99] dark:text-indigo-400' : 'text-slate-400' }}"></i>
@@ -338,7 +341,7 @@
 
                     <a href="{{ route('plans.index') }}"
                         class="group relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200
-                                                            {{ request()->routeIs('plans.index') ? 'bg-[#352f99]/10 text-[#352f99] dark:bg-indigo-900/40 dark:text-indigo-300 border-l-[3px] border-[#352f99]' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50 hover:text-slate-900 dark:hover:text-white' }}"
+                                                                    {{ request()->routeIs('plans.index') ? 'bg-[#352f99]/10 text-[#352f99] dark:bg-indigo-900/40 dark:text-indigo-300 border-l-[3px] border-[#352f99]' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50 hover:text-slate-900 dark:hover:text-white' }}"
                         :class="sidebarCollapsed ? 'lg:justify-center lg:px-0' : ''">
                         <i
                             class="fas fa-box-open w-5 text-center flex-shrink-0 {{ request()->routeIs('plans.index') ? 'text-[#352f99] dark:text-indigo-400' : 'text-slate-400' }}"></i>
@@ -350,7 +353,7 @@
 
                     <a href="{{ route('payment.index') }}"
                         class="group relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200
-                                                            {{ request()->routeIs('payment.index') ? 'bg-[#352f99]/10 text-[#352f99] dark:bg-indigo-900/40 dark:text-indigo-300 border-l-[3px] border-[#352f99]' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50 hover:text-slate-900 dark:hover:text-white' }}"
+                                                                    {{ request()->routeIs('payment.index') ? 'bg-[#352f99]/10 text-[#352f99] dark:bg-indigo-900/40 dark:text-indigo-300 border-l-[3px] border-[#352f99]' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50 hover:text-slate-900 dark:hover:text-white' }}"
                         :class="sidebarCollapsed ? 'lg:justify-center lg:px-0' : ''">
                         <i
                             class="fas fa-credit-card w-5 text-center flex-shrink-0 {{ request()->routeIs('payment.index') ? 'text-[#352f99] dark:text-indigo-400' : 'text-slate-400' }}"></i>
@@ -362,7 +365,7 @@
 
                     <a href="{{ route('site.index') }}"
                         class="group relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200
-                                                            {{ request()->routeIs('site.index') ? 'bg-[#352f99]/10 text-[#352f99] dark:bg-indigo-900/40 dark:text-indigo-300 border-l-[3px] border-[#352f99]' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50 hover:text-slate-900 dark:hover:text-white' }}"
+                                                                    {{ request()->routeIs('site.index') ? 'bg-[#352f99]/10 text-[#352f99] dark:bg-indigo-900/40 dark:text-indigo-300 border-l-[3px] border-[#352f99]' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50 hover:text-slate-900 dark:hover:text-white' }}"
                         :class="sidebarCollapsed ? 'lg:justify-center lg:px-0' : ''">
                         <i
                             class="fas fa-cog w-5 text-center flex-shrink-0 {{ request()->routeIs('site.index') ? 'text-[#352f99] dark:text-indigo-400' : 'text-slate-400' }}"></i>
@@ -374,7 +377,7 @@
 
                     <a href="{{ route('system.index') }}"
                         class="group relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200
-                                                            {{ request()->routeIs('system.index') ? 'bg-[#352f99]/10 text-[#352f99] dark:bg-indigo-900/40 dark:text-indigo-300 border-l-[3px] border-[#352f99]' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50 hover:text-slate-900 dark:hover:text-white' }}"
+                                                                    {{ request()->routeIs('system.index') ? 'bg-[#352f99]/10 text-[#352f99] dark:bg-indigo-900/40 dark:text-indigo-300 border-l-[3px] border-[#352f99]' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50 hover:text-slate-900 dark:hover:text-white' }}"
                         :class="sidebarCollapsed ? 'lg:justify-center lg:px-0' : ''">
                         <i
                             class="fas fa-sync w-5 text-center flex-shrink-0 {{ request()->routeIs('system.index') ? 'text-[#352f99] dark:text-indigo-400' : 'text-slate-400' }}"></i>
