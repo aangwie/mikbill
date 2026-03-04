@@ -12,9 +12,9 @@ class RouterSettingController extends Controller
     public function index(Request $request)
     {
         $ownership = $request->input('ownership', 'semua');
-        // Jika superadmin, bypass global scope agar bisa melihat semua router
+        // Jika superadmin, bypass SEMUA global scope agar bisa melihat semua router
         if (auth()->user()->isSuperAdmin()) {
-            $query = RouterSetting::withoutGlobalScope(\App\Scopes\TenantScope::class)->orderBy('is_active', 'desc');
+            $query = RouterSetting::withoutGlobalScopes()->orderBy('is_active', 'desc');
 
             if ($ownership === 'superadmin') {
                 $query->whereHas('admin', function ($q) {
@@ -22,7 +22,7 @@ class RouterSettingController extends Controller
                 });
             } elseif ($ownership === 'admin') {
                 $query->whereHas('admin', function ($q) {
-                    $q->where('role', 'admin')->orWhere('role', 'operator');
+                    $q->where('role', 'admin');
                 });
             }
         } else {
@@ -75,7 +75,7 @@ class RouterSettingController extends Controller
         // Cek ID (jika ada ID berarti Edit, jika tidak berarti Baru)
         if ($request->id) {
             $router = $user->isSuperAdmin()
-                ? RouterSetting::withoutGlobalScope(\App\Scopes\TenantScope::class)->find($request->id)
+                ? RouterSetting::withoutGlobalScopes()->find($request->id)
                 : RouterSetting::find($request->id);
 
             $router->update($data);
@@ -108,7 +108,7 @@ class RouterSettingController extends Controller
 
         // 1. Matikan semua router milik admin_id yang sama dengan router yang akan diaktifkan
         // Ini memastikan aktivasi router superadmin tidak mematikan router admin, dan sebaliknya.
-        RouterSetting::withoutGlobalScope(\App\Scopes\TenantScope::class)
+        RouterSetting::withoutGlobalScopes()
             ->where('admin_id', $router->admin_id)
             ->update(['is_active' => false]);
 
@@ -123,7 +123,7 @@ class RouterSettingController extends Controller
     {
         $user = auth()->user();
         $router = $user->isSuperAdmin()
-            ? RouterSetting::withoutGlobalScope(\App\Scopes\TenantScope::class)->find($id)
+            ? RouterSetting::withoutGlobalScopes()->find($id)
             : RouterSetting::find($id);
 
         if ($router->is_active) {
