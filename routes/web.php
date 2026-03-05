@@ -90,6 +90,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/admin/pppoe', [PppoeController::class, 'index'])->name('pppoe.dashboard');
     //Route Maps Pelanggan
     Route::get('/maps', [App\Http\Controllers\MapController::class, 'index'])->name('maps.index');
+    Route::get('/maps/data', [App\Http\Controllers\MapController::class, 'data'])->name('maps.data');
 
     // ... (SISA SEMUA ROUTE LAMA ANDA : BILLING, ADMIN, OPERATOR TETAP DISINI) ...
 

@@ -14,17 +14,26 @@ class MikrotikService
 
     public function __construct()
     {
+        // Connection will be initialized lazily when needed
+    }
+
+    protected function initialize()
+    {
+        if ($this->client !== null) {
+            return;
+        }
+
         try {
-            // AMBIL YANG STATUSNYA AKTIF
+            // AMBIL YANG STATUSNYA AKTIF (TenantScope will apply here if user is logged in)
             $config = RouterSetting::where('is_active', true)->first();
 
             // Jika tidak ada yang aktif, ambil yang pertama saja (fallback)
             if (!$config) {
-                $config = RouterSetting::first();
+                // Bypass scope to check if ANY router exists at least
+                $config = RouterSetting::withoutGlobalScopes()->where('is_active', true)->first();
             }
 
             if (!$config) {
-                $this->client = null;
                 return;
             }
 
@@ -33,7 +42,7 @@ class MikrotikService
                 'user' => $config->username,
                 'pass' => $config->password,
                 'port' => (int) $config->port,
-                'timeout' => 10,
+                'timeout' => 5, // Reduced timeout for better UX
             ]);
         } catch (ConnectException | ClientException $e) {
             $this->client = null;
@@ -43,6 +52,7 @@ class MikrotikService
     // Cek status koneksi
     public function isConnected()
     {
+        $this->initialize();
         return $this->client !== null;
     }
 

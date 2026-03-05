@@ -178,62 +178,78 @@
             attribution: '&copy; OpenStreetMap contributors'
         }).addTo(map);
 
-        var locations = @json($mapData);
-        var markers = [];
+        var markers = {}; // Use object to track by username for easy updates
 
-        locations.forEach(function (loc) {
-            var markerStatus = (loc.status === 'online') ? 'online' : 'offline';
-            var iconColorClass = (loc.status === 'online') ? 'text-emerald-600' : 'text-rose-600';
+        function renderMarkers(locations) {
+            locations.forEach(function (loc) {
+                var markerStatus = (loc.status === 'online') ? 'online' : 'offline';
+                var iconColorClass = (loc.status === 'online') ? 'text-emerald-600' : 'text-rose-600';
 
-            var statusBadge = (loc.status === 'online') ?
-                '<span class="inline-flex items-center rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">ONLINE</span>' :
-                '<span class="inline-flex items-center rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-600/10">OFFLINE</span>';
+                var statusBadge = (loc.status === 'online') ?
+                    '<span class="inline-flex items-center rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">ONLINE</span>' :
+                    '<span class="inline-flex items-center rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-600/10">OFFLINE</span>';
 
-            var customIcon = L.divIcon({
-                className: 'bg-transparent border-0',
-                html: `<div class="map-pin ${markerStatus}"><span><i class="fas fa-wifi ${iconColorClass}"></i></span></div>`,
-                iconSize: [40, 40],
-                iconAnchor: [20, 40], // Center bottom
-                popupAnchor: [0, -45] // Above pin
+                var customIcon = L.divIcon({
+                    className: 'bg-transparent border-0',
+                    html: `<div class="map-pin ${markerStatus}"><span><i class="fas fa-wifi ${iconColorClass}"></i></span></div>`,
+                    iconSize: [40, 40],
+                    iconAnchor: [20, 40],
+                    popupAnchor: [0, -45]
+                });
+
+                var popupContent = `
+                        <div class="px-4 py-3 bg-white min-w-[200px]">
+                            <div class="text-center mb-3">
+                                <h6 class="text-sm font-bold text-slate-800 mb-1 leading-tight">${loc.name}</h6>
+                                ${statusBadge}
+                            </div>
+                            <div class="space-y-1.5 border-t border-slate-100 pt-2">
+                                <div class="flex items-start text-xs text-slate-500">
+                                    <i class="fas fa-user-circle mt-0.5 mr-2 text-slate-400"></i>
+                                    <span class="font-mono text-slate-700">${loc.username}</span>
+                                </div>
+                                <div class="flex items-start text-xs text-slate-500">
+                                    <i class="fas fa-map-marker-alt mt-0.5 mr-2 text-slate-400"></i>
+                                    <span>${loc.address ? loc.address.substring(0, 30) + '...' : '-'}</span>
+                                </div>
+                            </div>
+                            <div class="mt-3 pt-2">
+                                <a href="https://wa.me/${loc.phone}" target="_blank" class="flex w-full justify-center items-center rounded-md bg-green-50 px-2 py-1.5 text-xs font-bold text-green-700 hover:bg-green-100 transition-colors">
+                                    <i class="fab fa-whatsapp mr-1.5"></i> Chat WhatsApp
+                                </a>
+                            </div>
+                        </div>
+                    `;
+
+                if (markers[loc.username]) {
+                    // Update existing marker
+                    markers[loc.username].setIcon(customIcon);
+                    markers[loc.username].setPopupContent(popupContent);
+                } else {
+                    // Create new marker
+                    var marker = L.marker([loc.lat, loc.lng], { icon: customIcon }).addTo(map);
+                    marker.bindPopup(popupContent);
+                    marker.on('mouseover', function (e) {
+                        this.openPopup();
+                    });
+                    markers[loc.username] = marker;
+                }
             });
 
-            var marker = L.marker([loc.lat, loc.lng], { icon: customIcon }).addTo(map);
-
-            var popupContent = `
-                                    <div class="px-4 py-3 bg-white min-w-[200px]">
-                                        <div class="text-center mb-3">
-                                            <h6 class="text-sm font-bold text-slate-800 mb-1 leading-tight">${loc.name}</h6>
-                                            ${statusBadge}
-                                        </div>
-                                        <div class="space-y-1.5 border-t border-slate-100 pt-2">
-                                            <div class="flex items-start text-xs text-slate-500">
-                                                <i class="fas fa-user-circle mt-0.5 mr-2 text-slate-400"></i>
-                                                <span class="font-mono text-slate-700">${loc.username}</span>
-                                            </div>
-                                            <div class="flex items-start text-xs text-slate-500">
-                                                <i class="fas fa-map-marker-alt mt-0.5 mr-2 text-slate-400"></i>
-                                                <span>${loc.address ? loc.address.substring(0, 30) + '...' : '-'}</span>
-                                            </div>
-                                        </div>
-                                        <div class="mt-3 pt-2">
-                                            <a href="https://wa.me/${loc.phone}" target="_blank" class="flex w-full justify-center items-center rounded-md bg-green-50 px-2 py-1.5 text-xs font-bold text-green-700 hover:bg-green-100 transition-colors">
-                                                <i class="fab fa-whatsapp mr-1.5"></i> Chat WhatsApp
-                                            </a>
-                                        </div>
-                                    </div>
-                                `;
-
-            marker.bindPopup(popupContent);
-            marker.on('mouseover', function (e) {
-                this.openPopup();
-            });
-            markers.push(marker);
-        });
-
-        if (markers.length > 0) {
-            var group = new L.featureGroup(markers);
-            map.fitBounds(group.getBounds().pad(0.2), { maxZoom: 50 });
+            // Auto-fit bounds only on first load
+            if (window.firstLoad) {
+                var markerList = Object.values(markers);
+                if (markerList.length > 0) {
+                    var group = new L.featureGroup(markerList);
+                    map.fitBounds(group.getBounds().pad(0.2), { maxZoom: 50 });
+                }
+                window.firstLoad = false;
+            }
         }
+
+        // Initial Data
+        window.firstLoad = true;
+        renderMarkers(@json($mapData));
 
         // Auto Refresh Logic
         let savedMapInterval = localStorage.getItem('map_refresh_interval') || 30;
@@ -247,14 +263,29 @@
         let mapTimerElem = document.getElementById('mapTimerDisplay');
         let mapIntervalId;
 
+        function refreshData() {
+            fetch('{{ route('maps.data') }}')
+                .then(response => response.json())
+                .then(data => {
+                    renderMarkers(data);
+                    mapTimeLeft = parseInt(document.getElementById('selectMapInterval').value);
+                    mapTimerElem.innerHTML = mapTimeLeft;
+                })
+                .catch(err => console.error('Map refresh failed:', err));
+        }
+
         function startMapTimer() {
             if (mapIntervalId) clearInterval(mapIntervalId);
             if (!isMapRefreshOn) { mapTimerElem.innerHTML = "OFF"; return; }
             mapTimerElem.innerHTML = mapTimeLeft;
 
             mapIntervalId = setInterval(function () {
-                if (mapTimeLeft <= 0) window.location.reload();
-                else { mapTimeLeft--; mapTimerElem.innerHTML = mapTimeLeft; }
+                if (mapTimeLeft <= 0) {
+                    refreshData();
+                } else {
+                    mapTimeLeft--;
+                    mapTimerElem.innerHTML = mapTimeLeft;
+                }
             }, 1000);
         }
 

@@ -17,6 +17,17 @@ class MapController extends Controller
 
     public function index()
     {
+        $mapData = $this->getMapData();
+        return view('maps.index', compact('mapData'));
+    }
+
+    public function data()
+    {
+        return response()->json($this->getMapData());
+    }
+
+    private function getMapData()
+    {
         $user = auth()->user();
 
         // 1. Ambil Pelanggan yang punya Koordinat saja, filtered by user role
@@ -40,12 +51,11 @@ class MapController extends Controller
                 $onlineUsers = collect($actives)->pluck('name')->flip();
             }
         } catch (\Exception $e) {
-            // Ignore error jika mikrotik mati, anggap semua offline
+            // Ignore error jika mikrotik mati
         }
 
-        // 3. Format Data untuk Map (GeoJSON like)
-        $mapData = $customers->map(function ($c) use ($onlineUsers) {
-            // Cek apakah user ini ada di daftar online mikrotik?
+        // 3. Format Data untuk Map
+        return $customers->map(function ($c) use ($onlineUsers) {
             $isOnline = $onlineUsers->has($c->pppoe_username);
 
             return [
@@ -58,7 +68,5 @@ class MapController extends Controller
                 'phone' => $c->phone,
             ];
         });
-
-        return view('maps.index', compact('mapData'));
     }
 }
