@@ -17,10 +17,19 @@ class MapController extends Controller
 
     public function index()
     {
-        // 1. Ambil Pelanggan yang punya Koordinat saja
-        $customers = Customer::whereNotNull('latitude')
-            ->whereNotNull('longitude')
-            ->get();
+        $user = auth()->user();
+
+        // 1. Ambil Pelanggan yang punya Koordinat saja, filtered by user role
+        $query = Customer::whereNotNull('latitude')
+            ->whereNotNull('longitude');
+
+        if ($user->role === 'operator') {
+            $query->where('operator_id', $user->id);
+        } elseif ($user->role === 'admin' || $user->role === 'superadmin') {
+            $query->where('admin_id', $user->id);
+        }
+
+        $customers = $query->get();
 
         // 2. Ambil Data User Online dari Mikrotik
         $onlineUsers = collect([]);
@@ -35,10 +44,10 @@ class MapController extends Controller
         }
 
         // 3. Format Data untuk Map (GeoJSON like)
-        $mapData = $customers->map(function($c) use ($onlineUsers) {
+        $mapData = $customers->map(function ($c) use ($onlineUsers) {
             // Cek apakah user ini ada di daftar online mikrotik?
             $isOnline = $onlineUsers->has($c->pppoe_username);
-            
+
             return [
                 'name' => $c->name,
                 'username' => $c->pppoe_username,
