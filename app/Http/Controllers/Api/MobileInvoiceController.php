@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Customer;
-use App\Models\Invoice;
+use App\Models\MobileCustomer;
+use App\Models\MobileInvoice;
 use App\Services\WhatsappService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -21,17 +21,14 @@ class MobileInvoiceController extends Controller
         $month = $request->input('month', date('n'));
         $year = $request->input('year', date('Y'));
 
-        $query = Invoice::with('customer:id,name,internet_number,phone,monthly_price')
+        $query = MobileInvoice::with('customer:id,name,internet_number,phone,monthly_price')
             ->whereMonth('due_date', $month)
             ->whereYear('due_date', $year)
             ->orderByRaw("FIELD(status, 'unpaid', 'paid')")
             ->orderBy('due_date', 'asc');
 
-        if ($user->role === 'operator') {
-            $query->whereHas('customer', fn($q) => $q->where('operator_id', $user->id));
-        } elseif ($user->role === 'admin' || $user->role === 'superadmin') {
-            $query->whereHas('customer', fn($q) => $q->where('admin_id', $user->id));
-        }
+        // No explicit filtering needed as MobileTenantScope 
+        // handles it automatically via MobileInvoice model.
 
         // Search
         if ($search = $request->input('search')) {
@@ -48,15 +45,9 @@ class MobileInvoiceController extends Controller
 
         $invoices = $query->paginate($request->input('per_page', 20));
 
-        // Calculate totals
-        $totalsQuery = Invoice::whereMonth('due_date', $month)
+        // Calculate totals using Mobile-scoped model
+        $totalsQuery = MobileInvoice::whereMonth('due_date', $month)
             ->whereYear('due_date', $year);
-
-        if ($user->role === 'operator') {
-            $totalsQuery->whereHas('customer', fn($q) => $q->where('operator_id', $user->id));
-        } elseif ($user->role === 'admin' || $user->role === 'superadmin') {
-            $totalsQuery->whereHas('customer', fn($q) => $q->where('admin_id', $user->id));
-        }
 
         $allInvoices = $totalsQuery->with('customer')->get();
 
@@ -91,7 +82,7 @@ class MobileInvoiceController extends Controller
      */
     public function pay(Request $request, $id)
     {
-        $invoice = Invoice::with('customer')->findOrFail($id);
+        $invoice = MobileInvoice::with('customer')->findOrFail($id);
         $customer = $invoice->customer;
         $user = $request->user();
 
@@ -146,7 +137,7 @@ class MobileInvoiceController extends Controller
      */
     public function cancel(Request $request, $id)
     {
-        $invoice = Invoice::with('customer')->findOrFail($id);
+        $invoice = MobileInvoice::with('customer')->findOrFail($id);
         $customer = $invoice->customer;
         $user = $request->user();
 
@@ -206,7 +197,7 @@ class MobileInvoiceController extends Controller
             'year' => 'required|numeric',
         ]);
 
-        $customer = Customer::where('internet_number', $request->internet_number)->first();
+        $customer = MobileCustomer::where('internet_number', $request->internet_number)->first();
 
         if (!$customer) {
             return response()->json([
@@ -215,7 +206,7 @@ class MobileInvoiceController extends Controller
             ], 404);
         }
 
-        $invoice = Invoice::where('customer_id', $customer->id)
+        $invoice = MobileInvoice::where('customer_id', $customer->id)
             ->whereMonth('due_date', $request->month)
             ->whereYear('due_date', $request->year)
             ->first();

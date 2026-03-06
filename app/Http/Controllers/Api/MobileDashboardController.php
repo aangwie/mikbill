@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Customer;
-use App\Models\Invoice;
+use App\Models\MobileCustomer;
+use App\Models\MobileInvoice;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -18,17 +18,12 @@ class MobileDashboardController extends Controller
     {
         $user = $request->user();
 
-        // Customer stats
-        $customerQuery = Customer::query();
-        $invoiceQuery = Invoice::query();
+        // Customer stats (Mobile-specific scoping)
+        $customerQuery = MobileCustomer::query();
+        $invoiceQuery = MobileInvoice::query();
 
-        if ($user->role === 'operator') {
-            $customerQuery->where('operator_id', $user->id);
-            $invoiceQuery->whereHas('customer', fn($q) => $q->where('operator_id', $user->id));
-        } elseif ($user->role === 'admin') {
-            $customerQuery->where('admin_id', $user->id);
-            $invoiceQuery->whereHas('customer', fn($q) => $q->where('admin_id', $user->id));
-        }
+        // No explicit filtering needed here anymore as MobileTenantScope 
+        // handles it automatically via MobileCustomer/MobileInvoice models.
 
         $totalCustomers = (clone $customerQuery)->count();
         $activeCustomers = (clone $customerQuery)->where('is_active', true)->count();

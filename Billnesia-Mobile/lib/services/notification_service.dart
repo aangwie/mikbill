@@ -1,21 +1,29 @@
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart'
+    as fln;
 
 class NotificationService {
-  static final FlutterLocalNotificationsPlugin _notifications =
-      FlutterLocalNotificationsPlugin();
+  static final fln.FlutterLocalNotificationsPlugin _notifications =
+      fln.FlutterLocalNotificationsPlugin();
 
   static bool _initialized = false;
 
   /// Initialize the notification plugin. Call once at app startup.
-  static Future<void> initialize() async {
+  static Future<void> init() async {
     if (_initialized) return;
 
-    const androidSettings =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
+    const androidSettings = fln.AndroidInitializationSettings(
+      '@mipmap/ic_launcher',
+    );
 
-    const initSettings = InitializationSettings(android: androidSettings);
+    const initSettings = fln.InitializationSettings(android: androidSettings);
 
-    await _notifications.initialize(initSettings);
+    // v20.x REQUIRES named argument 'settings'
+    await _notifications.initialize(
+      settings: initSettings,
+      onDidReceiveNotificationResponse: (details) {
+        // Handle notification tap
+      },
+    );
     _initialized = true;
   }
 
@@ -25,24 +33,27 @@ class NotificationService {
     required bool waSent,
     String? waError,
   }) async {
-    final waInfo = waSent ? '✅ WhatsApp terkirim' : '⚠️ WA: ${waError ?? "Gagal kirim"}';
-    
-    const androidDetails = AndroidNotificationDetails(
+    final waInfo = waSent
+        ? '✅ WhatsApp terkirim'
+        : '⚠️ WA: ${waError ?? "Gagal kirim"}';
+
+    const androidDetails = fln.AndroidNotificationDetails(
       'billing_channel',
       'Billing Notifications',
       channelDescription: 'Notifikasi pembayaran tagihan',
-      importance: Importance.high,
-      priority: Priority.high,
+      importance: fln.Importance.high,
+      priority: fln.Priority.high,
       icon: '@mipmap/ic_launcher',
     );
 
-    const details = NotificationDetails(android: androidDetails);
+    const details = fln.NotificationDetails(android: androidDetails);
 
+    // Using named arguments for 'show' to ensure compatibility with v20 API
     await _notifications.show(
-      DateTime.now().millisecondsSinceEpoch ~/ 1000,
-      '💰 Pembayaran Berhasil',
-      '$customerName telah lunas. $waInfo',
-      details,
+      id: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+      title: '💰 Pembayaran Berhasil',
+      body: '$customerName telah lunas. $waInfo',
+      notificationDetails: details,
     );
   }
 
@@ -52,24 +63,26 @@ class NotificationService {
     required bool waSent,
     String? waError,
   }) async {
-    final waInfo = waSent ? '✅ WhatsApp terkirim' : '⚠️ WA: ${waError ?? "Gagal kirim"}';
+    final waInfo = waSent
+        ? '✅ WhatsApp terkirim'
+        : '⚠️ WA: ${waError ?? "Gagal kirim"}';
 
-    const androidDetails = AndroidNotificationDetails(
+    const androidDetails = fln.AndroidNotificationDetails(
       'billing_channel',
       'Billing Notifications',
       channelDescription: 'Notifikasi pembayaran tagihan',
-      importance: Importance.high,
-      priority: Priority.high,
+      importance: fln.Importance.high,
+      priority: fln.Priority.high,
       icon: '@mipmap/ic_launcher',
     );
 
-    const details = NotificationDetails(android: androidDetails);
+    const details = fln.NotificationDetails(android: androidDetails);
 
     await _notifications.show(
-      DateTime.now().millisecondsSinceEpoch ~/ 1000,
-      '🔄 Pembayaran Dibatalkan',
-      '$customerName dikembalikan ke belum lunas. $waInfo',
-      details,
+      id: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+      title: '🔄 Pembayaran Dibatalkan',
+      body: '$customerName dikembalikan ke belum lunas. $waInfo',
+      notificationDetails: details,
     );
   }
 }

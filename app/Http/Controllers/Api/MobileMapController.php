@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Customer;
+use App\Models\MobileCustomer;
 use App\Services\MikrotikService;
 use Illuminate\Http\Request;
 
@@ -20,25 +20,16 @@ class MobileMapController extends Controller
     {
         $user = $request->user();
 
-        // 1. Ambil Pelanggan yang punya Koordinat saja, filtered by user role
-        $query = Customer::whereNotNull('latitude')
-            ->whereNotNull('longitude');
+        // 1. Ambil Pelanggan yang punya Koordinat saja (Mobile-specific scoping)
+        $customers = MobileCustomer::whereNotNull('latitude')
+            ->whereNotNull('longitude')
+            ->get();
 
-        if ($user->role === 'operator') {
-            $query->where('operator_id', $user->id);
-        } elseif ($user->role === 'admin' || $user->role === 'superadmin') {
-            $query->where('admin_id', $user->id);
-        }
-
-        $customers = $query->get();
-
-        // 2. Ambil Data User Online dari Mikrotik
+        // 2. Ambil Data User Online dari SEMUA Mikrotik yang aktif
         $onlineUsers = collect([]);
         try {
-            if ($this->mikrotik->isConnected()) {
-                $actives = $this->mikrotik->getActiveUsers();
-                $onlineUsers = collect($actives)->pluck('name')->flip();
-            }
+            $actives = $this->mikrotik->getAllActiveUsers();
+            $onlineUsers = collect($actives)->pluck('name')->flip();
         } catch (\Exception $e) {
             // Error mikrotik, biarkan offline
         }

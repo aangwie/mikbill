@@ -17,19 +17,34 @@ class MikrotikService
         // Connection will be initialized lazily when needed
     }
 
-    protected function initialize()
+    protected function initialize($config = null)
     {
+        // If config is provided, we force a new client for that specific router
+        if ($config instanceof RouterSetting) {
+            try {
+                $this->client = new Client([
+                    'host' => $config->host,
+                    'user' => $config->username,
+                    'pass' => $config->password,
+                    'port' => (int) $config->port,
+                    'timeout' => 5,
+                ]);
+            } catch (ConnectException | ClientException $e) {
+                $this->client = null;
+            }
+            return;
+        }
+
         if ($this->client !== null) {
             return;
         }
 
         try {
-            // AMBIL YANG STATUSNYA AKTIF (TenantScope will apply here if user is logged in)
+            // AMBIL YANG STATUSNYA AKTIF
             $config = RouterSetting::where('is_active', true)->first();
 
             // Jika tidak ada yang aktif, ambil yang pertama saja (fallback)
             if (!$config) {
-                // Bypass scope to check if ANY router exists at least
                 $config = RouterSetting::withoutGlobalScopes()->where('is_active', true)->first();
             }
 
@@ -42,7 +57,7 @@ class MikrotikService
                 'user' => $config->username,
                 'pass' => $config->password,
                 'port' => (int) $config->port,
-                'timeout' => 5, // Reduced timeout for better UX
+                'timeout' => 5,
             ]);
         } catch (ConnectException | ClientException $e) {
             $this->client = null;
@@ -70,6 +85,37 @@ class MikrotikService
         // /ppp/active/print
         $query = new Query('/ppp/active/print');
         return $this->client->query($query)->read();
+    }
+
+    /**
+     * Ambil semua user online dari SEMUA router yang aktif
+     */
+    public function getAllActiveUsers()
+    {
+        $routers = RouterSetting::where('is_active', true)->get();
+        if ($routers->isEmpty()) {
+            // Fallback for superadmin or if no scope applied
+            $routers = RouterSetting::withoutGlobalScopes()->where('is_active', true)->get();
+        }
+
+        $allActives = [];
+        foreach ($routers as $router) {
+            $this->initialize($router);
+            if ($this->client) {
+                try {
+                    $query = new Query('/ppp/active/print');
+                    $actives = $this->client->query($query)->read();
+                    if (is_array($actives)) {
+                        foreach ($actives as $active) {
+                            $allActives[] = $active;
+                        }
+                    }
+                } catch (\Exception $e) {
+                    // Skip failed router
+                }
+            }
+        }
+        return $allActives;
     }
 
     // Ambil daftar semua user terdaftar (Secret)

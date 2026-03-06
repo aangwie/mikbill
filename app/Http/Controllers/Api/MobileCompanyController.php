@@ -3,28 +3,23 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Company;
+use App\Models\MobileCompany;
 use Illuminate\Http\Request;
 
 class MobileCompanyController extends Controller
 {
     /**
      * GET /api/mobile/company
-     * Get company info for current tenant.
+     * Get company info for current tenant (Mobile-specific scoping).
      */
     public function index(Request $request)
     {
-        $user = $request->user();
+        // MobileTenantScope handles isolation automatically for admin_id
+        $company = MobileCompany::first();
 
-        $adminId = $user->role === 'operator' ? $user->parent_id : $user->id;
-
-        $company = Company::withoutGlobalScope(\App\Scopes\TenantScope::class)
-            ->where('admin_id', $adminId)
-            ->first();
-
-        // Fallback to superadmin's company
+        // Fallback to superadmin's company if current tenant has none
         if (!$company) {
-            $company = Company::withoutGlobalScope(\App\Scopes\TenantScope::class)
+            $company = MobileCompany::withoutGlobalScopes()
                 ->whereHas('admin', fn($q) => $q->where('role', 'superadmin'))
                 ->first();
         }

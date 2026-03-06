@@ -13,7 +13,7 @@ import 'screens/settings/settings_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await NotificationService.initialize();
+  await NotificationService.init();
   runApp(const BillnesiaApp());
 }
 

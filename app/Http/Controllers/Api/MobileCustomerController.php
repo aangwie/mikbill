@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Customer;
+use App\Models\MobileCustomer;
 use Illuminate\Http\Request;
 
 class MobileCustomerController extends Controller
@@ -15,13 +15,10 @@ class MobileCustomerController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
-        $query = Customer::query();
+        $query = MobileCustomer::query();
 
-        if ($user->role === 'operator') {
-            $query->where('operator_id', $user->id);
-        } elseif ($user->role === 'admin' || $user->role === 'superadmin') {
-            $query->where('admin_id', $user->id);
-        }
+        // No explicit filtering needed as MobileTenantScope 
+        // handles it automatically via MobileCustomer model.
 
         // Search
         if ($search = $request->input('search')) {
@@ -54,8 +51,10 @@ class MobileCustomerController extends Controller
     public function show(Request $request, $id)
     {
         $user = $request->user();
-        $customer = Customer::with([
+        $customer = MobileCustomer::with([
             'invoices' => function ($q) {
+                // This will use the relation defined in MobileCustomer which 
+                // ideally should point to MobileInvoice, but for now it's okay.
                 $q->orderBy('due_date', 'desc')->limit(12);
             }
         ])->findOrFail($id);
@@ -109,7 +108,7 @@ class MobileCustomerController extends Controller
             $data['admin_id'] = $user->id;
         }
 
-        $customer = Customer::create($data);
+        $customer = MobileCustomer::create($data);
 
         return response()->json([
             'success' => true,
@@ -124,7 +123,7 @@ class MobileCustomerController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $customer = Customer::findOrFail($id);
+        $customer = MobileCustomer::findOrFail($id);
         $user = $request->user();
 
         // Permission check
@@ -169,7 +168,7 @@ class MobileCustomerController extends Controller
      */
     public function destroy(Request $request, $id)
     {
-        $customer = Customer::findOrFail($id);
+        $customer = MobileCustomer::findOrFail($id);
         $user = $request->user();
 
         // Permission check

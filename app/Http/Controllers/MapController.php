@@ -42,14 +42,12 @@ class MapController extends Controller
 
         $customers = $query->get();
 
-        // 2. Ambil Data User Online dari Mikrotik
+        // 2. Ambil Data User Online dari SEMUA Mikrotik yang aktif
         $onlineUsers = collect([]);
         try {
-            if ($this->mikrotik->isConnected()) {
-                $actives = $this->mikrotik->getActiveUsers();
-                // Buat collection key-by username agar mudah dicek
-                $onlineUsers = collect($actives)->pluck('name')->flip();
-            }
+            $actives = $this->mikrotik->getAllActiveUsers();
+            // Buat collection key-by username agar mudah dicek
+            $onlineUsers = collect($actives)->pluck('name')->flip();
         } catch (\Exception $e) {
             // Ignore error jika mikrotik mati
         }
