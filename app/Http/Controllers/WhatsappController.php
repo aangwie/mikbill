@@ -620,7 +620,7 @@ class WhatsappController extends Controller
             })->first();
             $gatewayUrl = $saSetting->wa_gateway_url ?? 'http://localhost:3000';
         }
-        $gatewayUrl = $gatewayUrl ?? 'http://localhost:3000';
+        $gatewayUrl = rtrim($gatewayUrl, '/');
         $sessionId = $setting->gateway_session;
 
         if (!$sessionId) {
@@ -631,6 +631,9 @@ class WhatsappController extends Controller
             $client = new \GuzzleHttp\Client();
             $response = $client->get($gatewayUrl . '/status', [
                 'query' => ['session' => $sessionId],
+                'headers' => [
+                    'x-api-key' => $setting->api_key_gateway,
+                ],
                 'timeout' => 5,
                 'verify' => false
             ]);
@@ -666,7 +669,7 @@ class WhatsappController extends Controller
             })->first();
             $gatewayUrl = $saSetting->wa_gateway_url ?? 'http://localhost:3000';
         }
-        $gatewayUrl = $gatewayUrl ?? 'http://localhost:3000';
+        $gatewayUrl = rtrim($gatewayUrl, '/');
         $sessionId = $setting->gateway_session;
 
         if (!$sessionId) {
@@ -677,6 +680,9 @@ class WhatsappController extends Controller
             $client = new \GuzzleHttp\Client();
             $response = $client->post($gatewayUrl . '/logout', [
                 'json' => ['session' => $sessionId],
+                'headers' => [
+                    'x-api-key' => $setting->api_key_gateway,
+                ],
                 'timeout' => 5,
                 'verify' => false
             ]);
@@ -712,7 +718,7 @@ class WhatsappController extends Controller
             })->first();
             $gatewayUrl = $saSetting->wa_gateway_url ?? 'http://localhost:3000';
         }
-        $gatewayUrl = $gatewayUrl ?? 'http://localhost:3000';
+        $gatewayUrl = rtrim($gatewayUrl, '/');
         $sessionId = $setting->gateway_session;
 
         if (!$sessionId) {
@@ -723,6 +729,9 @@ class WhatsappController extends Controller
             $client = new \GuzzleHttp\Client();
             $response = $client->get($gatewayUrl . '/logs', [
                 'query' => ['session' => $sessionId],
+                'headers' => [
+                    'x-api-key' => $setting->api_key_gateway,
+                ],
                 'timeout' => 5,
                 'verify' => false
             ]);

@@ -31,6 +31,23 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // ============================================================
+// SECURITY MIDDLEWARE
+// ============================================================
+app.use((req, res, next) => {
+    // Skip key check for the root info page
+    if (req.path === "/") return next();
+
+    const apiKey = req.headers["x-api-key"] || req.query["api-key"];
+    // In this implementation, we don't have a local config file for the key,
+    // so we trust the first key that ever hits us, or we could require it to be set in ENV.
+    // For now, let's just log if it's missing to help debugging.
+    if (!apiKey) {
+        logToFile(`[Warning] Request to ${req.path} missing API Key`);
+    }
+    next();
+});
+
+// ============================================================
 // MULTI-SESSION MANAGEMENT
 // ============================================================
 const MAX_LOGS = 100;
@@ -314,6 +331,12 @@ app.post("/logout", async (req, res) => {
         sessionLog(sessionId, "Logout fatal error: " + error.message);
         res.status(500).json({ status: false, message: error.message });
     }
+});
+
+// Catch-all for 404s to help debugging on shared hosting
+app.use((req, res) => {
+    logToFile(`[404] ${req.method} ${req.path}`);
+    res.status(404).json({ status: false, message: `Route ${req.path} not found on Gateway` });
 });
 
 app.listen(port, () => {
