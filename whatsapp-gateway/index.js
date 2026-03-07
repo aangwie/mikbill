@@ -216,13 +216,13 @@ async function connectSession(sessionId) {
 // API ENDPOINTS
 // ============================================================
 
-app.get("/", (req, res) => {
+app.get(['/', '*/'], (req, res) => {
     res.setHeader('Content-Type', 'text/html');
     const sessionCount = sessions.size;
     res.send(`WhatsApp Gateway is running. Active sessions: ${sessionCount}`);
 });
 
-app.get("/status", (req, res) => {
+app.get(['/status', '*/status'], (req, res) => {
     const sessionId = req.query.session;
     if (!sessionId) {
         return res.status(400).json({ status: "disconnected", message: "Missing session parameter" });
@@ -244,7 +244,7 @@ app.get("/status", (req, res) => {
     });
 });
 
-app.get("/logs", (req, res) => {
+app.get(['/logs', '*/logs'], (req, res) => {
     const sessionId = req.query.session;
     if (!sessionId) {
         return res.json({ logs: [] });
@@ -256,7 +256,7 @@ app.get("/logs", (req, res) => {
     });
 });
 
-app.post("/send", async (req, res) => {
+app.post(['/send', '*/send'], async (req, res) => {
     const { number, message, session: sessionId } = req.body;
 
     if (!sessionId) {
@@ -279,7 +279,7 @@ app.post("/send", async (req, res) => {
     }
 });
 
-app.post("/logout", async (req, res) => {
+app.post(['/logout', '*/logout'], async (req, res) => {
     const sessionId = req.body.session;
     if (!sessionId) {
         return res.status(400).json({ status: false, message: "Missing session parameter" });

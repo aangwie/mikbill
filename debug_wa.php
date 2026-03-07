@@ -29,7 +29,7 @@ echo "API Key Prefix: " . substr($apiKey, 0, 8) . "...\n";
 $client = new Client();
 
 try {
-    echo "Requesting /status...\n";
+    echo "Requesting /status (Root)...\n";
     $response = $client->get($url . '/status', [
         'query' => ['session' => $session],
         'headers' => ['x-api-key' => $apiKey],
@@ -38,8 +38,19 @@ try {
         'http_errors' => false
     ]);
 
-    echo "HTTP Status: " . $response->getStatusCode() . "\n";
-    echo "Response Body: " . $response->getBody()->getContents() . "\n";
+    echo "HTTP Status (Root): " . $response->getStatusCode() . "\n";
+
+    echo "Requesting /whatsapp-gateway/status (Subpath)...\n";
+    $responseSub = $client->get($url . '/whatsapp-gateway/status', [
+        'query' => ['session' => $session],
+        'headers' => ['x-api-key' => $apiKey],
+        'timeout' => 5,
+        'verify' => false,
+        'http_errors' => false
+    ]);
+
+    echo "HTTP Status (Subpath): " . $responseSub->getStatusCode() . "\n";
+    echo "Response Body (Subpath): " . $responseSub->getBody()->getContents() . "\n";
 
     if ($response->getStatusCode() == 200) {
         echo "\nSUCCESS: Gateway is reachable and responding correctly.\n";
