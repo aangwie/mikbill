@@ -67,7 +67,7 @@
                 </div>
             @endif
 
-            @if(auth()->user()->role == 'admin')
+            @if(in_array(auth()->user()->role, ['admin', 'superadmin']))
                 <a href="{{ route('router.index') }}"
                     class="flex items-center justify-center h-10 w-10 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-400 hover:text-primary-600 hover:border-primary-600 transition shadow-sm"
                     title="Konfigurasi">
@@ -156,7 +156,7 @@
                             <th scope="col"
                                 class="px-6 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-300 uppercase tracking-wider hidden sm:table-cell">
                                 Uptime</th>
-                            @if(auth()->user()->role == 'admin')
+                            @if(in_array(auth()->user()->role, ['admin', 'superadmin']))
                                 <th scope="col" class="relative px-6 py-3 text-right">
                                     <span class="sr-only">Actions</span>
                                 </th>
@@ -208,7 +208,7 @@
                                     class="px-6 py-4 whitespace-nowrap text-sm text-slate-600 dark:text-slate-300 hidden sm:table-cell font-mono">
                                     {{ $activeData['uptime'] ?? '-' }}
                                 </td>
-                                @if(auth()->user()->role == 'admin')
+                                @if(in_array(auth()->user()->role, ['admin', 'superadmin']))
                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <div class="flex justify-end gap-2">
                                             @if($isActive)
