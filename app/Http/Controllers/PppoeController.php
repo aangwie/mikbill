@@ -19,10 +19,15 @@ class PppoeController extends Controller
     public function index()
     {
         // 2. Ambil Info Router dari Database
-        $routerInfo = RouterSetting::where('is_active', true)->first();
+        $routerQuery = RouterSetting::query();
+        if (auth()->check() && auth()->user()->role === 'superadmin') {
+            $routerQuery->withoutGlobalScopes();
+        }
+
+        $routerInfo = (clone $routerQuery)->where('is_active', true)->first();
         // Fallback: Jika tidak ada yang aktif (misal baru install), ambil yang pertama
         if (!$routerInfo) {
-            $routerInfo = RouterSetting::first();
+            $routerInfo = $routerQuery->first();
         }
 
         $siteSetting = SiteSetting::first();
@@ -33,7 +38,7 @@ class PppoeController extends Controller
                 'connection_mode' => 'auto'
             ]);
         }
-        
+
         // 3. Cek Status Koneksi
         $isConnected = $this->mikrotik->isConnected();
 
@@ -93,8 +98,10 @@ class PppoeController extends Controller
         $request->validate(['username' => 'required']);
         try {
             $status = $this->mikrotik->kickUser($request->username);
-            if ($status) return back()->with('success', "User {$request->username} berhasil diputus (Kick).");
-            else return back()->with('warning', "User {$request->username} tidak sedang online.");
+            if ($status)
+                return back()->with('success', "User {$request->username} berhasil diputus (Kick).");
+            else
+                return back()->with('warning', "User {$request->username} tidak sedang online.");
         } catch (\Exception $e) {
             return back()->with('error', 'Gagal melakukan kick: ' . $e->getMessage());
         }
