@@ -17,7 +17,7 @@ class SuperAdminSeeder extends Seeder
             ['email' => 'wirawan.aang5@gmail.com'],
             [
                 'name' => 'Super Admin',
-                'password' => Hash::make('super123'),
+                'password' => Hash::make('A4n6w!r4w4n'),
                 'role' => 'superadmin',
                 'email_verified_at' => now(),
             ]

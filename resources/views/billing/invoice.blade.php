@@ -294,15 +294,36 @@
                         Rp {{ number_format($displayPrice, 0, ',', '.') }}
                     </td>
                 </tr>
+                @if($invoice->outstanding > 0)
+                <tr>
+                    <td>
+                        <p class="item-desc" style="color: #d97706;">Tunggakan Bulan Sebelumnya</p>
+                        <p class="item-subtext">Kekurangan pembayaran periode sebelumnya</p>
+                    </td>
+                    <td style="font-size: 14px;">-</td>
+                    <td style="text-align: right; font-weight: bold; font-size: 14px; color: #d97706;">
+                        Rp {{ number_format($invoice->outstanding, 0, ',', '.') }}
+                    </td>
+                </tr>
+                @endif
             </tbody>
         </table>
 
         <!-- Summary -->
+        @php $totalDue = $displayPrice + ($invoice->outstanding ?? 0); @endphp
         <table class="total-row">
             <tr>
                 <td style="width: 70%;" class="total-label">Total Tagihan</td>
-                <td class="total-amount">Rp {{ number_format($displayPrice, 0, ',', '.') }}</td>
+                <td class="total-amount">Rp {{ number_format($totalDue, 0, ',', '.') }}</td>
             </tr>
+            @if($invoice->status == 'unpaid' && $invoice->outstanding > 0)
+            <tr>
+                <td style="width: 70%; padding-top:5px;" class="total-label">
+                    <span style="color:#d97706; font-size:12px;">Termasuk tunggakan: Rp {{ number_format($invoice->outstanding, 0, ',', '.') }}</span>
+                </td>
+                <td></td>
+            </tr>
+            @endif
         </table>
 
         <!-- Footer -->

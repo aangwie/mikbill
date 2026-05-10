@@ -81,6 +81,9 @@
                                 class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider py-3 px-4 bg-slate-50 dark:bg-slate-700/50">
                                 Harga Paket</th>
                             <th
+                                class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider py-3 px-4 bg-slate-50 dark:bg-slate-700/50">
+                                Saldo</th>
+                            <th
                                 class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider py-3 px-4 bg-slate-50 dark:bg-slate-700/50 rounded-r-lg text-right">
                                 Aksi</th>
                         </tr>
@@ -135,8 +138,23 @@
                                 <td class="px-4 py-3 align-middle font-medium text-slate-700 dark:text-slate-300">
                                     Rp {{ number_format($c->monthly_price, 0, ',', '.') }}
                                 </td>
+                                <td class="px-4 py-3 align-middle">
+                                    <span id="saldo-{{ $c->id }}" class="inline-flex items-center rounded-md px-2 py-1 text-xs font-semibold {{ $c->total_balance > 0 ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300' : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400' }}">
+                                        Rp {{ number_format($c->total_balance, 0, ',', '.') }}
+                                    </span>
+                                </td>
                                 <td class="px-4 py-3 align-middle text-right">
-                                    <div class="flex justify-end gap-2">
+                                    <div class="flex justify-end gap-1">
+                                        <button type="button" onclick="topupSaldo('{{ $c->id }}', '{{ addslashes($c->name) }}')"
+                                            class="p-1.5 text-emerald-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-md transition-colors"
+                                            title="Topup Saldo">
+                                            <i class="fas fa-wallet"></i>
+                                        </button>
+                                        <a href="{{ route('customer.balance.history', $c->id) }}"
+                                            class="p-1.5 text-blue-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-md transition-colors"
+                                            title="Riwayat Saldo">
+                                            <i class="fas fa-history"></i>
+                                        </a>
                                         <button
                                             class="btn-edit p-1.5 text-amber-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-md transition-colors"
                                             data-id="{{ $c->id }}" data-internet="{{ $c->internet_number }}"
@@ -808,6 +826,71 @@
             form.attr('action', '/customers/' + id);
             $('#deleteMikrotikFlag').val(mikrotikFlag);
             form.submit();
+        }
+
+        // Topup Saldo via SweetAlert2
+        function topupSaldo(customerId, customerName) {
+            Swal.fire({
+                title: 'Topup Saldo',
+                html:
+                    '<p class="text-sm text-gray-500 mb-4">Pelanggan: <strong>' + customerName + '</strong></p>' +
+                    '<div class="text-left mb-3">' +
+                    '<label class="block text-sm font-medium text-gray-700 mb-1">Jumlah (Rp)</label>' +
+                    '<input id="swalAmount" type="number" class="swal2-input" placeholder="Contoh: 100000" min="1" style="margin:0; width:100%;">' +
+                    '</div>' +
+                    '<div class="text-left">' +
+                    '<label class="block text-sm font-medium text-gray-700 mb-1">Keterangan</label>' +
+                    '<input id="swalDesc" type="text" class="swal2-input" placeholder="Contoh: Topup bulan Mei" style="margin:0; width:100%;">' +
+                    '</div>',
+                showCancelButton: true,
+                confirmButtonText: '<i class="fas fa-wallet mr-2"></i> Topup Sekarang',
+                cancelButtonText: 'Batal',
+                confirmButtonColor: '#10b981',
+                focusConfirm: false,
+                preConfirm: () => {
+                    const amount = document.getElementById('swalAmount').value;
+                    const desc = document.getElementById('swalDesc').value;
+                    if (!amount || amount <= 0) {
+                        Swal.showValidationMessage('Masukkan jumlah yang valid!');
+                        return false;
+                    }
+                    return { amount: amount, description: desc };
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: '/customers/' + customerId + '/balance',
+                        type: 'POST',
+                        data: {
+                            _token: $('meta[name="csrf-token"]').attr('content'),
+                            amount: result.value.amount,
+                            description: result.value.description
+                        },
+                        success: function(res) {
+                            if (res.success) {
+                                // Update saldo display on the table
+                                let formatted = 'Rp ' + Number(res.total_balance).toLocaleString('id-ID');
+                                let saldoEl = $('#saldo-' + customerId);
+                                saldoEl.text(formatted);
+                                saldoEl.removeClass('bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400')
+                                       .addClass('bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300');
+
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Berhasil!',
+                                    text: res.message,
+                                    timer: 2000,
+                                    showConfirmButton: false
+                                });
+                            }
+                        },
+                        error: function(xhr) {
+                            let msg = xhr.responseJSON?.message || 'Terjadi kesalahan.';
+                            Swal.fire('Error', msg, 'error');
+                        }
+                    });
+                }
+            });
         }
     </script>
 @endpush

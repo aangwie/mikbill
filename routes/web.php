@@ -23,6 +23,7 @@ use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\SiteSettingController;
 use App\Http\Controllers\ControlController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\CustomerBalanceController;
 
 
 
@@ -97,6 +98,7 @@ Route::middleware(['auth'])->group(function () {
     // Billing
     Route::get('/billing', [BillingController::class, 'index'])->name('billing.index');
     Route::post('/billing/{id}/pay', [BillingController::class, 'processPayment'])->name('billing.pay');
+    Route::post('/billing/{id}/pay-manual', [BillingController::class, 'payManual'])->name('billing.payManual');
     Route::post('/billing/{id}/pay-ajax', [BillingController::class, 'processPaymentAjax'])->name('billing.payAjax');
 
     Route::post('/billing/{id}/cancel', [BillingController::class, 'cancelPayment'])->name('billing.cancel');
@@ -104,6 +106,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/billing/generate', [BillingController::class, 'generate'])->name('billing.generate');
     // AJAX Bulk Billing
     Route::get('/billing/generate-list', [BillingController::class, 'getList'])->name('billing.list');
+    Route::get('/billing/customer/{id}/history', [BillingController::class, 'customerHistory'])->name('billing.history');
     Route::post('/billing/generate-process', [BillingController::class, 'processItem'])->name('billing.process');
     Route::get('/billing/{id}/print', [BillingController::class, 'print'])->name('billing.print');
     Route::delete('/billing/bulk-destroy', [BillingController::class, 'bulkDestroy'])->name('billing.bulkDestroy');
@@ -156,6 +159,12 @@ Route::middleware(['auth'])->group(function () {
         // Route Proses Kirim (yang sudah dibuat sebelumnya)
         Route::post('/whatsapp/broadcast/process', [WhatsappController::class, 'broadcastProcess'])->name('whatsapp.broadcast.process');
         Route::delete('/customers/{id}', [CustomerController::class, 'destroy'])->name('customers.destroy');
+
+        // CUSTOMER BALANCE (Saldo)
+        Route::post('/customers/{customer}/balance', [CustomerBalanceController::class, 'store'])->name('customer.balance.store');
+        Route::get('/customers/{customer}/balance', [CustomerBalanceController::class, 'history'])->name('customer.balance.history');
+        Route::put('/customer-balance/{id}', [CustomerBalanceController::class, 'update'])->name('customer.balance.update');
+        Route::delete('/customer-balance/{id}', [CustomerBalanceController::class, 'destroy'])->name('customer.balance.destroy');
 
         // AKUNTANSI & KEUANGAN
         Route::get('/accounting', [AccountingController::class, 'index'])->name('accounting.index');

@@ -6,8 +6,9 @@ use App\Models\Invoice;
 use App\Models\Customer;
 use App\Models\Company;
 use App\Models\User;
+use App\Models\CustomerBalance;
 use App\Services\MikrotikService;
-use App\Services\WhatsappService; // 1. Import Service WA
+use App\Services\WhatsappService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
@@ -78,6 +79,26 @@ class BillingController extends Controller
             }
         }
 
+        // Hitung Piutang (total outstanding dari semua invoice unpaid sebelum bulan ini)
+        $piutangQuery = Invoice::where('status', 'unpaid')
+            ->where(function($q) use ($month, $year) {
+                $q->whereYear('due_date', '<', $year)
+                  ->orWhere(function($q2) use ($month, $year) {
+                      $q2->whereYear('due_date', $year)->whereMonth('due_date', '<', $month);
+                  });
+            });
+        if ($user->role == 'operator') {
+            $piutangQuery->whereHas('customer', fn($q) => $q->where('operator_id', $user->id));
+        } elseif ($user->role == 'superadmin' && $selectedAdminId) {
+            $piutangQuery->whereHas('customer', fn($q) => $q->where('admin_id', $selectedAdminId));
+        }
+        $total_piutang = $piutangQuery->sum('outstanding');
+        // Juga tambahkan invoice yang masih unpaid sepenuhnya (outstanding = 0 tapi belum dibayar)
+        $piutangFullUnpaid = (clone $piutangQuery)->where('outstanding', 0)->get();
+        foreach ($piutangFullUnpaid as $pInv) {
+            $total_piutang += ($pInv->price > 0 ? $pInv->price : ($pInv->customer->monthly_price ?? 0));
+        }
+
         $customerQuery = Customer::orderBy('name', 'asc');
         if ($user->role == 'operator') {
             $customerQuery->where('operator_id', $user->id);
@@ -89,7 +110,7 @@ class BillingController extends Controller
             $admins = User::whereIn('role', ['admin', 'superadmin'])->get(['id', 'name', 'role']);
         }
 
-        return view('billing.index', compact('invoices', 'customers', 'month', 'year', 'total_bill', 'paid_bill', 'unpaid_bill', 'admins', 'selectedAdminId'));
+        return view('billing.index', compact('invoices', 'customers', 'month', 'year', 'total_bill', 'paid_bill', 'unpaid_bill', 'total_piutang', 'admins', 'selectedAdminId'));
     }
 
     public function generate(Request $request)
@@ -126,11 +147,24 @@ class BillingController extends Controller
                 ->exists();
 
             if (!$exists) {
+                // Hitung total outstanding dari invoice sebelumnya yang belum lunas
+                $prevOutstanding = Invoice::where('customer_id', $customer->id)
+                    ->where('status', 'unpaid')
+                    ->where(function($q) use ($request) {
+                        $q->whereYear('due_date', '<', $request->year)
+                          ->orWhere(function($q2) use ($request) {
+                              $q2->whereYear('due_date', $request->year)
+                                 ->whereMonth('due_date', '<', $request->month);
+                          });
+                    })
+                    ->sum('outstanding');
+
                 Invoice::create([
                     'customer_id' => $customer->id,
-                    'admin_id' => $customer->admin_id, // Ensure admin_id is carried over
+                    'admin_id' => $customer->admin_id,
                     'due_date' => $request->due_date,
-                    'price' => $customer->monthly_price, // Save current price
+                    'price' => $customer->monthly_price,
+                    'outstanding' => $prevOutstanding,
                     'status' => 'unpaid',
                 ]);
                 $count++;
@@ -200,11 +234,24 @@ class BillingController extends Controller
             return response()->json(['status' => 'skipped', 'name' => $customer->name]);
         }
 
+        // Hitung outstanding dari bulan sebelumnya
+        $prevOutstanding = Invoice::where('customer_id', $customer->id)
+            ->where('status', 'unpaid')
+            ->where(function($q) use ($request) {
+                $q->whereYear('due_date', '<', $request->year)
+                  ->orWhere(function($q2) use ($request) {
+                      $q2->whereYear('due_date', $request->year)
+                         ->whereMonth('due_date', '<', $request->month);
+                  });
+            })
+            ->sum('outstanding');
+
         Invoice::create([
             'customer_id' => $customer->id,
             'admin_id' => $customer->admin_id,
             'due_date' => $request->due_date,
             'price' => $customer->monthly_price,
+            'outstanding' => $prevOutstanding,
             'status' => 'unpaid',
         ]);
 
@@ -280,7 +327,7 @@ class BillingController extends Controller
             try {
                 if ($this->mikrotik->isConnected()) {
                     $this->mikrotik->setSecretStatus($userPppoe, 'enabled');
-                    $this->mikrotik->kickUser($userPppoe);
+                    // $this->mikrotik->kickUser($userPppoe); // Disable kick active connection
                     $pesanMikrotik = "Mikrotik: Enabled.";
                 } else {
                     $pesanMikrotik = "Mikrotik: Gagal Konek.";
@@ -357,7 +404,7 @@ class BillingController extends Controller
         try {
             if ($this->mikrotik->isConnected()) {
                 $this->mikrotik->setSecretStatus($userPppoe, 'enabled');
-                $this->mikrotik->kickUser($userPppoe);
+                // $this->mikrotik->kickUser($userPppoe); // Disable kick active connection
                 $pesanMikrotik = "Mikrotik: Enabled.";
             } else {
                 $pesanMikrotik = "Mikrotik: Gagal Konek.";
@@ -399,6 +446,104 @@ class BillingController extends Controller
     }
 
     /**
+     * PROSES PEMBAYARAN MANUAL VIA AJAX (SweetAlert)
+     * Supports: manual payment amount & saldo payment
+     */
+    public function payManual(Request $request, $id)
+    {
+        $request->validate([
+            'method' => 'required|in:manual,saldo',
+            'amount' => 'nullable|numeric|min:0',
+        ]);
+
+        $invoice = Invoice::with('customer')->findOrFail($id);
+        $customer = $invoice->customer;
+
+        if ($invoice->status == 'paid') {
+            return response()->json(['success' => false, 'message' => 'Invoice sudah lunas.']);
+        }
+
+        $price = $invoice->price > 0 ? $invoice->price : ($customer->monthly_price ?? 0);
+        // Total yang harus dibayar = price + outstanding yang sudah tercatat
+        $totalDue = $price + $invoice->outstanding;
+
+        $method = $request->method;
+        $payAmount = 0;
+
+        if ($method == 'saldo') {
+            // Bayar pakai saldo
+            $saldo = CustomerBalance::where('customer_id', $customer->id)->sum('amount');
+            if ($saldo <= 0) {
+                return response()->json(['success' => false, 'message' => 'Saldo pelanggan kosong.']);
+            }
+            $payAmount = min($saldo, $totalDue);
+
+            // Kurangi saldo
+            CustomerBalance::create([
+                'customer_id' => $customer->id,
+                'amount' => -$payAmount,
+                'description' => 'Pembayaran Invoice #INV-' . str_pad($invoice->id, 5, '0', STR_PAD_LEFT),
+            ]);
+        } else {
+            // Bayar manual
+            $payAmount = (int) $request->amount;
+            if ($payAmount <= 0) {
+                return response()->json(['success' => false, 'message' => 'Jumlah pembayaran harus lebih dari 0.']);
+            }
+        }
+
+        // Hitung sisa
+        if ($payAmount >= $totalDue) {
+            // Lunas atau lebih
+            $excess = $payAmount - $totalDue;
+            $invoice->update([
+                'status' => 'paid',
+                'paid_amount' => $totalDue,
+                'outstanding' => 0,
+            ]);
+
+            // Kelebihan masuk ke saldo
+            if ($excess > 0) {
+                CustomerBalance::create([
+                    'customer_id' => $customer->id,
+                    'amount' => $excess,
+                    'description' => 'Kelebihan bayar Invoice #INV-' . str_pad($invoice->id, 5, '0', STR_PAD_LEFT),
+                ]);
+            }
+
+            // Aktifkan di Mikrotik
+            $customer->update(['is_active' => true]);
+            try {
+                if ($this->mikrotik->isConnected()) {
+                    $this->mikrotik->setSecretStatus($customer->pppoe_username, 'enabled');
+                    // $this->mikrotik->kickUser($customer->pppoe_username); // Disable kick active connection
+                }
+            } catch (\Exception $e) { /* ignore */ }
+
+            $msg = 'Invoice LUNAS!';
+            if ($excess > 0) {
+                $msg .= ' Kelebihan Rp ' . number_format($excess, 0, ',', '.') . ' masuk ke saldo.';
+            }
+
+            return response()->json(['success' => true, 'message' => $msg, 'status' => 'paid']);
+        } else {
+            // Kurang bayar
+            $remaining = $totalDue - $payAmount;
+            $invoice->update([
+                'paid_amount' => $payAmount,
+                'outstanding' => $remaining,
+                // status tetap unpaid
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Pembayaran sebagian diterima. Kurang bayar: Rp ' . number_format($remaining, 0, ',', '.'),
+                'status' => 'partial',
+            ]);
+        }
+    }
+
+    /**
      * BATALKAN PEMBAYARAN (KOREKSI + KIRIM WA)
      */
     public function cancelPayment($id)
@@ -426,7 +571,7 @@ class BillingController extends Controller
         try {
             if ($this->mikrotik->isConnected()) {
                 $this->mikrotik->setSecretStatus($userPppoe, 'disabled');
-                $this->mikrotik->kickUser($userPppoe);
+                // $this->mikrotik->kickUser($userPppoe); // Disable kick active connection
                 $pesanMikrotik = "Mikrotik: Disabled.";
             }
         } catch (\Exception $e) {
@@ -450,6 +595,44 @@ class BillingController extends Controller
         }
 
         return back()->with('warning', "Pembayaran DIBATALKAN! $pesanMikrotik $pesanWA");
+    }
+
+    /**
+     * AJAX: Get payment history for a customer
+     */
+    public function customerHistory($id)
+    {
+        $invoices = Invoice::where('customer_id', $id)
+            ->orderBy('due_date', 'desc')
+            ->get();
+
+        $history = [];
+        $totalTunggakan = 0;
+
+        foreach ($invoices as $inv) {
+            $price = $inv->price > 0 ? $inv->price : ($inv->customer->monthly_price ?? 0);
+            $unpaid = 0;
+            if ($inv->status == 'unpaid') {
+                $unpaid = $price - $inv->paid_amount;
+                $totalTunggakan += $unpaid;
+            }
+
+            $history[] = [
+                'id' => $inv->id,
+                'no_invoice' => '#INV-' . str_pad($inv->id, 5, '0', STR_PAD_LEFT),
+                'periode' => Carbon::parse($inv->due_date)->locale('id')->isoFormat('MMMM Y'),
+                'tagihan' => $price,
+                'dibayar' => $inv->status == 'paid' ? ($inv->paid_amount > 0 ? $inv->paid_amount : $price) : $inv->paid_amount,
+                'kurang' => $unpaid,
+                'status' => $inv->status,
+            ];
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $history,
+            'total_tunggakan' => $totalTunggakan
+        ]);
     }
 
     public function destroy($id)

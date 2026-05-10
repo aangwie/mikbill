@@ -25,4 +25,14 @@ class Customer extends Model
     {
         return $this->belongsTo(Olt::class);
     }
+
+    public function balances()
+    {
+        return $this->hasMany(CustomerBalance::class);
+    }
+
+    public function getTotalBalanceAttribute()
+    {
+        return $this->balances()->sum('amount');
+    }
 }

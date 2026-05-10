@@ -74,7 +74,7 @@
         </div>
 
         <!-- Stats Overview -->
-        <div class="mb-8 grid grid-cols-1 gap-5 sm:grid-cols-3">
+        <div class="mb-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
             <div
                 class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 p-6 shadow-lg shadow-indigo-500/20 text-white hover:shadow-xl transition-shadow group">
                 <dt class="truncate text-sm font-medium text-indigo-100">Total Tagihan (Periode Ini)</dt>
@@ -106,6 +106,18 @@
                 <div
                     class="absolute right-4 top-4 text-white/10 group-hover:text-white/20 transition-all transform group-hover:scale-110">
                     <i class="fas fa-exclamation-circle fa-3x"></i>
+                </div>
+            </div>
+            <div
+                class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 p-6 shadow-lg shadow-amber-500/20 text-white hover:shadow-xl transition-shadow group">
+                <dt class="truncate text-sm font-medium text-amber-100">Piutang Pelanggan</dt>
+                <dd class="mt-2 text-3xl font-bold tracking-tight text-white">
+                    Rp {{ number_format($total_piutang ?? 0, 0, ',', '.') }}
+                </dd>
+                <p class="mt-1 text-xs text-amber-200/80">Akumulasi bulan sebelumnya</p>
+                <div
+                    class="absolute right-4 top-4 text-white/10 group-hover:text-white/20 transition-all transform group-hover:scale-110">
+                    <i class="fas fa-hand-holding-usd fa-3x"></i>
                 </div>
             </div>
         </div>
@@ -164,14 +176,17 @@
                             class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider py-3 px-4 bg-slate-50 dark:bg-slate-700/50">
                             Pelanggan</th>
                         <th
-                            class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider py-3 px-4 bg-slate-50 dark:bg-slate-700/50">
-                            Due Date</th>
-                        <th
                             class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider py-3 px-4 bg-slate-50 dark:bg-slate-700/50 hidden sm:table-cell">
                             Bulan/Tahun</th>
                         <th
                             class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider py-3 px-4 bg-slate-50 dark:bg-slate-700/50">
-                            Total</th>
+                            Tagihan</th>
+                        <th
+                            class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider py-3 px-4 bg-slate-50 dark:bg-slate-700/50">
+                            Saldo</th>
+                        <th
+                            class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider py-3 px-4 bg-slate-50 dark:bg-slate-700/50">
+                            Kurang Bayar</th>
                         <th
                             class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider py-3 px-4 bg-slate-50 dark:bg-slate-700/50">
                             Status</th>
@@ -182,6 +197,18 @@
                     </thead>
                     <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
                         @foreach($invoices as $inv)
+                            @php
+                                $displayPrice = $inv->price > 0 ? $inv->price : ($inv->customer->monthly_price ?? 0);
+                                $totalDue = $displayPrice + $inv->outstanding;
+                                $customerSaldo = \App\Models\CustomerBalance::where('customer_id', $inv->customer_id)->sum('amount');
+                                $accumulatedTunggakan = \App\Models\Invoice::where('customer_id', $inv->customer_id)
+                                    ->where('status', 'unpaid')
+                                    ->get()
+                                    ->sum(function($i) {
+                                        $p = $i->price > 0 ? $i->price : ($i->customer->monthly_price ?? 0);
+                                        return $p - $i->paid_amount;
+                                    });
+                            @endphp
                             <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors group">
                                 <td class="px-4 py-3 align-middle font-mono text-sm text-slate-600 dark:text-slate-300">
                                     @if($inv->status == 'unpaid')
@@ -200,51 +227,66 @@
                                         {{ $inv->customer->internet_number ?? '-' }}
                                     </div>
                                 </td>
-                                <td class="px-4 py-3 align-middle text-sm text-slate-600 dark:text-slate-300">
-                                    {{ \Carbon\Carbon::parse($inv->due_date)->isoFormat('DD/MM/YYYY') }}
-                                </td>
                                 <td
                                     class="px-4 py-3 align-middle hidden sm:table-cell text-sm text-slate-600 dark:text-slate-300">
                                     {{ \Carbon\Carbon::parse($inv->due_date)->isoFormat('MMMM Y') }}
                                 </td>
                                 <td class="px-4 py-3 align-middle font-medium text-slate-700 dark:text-slate-200">
-                                    @php
-                                        $displayPrice = $inv->price > 0 ? $inv->price : ($inv->customer->monthly_price ?? 0);
-                                    @endphp
                                     Rp {{ number_format($displayPrice, 0, ',', '.') }}
+                                    @if($inv->outstanding > 0)
+                                        <div class="text-xs text-amber-500 mt-0.5">
+                                            + Rp {{ number_format($inv->outstanding, 0, ',', '.') }} tunggakan
+                                        </div>
+                                    @endif
+                                </td>
+                                <td class="px-4 py-3 align-middle">
+                                    <span class="inline-flex items-center rounded-md px-2 py-1 text-xs font-semibold {{ $customerSaldo > 0 ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300' : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400' }}">
+                                        Rp {{ number_format($customerSaldo, 0, ',', '.') }}
+                                    </span>
+                                </td>
+                                <td class="px-4 py-3 align-middle">
+                                    @if($accumulatedTunggakan > 0)
+                                        <span class="inline-flex items-center rounded-md px-2 py-1 text-xs font-bold bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300">
+                                            Rp {{ number_format($accumulatedTunggakan, 0, ',', '.') }}
+                                        </span>
+                                    @else
+                                        <span class="text-xs text-emerald-500">Lunas</span>
+                                    @endif
                                 </td>
                                 <td class="px-4 py-3 align-middle">
                                     @if($inv->status == 'paid')
                                         <div class="flex items-center justify-center">
-                                            <span class="h-3 w-3 rounded-full bg-green-500" title="Lunas" alt="Lunas"></span>
+                                            <span class="h-3 w-3 rounded-full bg-green-500" title="Lunas"></span>
                                         </div>
                                     @else
                                         <div class="flex items-center justify-center">
-                                            <span class="h-3 w-3 rounded-full bg-red-500" title="Belum Bayar"
-                                                alt="Belum Bayar"></span>
+                                            <span class="h-3 w-3 rounded-full bg-red-500" title="Belum Bayar"></span>
                                         </div>
                                     @endif
                                 </td>
                                 <td class="px-4 py-3 align-middle text-right">
-                                    <div class="flex justify-end gap-2">
+                                    <div class="flex justify-end gap-1">
                                         <a href="{{ route('billing.print', $inv->id) }}" target="_blank"
                                             class="p-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-md transition-colors"
                                             title="Print Invoice">
                                             <i class="fas fa-print"></i>
                                         </a>
+                                        <button type="button"
+                                            onclick="showHistory('{{ $inv->customer_id }}', '{{ addslashes($inv->customer->name) }}')"
+                                            class="p-1.5 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-md transition-colors"
+                                            title="Riwayat Pembayaran">
+                                            <i class="fas fa-list-alt"></i>
+                                        </button>
                                         @if($inv->status == 'unpaid')
-                                            <form action="{{ route('billing.pay', $inv->id) }}" method="POST" class="d-inline"
-                                                onsubmit="return confirm('Tandai invoice ini sebagai LUNAS?');">
-                                                @csrf
-                                                <button
-                                                    class="p-1.5 text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-md transition-colors"
-                                                    title="Bayar Manual">
-                                                    <i class="fas fa-check-double"></i>
-                                                </button>
-                                            </form>
+                                            <button type="button"
+                                                onclick="bayarInvoice('{{ $inv->id }}', '{{ addslashes($inv->customer->name) }}', {{ $totalDue }}, {{ $customerSaldo }})"
+                                                class="p-1.5 text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-md transition-colors"
+                                                title="Bayar">
+                                                <i class="fas fa-cash-register"></i>
+                                            </button>
                                         @else
                                             <form action="{{ route('billing.cancel', $inv->id) }}" method="POST" class="d-inline"
-                                                onsubmit="return confirm('Batalkan pembayaran ini? Status akan kembali menjadi UNPAID.');">
+                                                onsubmit="return confirm('Batalkan pembayaran ini?');">
                                                 @csrf
                                                 <button
                                                     class="p-1.5 text-orange-500 hover:text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20 rounded-md transition-colors"
@@ -912,6 +954,173 @@
             $('#payProgress').hide();
             $('#payDone').show();
             $('#paySummaryText').text(`Selesai: ${success} Sukses, ${skipped} Dilewati, ${error} Gagal.`);
+        }
+
+        // SweetAlert Payment Flow
+        function bayarInvoice(invoiceId, customerName, totalDue, saldo) {
+            const formattedDue = 'Rp ' + Number(totalDue).toLocaleString('id-ID');
+            const formattedSaldo = 'Rp ' + Number(saldo).toLocaleString('id-ID');
+
+            Swal.fire({
+                title: 'Pembayaran Invoice',
+                html:
+                    '<div class="text-left text-sm">' +
+                    '<p class="mb-2">Pelanggan: <strong>' + customerName + '</strong></p>' +
+                    '<p class="mb-2">Total Tagihan: <strong class="text-red-600">' + formattedDue + '</strong></p>' +
+                    '<p class="mb-4">Saldo Tersedia: <strong class="text-green-600">' + formattedSaldo + '</strong></p>' +
+                    '<hr class="my-3">' +
+                    '<p class="font-semibold mb-2">Pilih metode pembayaran:</p>' +
+                    '</div>',
+                showCancelButton: true,
+                showDenyButton: saldo > 0,
+                confirmButtonText: '<i class="fas fa-money-bill-wave mr-1"></i> Bayar Manual',
+                denyButtonText: '<i class="fas fa-wallet mr-1"></i> Pakai Saldo',
+                cancelButtonText: 'Batal',
+                confirmButtonColor: '#4f46e5',
+                denyButtonColor: '#10b981',
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Manual Payment - ask amount
+                    Swal.fire({
+                        title: 'Input Jumlah Bayar',
+                        html:
+                            '<p class="text-sm text-gray-500 mb-3">Tagihan: <strong>' + formattedDue + '</strong></p>' +
+                            '<div class="text-left">' +
+                            '<label class="block text-sm font-medium text-gray-700 mb-1">Jumlah Bayar (Rp)</label>' +
+                            '<input id="swalPayAmount" type="number" class="swal2-input" value="' + totalDue + '" min="1" style="margin:0;width:100%;">' +
+                            '</div>' +
+                            '<p class="text-xs text-gray-400 mt-2">Jika lebih dari tagihan, sisa masuk ke saldo. Jika kurang, tercatat sebagai kurang bayar.</p>',
+                        showCancelButton: true,
+                        confirmButtonText: '<i class="fas fa-check mr-1"></i> Bayar',
+                        cancelButtonText: 'Batal',
+                        confirmButtonColor: '#10b981',
+                        preConfirm: () => {
+                            const amt = document.getElementById('swalPayAmount').value;
+                            if (!amt || amt <= 0) {
+                                Swal.showValidationMessage('Masukkan jumlah yang valid!');
+                                return false;
+                            }
+                            return amt;
+                        }
+                    }).then((r) => {
+                        if (r.isConfirmed) {
+                            submitPayment(invoiceId, 'manual', r.value);
+                        }
+                    });
+                } else if (result.isDenied) {
+                    // Saldo Payment
+                    let payFromSaldo = Math.min(saldo, totalDue);
+                    Swal.fire({
+                        title: 'Konfirmasi Bayar dari Saldo',
+                        html: '<p class="text-sm">Akan memotong <strong class="text-green-600">Rp ' + Number(payFromSaldo).toLocaleString('id-ID') + '</strong> dari saldo pelanggan.</p>' +
+                              (payFromSaldo < totalDue ? '<p class="text-sm text-amber-600 mt-2">Saldo tidak cukup. Kurang bayar: <strong>Rp ' + Number(totalDue - payFromSaldo).toLocaleString('id-ID') + '</strong></p>' : ''),
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonText: 'Ya, Potong Saldo',
+                        cancelButtonText: 'Batal',
+                        confirmButtonColor: '#10b981',
+                    }).then((r) => {
+                        if (r.isConfirmed) {
+                            submitPayment(invoiceId, 'saldo', 0);
+                        }
+                    });
+                }
+            });
+        }
+
+        function submitPayment(invoiceId, method, amount) {
+            $.ajax({
+                url: '/billing/' + invoiceId + '/pay-manual',
+                type: 'POST',
+                data: {
+                    _token: $('meta[name="csrf-token"]').attr('content'),
+                    method: method,
+                    amount: amount
+                },
+                success: function(res) {
+                    if (res.success) {
+                        Swal.fire({
+                            icon: res.status === 'paid' ? 'success' : 'info',
+                            title: res.status === 'paid' ? 'Lunas!' : 'Pembayaran Sebagian',
+                            text: res.message,
+                            timer: 2500,
+                            showConfirmButton: true
+                        }).then(() => location.reload());
+                    } else {
+                        Swal.fire('Gagal', res.message, 'error');
+                    }
+                },
+                error: function(xhr) {
+                    let msg = xhr.responseJSON?.message || 'Terjadi kesalahan.';
+                    Swal.fire('Error', msg, 'error');
+                }
+            });
+        }
+
+        // Fetch and show payment history
+        function showHistory(customerId, customerName) {
+            Swal.fire({
+                title: 'Riwayat Pembayaran',
+                text: 'Memuat data...',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            $.ajax({
+                url: '/billing/customer/' + customerId + '/history',
+                type: 'GET',
+                success: function(res) {
+                    if (res.success) {
+                        let html = '<div class="text-left">';
+                        html += '<p class="mb-4 text-sm">Pelanggan: <strong>' + customerName + '</strong></p>';
+                        
+                        html += '<div class="overflow-x-auto max-h-96">';
+                        html += '<table class="w-full text-sm text-left border-collapse">';
+                        html += '<thead class="bg-gray-100 sticky top-0">';
+                        html += '<tr><th class="p-2 border">Periode</th><th class="p-2 border">Tagihan</th><th class="p-2 border">Dibayar</th><th class="p-2 border">Kurang</th><th class="p-2 border">Status</th></tr>';
+                        html += '</thead><tbody>';
+
+                        res.data.forEach(item => {
+                            let statusBadge = item.status === 'paid' 
+                                ? '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Lunas</span>'
+                                : '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">Unpaid</span>';
+                                
+                            html += '<tr class="border-b hover:bg-gray-50">';
+                            html += '<td class="p-2 border">' + item.periode + '</td>';
+                            html += '<td class="p-2 border">Rp ' + Number(item.tagihan).toLocaleString('id-ID') + '</td>';
+                            html += '<td class="p-2 border">Rp ' + Number(item.dibayar).toLocaleString('id-ID') + '</td>';
+                            html += '<td class="p-2 border text-amber-600">Rp ' + Number(item.kurang).toLocaleString('id-ID') + '</td>';
+                            html += '<td class="p-2 border text-center">' + statusBadge + '</td>';
+                            html += '</tr>';
+                        });
+
+                        html += '</tbody></table></div>';
+                        
+                        if (res.total_tunggakan > 0) {
+                            html += '<div class="mt-4 p-3 bg-red-50 text-red-800 rounded-md font-bold text-sm border border-red-200">';
+                            html += 'Total Tunggakan: Rp ' + Number(res.total_tunggakan).toLocaleString('id-ID');
+                            html += '</div>';
+                        }
+                        
+                        html += '</div>';
+
+                        Swal.fire({
+                            title: 'Riwayat Pembayaran',
+                            html: html,
+                            width: '800px',
+                            showCloseButton: true,
+                            showConfirmButton: false
+                        });
+                    } else {
+                        Swal.fire('Gagal', 'Tidak dapat memuat data.', 'error');
+                    }
+                },
+                error: function(xhr) {
+                    Swal.fire('Error', 'Gagal memuat data dari server.', 'error');
+                }
+            });
         }
     </script>
 @endpush
