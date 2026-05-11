@@ -133,12 +133,22 @@ class FrontendController extends Controller
         // Pastikan tidak negatif jika ada anomali data
         if ($akumulasiKurangBayar < 0) $akumulasiKurangBayar = 0;
 
+        // Extract company fields with fallback defaults
+        $companyName = $company->company_name ?? 'BillNesia';
+        $companyAddress = $company->address ?? '';
+        $companyPhone = $company->phone ?? '';
+        $companyEmail = $company->email ?? '';
+
         $data = [
             'invoice' => $invoice,
             'company' => $company,
             'logoBase64' => $logoBase64,
             'isPdf' => true,
-            'akumulasiKurangBayar' => $akumulasiKurangBayar
+            'akumulasiKurangBayar' => $akumulasiKurangBayar,
+            'companyName' => $companyName,
+            'companyAddress' => $companyAddress,
+            'companyPhone' => $companyPhone,
+            'companyEmail' => $companyEmail,
         ];
 
         $pdf = Pdf::loadView('billing.invoice', $data);
