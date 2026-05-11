@@ -454,6 +454,9 @@ class BillingController extends Controller
         $request->validate([
             'method' => 'required|in:manual,saldo',
             'amount' => 'nullable|numeric|min:0',
+            'additional_payments' => 'nullable|array',
+            'additional_payments.*.invoice_id' => 'sometimes|integer',
+            'additional_payments.*.amount' => 'sometimes|numeric|min:0',
         ]);
 
         $invoice = Invoice::with('customer')->findOrFail($id);
@@ -463,25 +466,62 @@ class BillingController extends Controller
             return response()->json(['success' => false, 'message' => 'Invoice sudah lunas.']);
         }
 
+        $invoiceDate = \Carbon\Carbon::parse($invoice->due_date);
+        $month = $invoiceDate->month;
+        $year = $invoiceDate->year;
+
+        $previousInvoices = Invoice::where('customer_id', $invoice->customer_id)
+            ->where('status', 'unpaid')
+            ->where('id', '!=', $invoice->id)
+            ->where(function($q) use ($month, $year) {
+                $q->whereYear('due_date', '<', $year)
+                  ->orWhere(function($q2) use ($month, $year) {
+                      $q2->whereYear('due_date', $year)->whereMonth('due_date', '<', $month);
+                  });
+            })
+            ->get();
+
+        $akumulasiKurangBayar = 0;
+        foreach ($previousInvoices as $prevInv) {
+            $prevPrice = $prevInv->price > 0 ? $prevInv->price : ($prevInv->customer->monthly_price ?? 0);
+            if ($prevPrice == 0) continue; 
+            
+            $unpaid = $prevPrice - $prevInv->paid_amount;
+            $akumulasiKurangBayar += $unpaid;
+        }
+        if ($akumulasiKurangBayar < 0) $akumulasiKurangBayar = 0;
+
+        // Sinkronisasi outstanding real-time ke database
+        $invoice->outstanding = $akumulasiKurangBayar;
+        $invoice->save();
+
         $price = $invoice->price > 0 ? $invoice->price : ($customer->monthly_price ?? 0);
-        // Total yang harus dibayar = price + outstanding yang sudah tercatat
-        $totalDue = $price + $invoice->outstanding;
+        // Total yang harus dibayar = price saja (tanpa tunggakan, karena tunggakan dibayar terpisah via additional_payments)
+        $mainDue = $price;
+
+        // Hitung total additional payments
+        $additionalPayments = $request->input('additional_payments', []);
+        $totalAdditionalAmount = 0;
+        foreach ($additionalPayments as $ap) {
+            $totalAdditionalAmount += (int) $ap['amount'];
+        }
 
         $method = $request->method;
         $payAmount = 0;
 
         if ($method == 'saldo') {
             // Bayar pakai saldo
+            $totalAll = $mainDue + $totalAdditionalAmount;
             $saldo = CustomerBalance::where('customer_id', $customer->id)->sum('amount');
             if ($saldo <= 0) {
                 return response()->json(['success' => false, 'message' => 'Saldo pelanggan kosong.']);
             }
-            $payAmount = min($saldo, $totalDue);
+            $payAmount = min($saldo, $mainDue);
 
             // Kurangi saldo
             CustomerBalance::create([
                 'customer_id' => $customer->id,
-                'amount' => -$payAmount,
+                'amount' => -min($saldo, $totalAll),
                 'description' => 'Pembayaran Invoice #INV-' . str_pad($invoice->id, 5, '0', STR_PAD_LEFT),
             ]);
         } else {
@@ -492,13 +532,42 @@ class BillingController extends Controller
             }
         }
 
-        // Hitung sisa
-        if ($payAmount >= $totalDue) {
+        // === Proses pembayaran tambahan untuk bulan sebelumnya ===
+        $additionalMessages = [];
+        foreach ($additionalPayments as $ap) {
+            $addInv = Invoice::find($ap['invoice_id']);
+            if (!$addInv || $addInv->customer_id != $customer->id) continue;
+            if ($addInv->status == 'paid') continue;
+
+            $addPrice = $addInv->price > 0 ? $addInv->price : ($customer->monthly_price ?? 0);
+            $addDue = $addPrice - $addInv->paid_amount;
+            $addPay = min((int) $ap['amount'], $addDue);
+
+            if ($addPay <= 0) continue;
+
+            $newPaid = $addInv->paid_amount + $addPay;
+            if ($newPaid >= $addPrice) {
+                $addInv->update([
+                    'status' => 'paid',
+                    'paid_amount' => $addPrice,
+                    'outstanding' => 0,
+                ]);
+                $additionalMessages[] = Carbon::parse($addInv->due_date)->locale('id')->isoFormat('MMM Y') . ': Lunas';
+            } else {
+                $addInv->update([
+                    'paid_amount' => $newPaid,
+                ]);
+                $additionalMessages[] = Carbon::parse($addInv->due_date)->locale('id')->isoFormat('MMM Y') . ': Rp ' . number_format($addPay, 0, ',', '.');
+            }
+        }
+
+        // === Proses pembayaran invoice utama ===
+        if ($payAmount >= $mainDue) {
             // Lunas atau lebih
-            $excess = $payAmount - $totalDue;
+            $excess = $payAmount - $mainDue;
             $invoice->update([
                 'status' => 'paid',
-                'paid_amount' => $totalDue,
+                'paid_amount' => $mainDue,
                 'outstanding' => 0,
             ]);
 
@@ -516,7 +585,6 @@ class BillingController extends Controller
             try {
                 if ($this->mikrotik->isConnected()) {
                     $this->mikrotik->setSecretStatus($customer->pppoe_username, 'enabled');
-                    // $this->mikrotik->kickUser($customer->pppoe_username); // Disable kick active connection
                 }
             } catch (\Exception $e) { /* ignore */ }
 
@@ -524,20 +592,28 @@ class BillingController extends Controller
             if ($excess > 0) {
                 $msg .= ' Kelebihan Rp ' . number_format($excess, 0, ',', '.') . ' masuk ke saldo.';
             }
+            if (!empty($additionalMessages)) {
+                $msg .= ' Tunggakan: ' . implode(', ', $additionalMessages) . '.';
+            }
 
             return response()->json(['success' => true, 'message' => $msg, 'status' => 'paid']);
         } else {
             // Kurang bayar
-            $remaining = $totalDue - $payAmount;
+            $remaining = $mainDue - $payAmount;
             $invoice->update([
                 'paid_amount' => $payAmount,
                 'outstanding' => $remaining,
                 // status tetap unpaid
             ]);
 
+            $msg = 'Pembayaran sebagian diterima. Kurang bayar bulan ini: Rp ' . number_format($remaining, 0, ',', '.');
+            if (!empty($additionalMessages)) {
+                $msg .= ' Tunggakan: ' . implode(', ', $additionalMessages) . '.';
+            }
+
             return response()->json([
                 'success' => true,
-                'message' => 'Pembayaran sebagian diterima. Kurang bayar: Rp ' . number_format($remaining, 0, ',', '.'),
+                'message' => $msg,
                 'status' => 'partial',
             ]);
         }
@@ -551,18 +627,52 @@ class BillingController extends Controller
         $invoice = Invoice::with('customer')->findOrFail($id);
         $customer = $invoice->customer;
 
-        if ($invoice->status != 'paid')
+        if ($invoice->status != 'paid' && $invoice->paid_amount <= 0) {
+            if (request()->ajax()) return response()->json(['success' => false, 'message' => 'Gagal. Invoice tidak memiliki pembayaran yang dapat dibatalkan.']);
             return back()->with('error', 'Gagal.');
+        }
 
         // Validasi Operator
         if (Auth::user()->role == 'operator') {
             if ($customer->operator_id != Auth::user()->id) {
+                if (request()->ajax()) return response()->json(['success' => false, 'message' => 'Akses Ditolak.']);
                 return back()->with('error', 'Akses Ditolak.');
             }
         }
 
+        // Hitung ulang outstanding (akumulasi kurang bayar sebelum invoice ini)
+        $invoiceDate = \Carbon\Carbon::parse($invoice->due_date);
+        $month = $invoiceDate->month;
+        $year = $invoiceDate->year;
+
+        $previousInvoices = Invoice::where('customer_id', $invoice->customer_id)
+            ->where('status', 'unpaid')
+            ->where('id', '!=', $invoice->id)
+            ->where(function($q) use ($month, $year) {
+                $q->whereYear('due_date', '<', $year)
+                  ->orWhere(function($q2) use ($month, $year) {
+                      $q2->whereYear('due_date', $year)->whereMonth('due_date', '<', $month);
+                  });
+            })
+            ->get();
+
+        $akumulasiKurangBayar = 0;
+        foreach ($previousInvoices as $prevInv) {
+            $prevPrice = $prevInv->price > 0 ? $prevInv->price : ($prevInv->customer->monthly_price ?? 0);
+            if ($prevPrice == 0) continue; 
+            
+            $unpaid = $prevPrice - $prevInv->paid_amount;
+            $akumulasiKurangBayar += $unpaid;
+        }
+        if ($akumulasiKurangBayar < 0) $akumulasiKurangBayar = 0;
+
         // Update Database
-        $invoice->update(['status' => 'unpaid']);
+        $invoice->update([
+            'status' => 'unpaid',
+            'paid_amount' => 0,
+            'outstanding' => $akumulasiKurangBayar
+        ]);
+        
         $customer->update(['is_active' => false]);
 
         // Eksekusi Mikrotik
@@ -594,7 +704,56 @@ class BillingController extends Controller
             $pesanWA = $waResult['status'] ? "WA Terkirim." : "WA Gagal.";
         }
 
-        return back()->with('warning', "Pembayaran DIBATALKAN! $pesanMikrotik $pesanWA");
+        $msg = "Pembayaran DIBATALKAN! $pesanMikrotik $pesanWA";
+        
+        if (request()->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => $msg
+            ]);
+        }
+
+        return back()->with('warning', $msg);
+    }
+
+    /**
+     * AJAX: Get unpaid months for a specific invoice's customer (same year, prior months)
+     */
+    public function getUnpaidMonths($id)
+    {
+        $invoice = Invoice::with('customer')->findOrFail($id);
+        $invoiceDate = Carbon::parse($invoice->due_date);
+        $month = $invoiceDate->month;
+        $year = $invoiceDate->year;
+
+        $unpaidInvoices = Invoice::where('customer_id', $invoice->customer_id)
+            ->where('status', 'unpaid')
+            ->where('id', '!=', $invoice->id)
+            ->where(function($q) use ($month, $year) {
+                $q->whereYear('due_date', $year)
+                  ->whereMonth('due_date', '<', $month);
+            })
+            ->orderBy('due_date', 'asc')
+            ->get();
+
+        $data = [];
+        foreach ($unpaidInvoices as $inv) {
+            $price = $inv->price > 0 ? $inv->price : ($inv->customer->monthly_price ?? 0);
+            if ($price == 0) continue;
+            
+            $kurangBayar = $price - $inv->paid_amount;
+            if ($kurangBayar <= 0) continue;
+
+            $data[] = [
+                'id' => $inv->id,
+                'periode' => Carbon::parse($inv->due_date)->locale('id')->isoFormat('MMMM Y'),
+                'tagihan' => $price,
+                'dibayar' => $inv->paid_amount,
+                'kurang_bayar' => $kurangBayar,
+            ];
+        }
+
+        return response()->json(['success' => true, 'data' => $data]);
     }
 
     /**
@@ -611,8 +770,14 @@ class BillingController extends Controller
 
         foreach ($invoices as $inv) {
             $price = $inv->price > 0 ? $inv->price : ($inv->customer->monthly_price ?? 0);
+            
+            $status = $inv->status;
+            if ($price == 0) {
+                $status = 'paid';
+            }
+
             $unpaid = 0;
-            if ($inv->status == 'unpaid') {
+            if ($status == 'unpaid') {
                 $unpaid = $price - $inv->paid_amount;
                 $totalTunggakan += $unpaid;
             }
@@ -622,9 +787,9 @@ class BillingController extends Controller
                 'no_invoice' => '#INV-' . str_pad($inv->id, 5, '0', STR_PAD_LEFT),
                 'periode' => Carbon::parse($inv->due_date)->locale('id')->isoFormat('MMMM Y'),
                 'tagihan' => $price,
-                'dibayar' => $inv->status == 'paid' ? ($inv->paid_amount > 0 ? $inv->paid_amount : $price) : $inv->paid_amount,
+                'dibayar' => $status == 'paid' ? ($inv->paid_amount > 0 ? $inv->paid_amount : $price) : $inv->paid_amount,
                 'kurang' => $unpaid,
-                'status' => $inv->status,
+                'status' => $status,
             ];
         }
 
@@ -757,6 +922,35 @@ class BillingController extends Controller
             }
         }
 
+        // Hitung akumulasi kurang bayar dari bulan-bulan sebelumnya
+        $invoiceDate = \Carbon\Carbon::parse($invoice->due_date);
+        $month = $invoiceDate->month;
+        $year = $invoiceDate->year;
+
+        $previousInvoices = Invoice::where('customer_id', $invoice->customer_id)
+            ->where('status', 'unpaid')
+            ->where('id', '!=', $invoice->id)
+            ->where(function($q) use ($month, $year) {
+                $q->whereYear('due_date', '<', $year)
+                  ->orWhere(function($q2) use ($month, $year) {
+                      $q2->whereYear('due_date', $year)->whereMonth('due_date', '<', $month);
+                  });
+            })
+            ->get();
+
+        $akumulasiKurangBayar = 0;
+        foreach ($previousInvoices as $prevInv) {
+            $prevPrice = $prevInv->price > 0 ? $prevInv->price : ($prevInv->customer->monthly_price ?? 0);
+            // Jika tagihan 0, anggap lunas (tidak ada kurang bayar)
+            if ($prevPrice == 0) continue; 
+            
+            $unpaid = $prevPrice - $prevInv->paid_amount;
+            $akumulasiKurangBayar += $unpaid;
+        }
+
+        // Pastikan tidak negatif jika ada anomali data
+        if ($akumulasiKurangBayar < 0) $akumulasiKurangBayar = 0;
+
         return view('billing.invoice', compact(
             'invoice',
             'company',
@@ -764,7 +958,8 @@ class BillingController extends Controller
             'companyName',
             'companyAddress',
             'companyPhone',
-            'companyEmail'
+            'companyEmail',
+            'akumulasiKurangBayar'
         ));
     }
 

@@ -278,12 +278,26 @@
                                             <i class="fas fa-list-alt"></i>
                                         </button>
                                         @if($inv->status == 'unpaid')
-                                            <button type="button"
-                                                onclick="bayarInvoice('{{ $inv->id }}', '{{ addslashes($inv->customer->name) }}', {{ $totalDue }}, {{ $customerSaldo }})"
-                                                class="p-1.5 text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-md transition-colors"
-                                                title="Bayar">
-                                                <i class="fas fa-cash-register"></i>
-                                            </button>
+                                            @if($displayPrice == 0 && $accumulatedTunggakan <= 0)
+                                                <button type="button" disabled
+                                                    class="p-1.5 text-slate-400 bg-slate-100 dark:bg-slate-800 rounded-md cursor-not-allowed"
+                                                    title="Tidak ada tagihan">
+                                                    <i class="fas fa-cash-register"></i>
+                                                </button>
+                                            @elseif($inv->paid_amount > 0)
+                                                <button type="button" disabled
+                                                    class="p-1.5 text-slate-400 bg-slate-100 dark:bg-slate-800 rounded-md cursor-not-allowed"
+                                                    title="Sudah dilakukan pembayaran sebagian. Batal pembayaran di Riwayat jika ingin mengubah.">
+                                                    <i class="fas fa-cash-register"></i>
+                                                </button>
+                                            @else
+                                                <button type="button"
+                                                    onclick="bayarInvoice('{{ $inv->id }}', '{{ addslashes($inv->customer->name) }}', {{ $displayPrice }}, {{ $accumulatedTunggakan - $displayPrice }}, {{ $customerSaldo }})"
+                                                    class="p-1.5 text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-md transition-colors"
+                                                    title="Bayar">
+                                                    <i class="fas fa-cash-register"></i>
+                                                </button>
+                                            @endif
                                         @else
                                             <form action="{{ route('billing.cancel', $inv->id) }}" method="POST" class="d-inline"
                                                 onsubmit="return confirm('Batalkan pembayaran ini?');">
@@ -957,16 +971,25 @@
         }
 
         // SweetAlert Payment Flow
-        function bayarInvoice(invoiceId, customerName, totalDue, saldo) {
+        function bayarInvoice(invoiceId, customerName, tagihanBulanIni, tunggakan, saldo) {
+            const totalDue = tagihanBulanIni + (tunggakan > 0 ? tunggakan : 0);
+            const formattedTagihan = 'Rp ' + Number(tagihanBulanIni).toLocaleString('id-ID');
+            const formattedTunggakan = 'Rp ' + Number(tunggakan).toLocaleString('id-ID');
             const formattedDue = 'Rp ' + Number(totalDue).toLocaleString('id-ID');
             const formattedSaldo = 'Rp ' + Number(saldo).toLocaleString('id-ID');
+
+            let detailHTML = '<p class="mb-1">Tagihan Bulan Ini: <strong>' + formattedTagihan + '</strong></p>';
+            if (tunggakan > 0) {
+                detailHTML += '<p class="mb-1 text-amber-600">Tunggakan Bulan Sebelumnya: <strong>' + formattedTunggakan + '</strong></p>';
+            }
+            detailHTML += '<p class="mb-2">Total Tagihan: <strong class="text-red-600">' + formattedDue + '</strong></p>';
 
             Swal.fire({
                 title: 'Pembayaran Invoice',
                 html:
                     '<div class="text-left text-sm">' +
                     '<p class="mb-2">Pelanggan: <strong>' + customerName + '</strong></p>' +
-                    '<p class="mb-2">Total Tagihan: <strong class="text-red-600">' + formattedDue + '</strong></p>' +
+                    detailHTML +
                     '<p class="mb-4">Saldo Tersedia: <strong class="text-green-600">' + formattedSaldo + '</strong></p>' +
                     '<hr class="my-3">' +
                     '<p class="font-semibold mb-2">Pilih metode pembayaran:</p>' +
@@ -980,33 +1003,8 @@
                 denyButtonColor: '#10b981',
             }).then((result) => {
                 if (result.isConfirmed) {
-                    // Manual Payment - ask amount
-                    Swal.fire({
-                        title: 'Input Jumlah Bayar',
-                        html:
-                            '<p class="text-sm text-gray-500 mb-3">Tagihan: <strong>' + formattedDue + '</strong></p>' +
-                            '<div class="text-left">' +
-                            '<label class="block text-sm font-medium text-gray-700 mb-1">Jumlah Bayar (Rp)</label>' +
-                            '<input id="swalPayAmount" type="number" class="swal2-input" value="' + totalDue + '" min="1" style="margin:0;width:100%;">' +
-                            '</div>' +
-                            '<p class="text-xs text-gray-400 mt-2">Jika lebih dari tagihan, sisa masuk ke saldo. Jika kurang, tercatat sebagai kurang bayar.</p>',
-                        showCancelButton: true,
-                        confirmButtonText: '<i class="fas fa-check mr-1"></i> Bayar',
-                        cancelButtonText: 'Batal',
-                        confirmButtonColor: '#10b981',
-                        preConfirm: () => {
-                            const amt = document.getElementById('swalPayAmount').value;
-                            if (!amt || amt <= 0) {
-                                Swal.showValidationMessage('Masukkan jumlah yang valid!');
-                                return false;
-                            }
-                            return amt;
-                        }
-                    }).then((r) => {
-                        if (r.isConfirmed) {
-                            submitPayment(invoiceId, 'manual', r.value);
-                        }
-                    });
+                    // Fetch unpaid months first, then show manual payment dialog
+                    showManualPaymentDialog(invoiceId, tagihanBulanIni, detailHTML);
                 } else if (result.isDenied) {
                     // Saldo Payment
                     let payFromSaldo = Math.min(saldo, totalDue);
@@ -1028,15 +1026,151 @@
             });
         }
 
-        function submitPayment(invoiceId, method, amount) {
+        function showManualPaymentDialog(invoiceId, tagihanBulanIni, detailHTML) {
+            // Show loading while fetching unpaid months
+            Swal.fire({ title: 'Memuat data...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+            $.ajax({
+                url: '/billing/' + invoiceId + '/unpaid-months',
+                type: 'GET',
+                success: function(res) {
+                    let unpaidMonths = res.success ? res.data : [];
+                    
+                    let unpaidHTML = '';
+                    if (unpaidMonths.length > 0) {
+                        unpaidHTML += '<div class="mt-3 mb-3 p-3 bg-amber-50 rounded-lg border border-amber-200 text-left">';
+                        unpaidHTML += '<p class="text-sm font-semibold text-amber-700 mb-2"><i class="fas fa-exclamation-triangle mr-1"></i> Kurang Bayar Bulan Sebelumnya</p>';
+                        
+                        unpaidMonths.forEach((m, idx) => {
+                            unpaidHTML += '<div class="flex items-start gap-2 mb-2 p-2 bg-white rounded border border-amber-100">';
+                            unpaidHTML += '<input type="checkbox" id="unpaidCb_' + idx + '" class="unpaid-checkbox mt-1" data-idx="' + idx + '" data-invoice-id="' + m.id + '" data-max="' + m.kurang_bayar + '">';
+                            unpaidHTML += '<div class="flex-1">';
+                            unpaidHTML += '<label for="unpaidCb_' + idx + '" class="text-sm font-medium cursor-pointer">' + m.periode + '</label>';
+                            unpaidHTML += '<p class="text-xs text-gray-500">Kurang bayar: <strong class="text-amber-600">Rp ' + Number(m.kurang_bayar).toLocaleString('id-ID') + '</strong></p>';
+                            unpaidHTML += '<div id="unpaidInput_' + idx + '" class="mt-1" style="display:none;">';
+                            unpaidHTML += '<input type="number" id="unpaidAmt_' + idx + '" class="unpaid-amount w-full px-2 py-1 text-sm border rounded focus:ring-1 focus:ring-amber-400" value="' + m.kurang_bayar + '" min="1" max="' + m.kurang_bayar + '" placeholder="Jumlah bayar">';
+                            unpaidHTML += '</div>';
+                            unpaidHTML += '</div>';
+                            unpaidHTML += '</div>';
+                        });
+
+                        unpaidHTML += '</div>';
+                    }
+
+                    Swal.fire({
+                        title: 'Input Jumlah Bayar',
+                        html:
+                            '<div class="text-left text-sm mb-3">' +
+                            detailHTML +
+                            '</div>' +
+                            '<div class="text-left">' +
+                            '<label class="block text-sm font-medium text-gray-700 mb-1">Jumlah Bayar Bulan Ini (Rp)</label>' +
+                            '<input id="swalPayAmount" type="number" class="swal2-input" value="' + tagihanBulanIni + '" min="1" style="margin:0;width:100%;">' +
+                            '</div>' +
+                            unpaidHTML +
+                            '<div id="payTotalSummary" class="mt-3 p-2 bg-indigo-50 rounded text-sm text-left border border-indigo-200">' +
+                            '<strong>Total Pembayaran: </strong><span id="payTotalDisplay">Rp ' + Number(tagihanBulanIni).toLocaleString('id-ID') + '</span>' +
+                            '</div>' +
+                            '<p class="text-xs text-gray-400 mt-2">Jika lebih dari tagihan, sisa masuk ke saldo. Jika kurang, tercatat sebagai kurang bayar.</p>',
+                        width: '520px',
+                        showCancelButton: true,
+                        confirmButtonText: '<i class="fas fa-check mr-1"></i> Bayar',
+                        cancelButtonText: 'Batal',
+                        confirmButtonColor: '#10b981',
+                        didOpen: () => {
+                            // Toggle checkbox → show/hide input & recalculate total
+                            document.querySelectorAll('.unpaid-checkbox').forEach(cb => {
+                                cb.addEventListener('change', function() {
+                                    const idx = this.dataset.idx;
+                                    const inputDiv = document.getElementById('unpaidInput_' + idx);
+                                    inputDiv.style.display = this.checked ? 'block' : 'none';
+                                    recalcPayTotal(tagihanBulanIni);
+                                });
+                            });
+                            // Recalculate when any amount changes
+                            document.querySelectorAll('.unpaid-amount').forEach(inp => {
+                                inp.addEventListener('input', () => recalcPayTotal(tagihanBulanIni));
+                            });
+                            document.getElementById('swalPayAmount').addEventListener('input', () => recalcPayTotal(tagihanBulanIni));
+                        },
+                        preConfirm: () => {
+                            const mainAmt = document.getElementById('swalPayAmount').value;
+                            if (!mainAmt || mainAmt <= 0) {
+                                Swal.showValidationMessage('Masukkan jumlah yang valid!');
+                                return false;
+                            }
+                            
+                            // Collect additional payments
+                            let additionalPayments = [];
+                            document.querySelectorAll('.unpaid-checkbox:checked').forEach(cb => {
+                                const idx = cb.dataset.idx;
+                                const amt = document.getElementById('unpaidAmt_' + idx).value;
+                                if (amt > 0) {
+                                    additionalPayments.push({
+                                        invoice_id: parseInt(cb.dataset.invoiceId),
+                                        amount: parseInt(amt)
+                                    });
+                                }
+                            });
+
+                            return { amount: mainAmt, additionalPayments: additionalPayments };
+                        }
+                    }).then((r) => {
+                        if (r.isConfirmed) {
+                            submitPayment(invoiceId, 'manual', r.value.amount, r.value.additionalPayments);
+                        }
+                    });
+                },
+                error: function() {
+                    // Fallback: show without unpaid months
+                    Swal.fire({
+                        title: 'Input Jumlah Bayar',
+                        html:
+                            '<div class="text-left text-sm mb-3">' + detailHTML + '</div>' +
+                            '<div class="text-left">' +
+                            '<label class="block text-sm font-medium text-gray-700 mb-1">Jumlah Bayar (Rp)</label>' +
+                            '<input id="swalPayAmount" type="number" class="swal2-input" value="' + tagihanBulanIni + '" min="1" style="margin:0;width:100%;">' +
+                            '</div>',
+                        showCancelButton: true,
+                        confirmButtonText: '<i class="fas fa-check mr-1"></i> Bayar',
+                        cancelButtonText: 'Batal',
+                        confirmButtonColor: '#10b981',
+                        preConfirm: () => {
+                            const amt = document.getElementById('swalPayAmount').value;
+                            if (!amt || amt <= 0) { Swal.showValidationMessage('Masukkan jumlah yang valid!'); return false; }
+                            return { amount: amt, additionalPayments: [] };
+                        }
+                    }).then((r) => {
+                        if (r.isConfirmed) {
+                            submitPayment(invoiceId, 'manual', r.value.amount, r.value.additionalPayments);
+                        }
+                    });
+                }
+            });
+        }
+
+        function recalcPayTotal(tagihanBulanIni) {
+            let mainAmt = parseInt(document.getElementById('swalPayAmount').value) || 0;
+            let additionalTotal = 0;
+            document.querySelectorAll('.unpaid-checkbox:checked').forEach(cb => {
+                const idx = cb.dataset.idx;
+                additionalTotal += parseInt(document.getElementById('unpaidAmt_' + idx).value) || 0;
+            });
+            let total = mainAmt + additionalTotal;
+            document.getElementById('payTotalDisplay').textContent = 'Rp ' + Number(total).toLocaleString('id-ID');
+        }
+
+        function submitPayment(invoiceId, method, amount, additionalPayments) {
             $.ajax({
                 url: '/billing/' + invoiceId + '/pay-manual',
                 type: 'POST',
-                data: {
+                contentType: 'application/json',
+                data: JSON.stringify({
                     _token: $('meta[name="csrf-token"]').attr('content'),
                     method: method,
-                    amount: amount
-                },
+                    amount: amount,
+                    additional_payments: additionalPayments || []
+                }),
                 success: function(res) {
                     if (res.success) {
                         Swal.fire({
@@ -1079,13 +1213,20 @@
                         html += '<div class="overflow-x-auto max-h-96">';
                         html += '<table class="w-full text-sm text-left border-collapse">';
                         html += '<thead class="bg-gray-100 sticky top-0">';
-                        html += '<tr><th class="p-2 border">Periode</th><th class="p-2 border">Tagihan</th><th class="p-2 border">Dibayar</th><th class="p-2 border">Kurang</th><th class="p-2 border">Status</th></tr>';
+                        html += '<tr><th class="p-2 border">Periode</th><th class="p-2 border">Tagihan</th><th class="p-2 border">Dibayar</th><th class="p-2 border">Kurang</th><th class="p-2 border">Status</th><th class="p-2 border text-center">Aksi</th></tr>';
                         html += '</thead><tbody>';
 
                         res.data.forEach(item => {
                             let statusBadge = item.status === 'paid' 
                                 ? '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Lunas</span>'
                                 : '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">Unpaid</span>';
+                            
+                            let actionBtn = '';
+                            if (item.status === 'paid' || item.dibayar > 0) {
+                                actionBtn = `<button type="button" onclick="cancelPaymentAjax(${item.id})" class="p-1 px-2 text-xs bg-orange-100 text-orange-600 hover:bg-orange-200 rounded transition-colors" title="Batalkan Bayar">
+                                        <i class="fas fa-undo mr-1"></i> Batal
+                                    </button>`;
+                            }
                                 
                             html += '<tr class="border-b hover:bg-gray-50">';
                             html += '<td class="p-2 border">' + item.periode + '</td>';
@@ -1093,6 +1234,7 @@
                             html += '<td class="p-2 border">Rp ' + Number(item.dibayar).toLocaleString('id-ID') + '</td>';
                             html += '<td class="p-2 border text-amber-600">Rp ' + Number(item.kurang).toLocaleString('id-ID') + '</td>';
                             html += '<td class="p-2 border text-center">' + statusBadge + '</td>';
+                            html += '<td class="p-2 border text-center">' + actionBtn + '</td>';
                             html += '</tr>';
                         });
 
@@ -1119,6 +1261,43 @@
                 },
                 error: function(xhr) {
                     Swal.fire('Error', 'Gagal memuat data dari server.', 'error');
+                }
+            });
+        }
+
+        function cancelPaymentAjax(invoiceId) {
+            Swal.fire({
+                title: 'Batalkan Pembayaran?',
+                text: "Nilai tagihan akan dikembalikan dan diakumulasikan kembali pada tagihan berikutnya.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#f97316',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Ya, Batalkan!',
+                cancelButtonText: 'Tutup'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({ title: 'Memproses...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+                    
+                    $.ajax({
+                        url: '/billing/' + invoiceId + '/cancel',
+                        type: 'POST',
+                        data: {
+                            _token: $('meta[name="csrf-token"]').attr('content') || '{{ csrf_token() }}'
+                        },
+                        success: function(res) {
+                            if (res.success) {
+                                Swal.fire('Berhasil!', res.message, 'success').then(() => {
+                                    location.reload();
+                                });
+                            } else {
+                                Swal.fire('Gagal!', res.message || 'Terjadi kesalahan.', 'error');
+                            }
+                        },
+                        error: function(xhr) {
+                            Swal.fire('Error', 'Gagal membatalkan pembayaran.', 'error');
+                        }
+                    });
                 }
             });
         }

@@ -105,11 +105,40 @@ class FrontendController extends Controller
             }
         }
 
+        // Hitung akumulasi kurang bayar dari bulan-bulan sebelumnya
+        $invoiceDate = \Carbon\Carbon::parse($invoice->due_date);
+        $month = $invoiceDate->month;
+        $year = $invoiceDate->year;
+
+        $previousInvoices = Invoice::where('customer_id', $invoice->customer_id)
+            ->where('status', 'unpaid')
+            ->where('id', '!=', $invoice->id)
+            ->where(function($q) use ($month, $year) {
+                $q->whereYear('due_date', '<', $year)
+                  ->orWhere(function($q2) use ($month, $year) {
+                      $q2->whereYear('due_date', $year)->whereMonth('due_date', '<', $month);
+                  });
+            })
+            ->get();
+
+        $akumulasiKurangBayar = 0;
+        foreach ($previousInvoices as $prevInv) {
+            $prevPrice = $prevInv->price > 0 ? $prevInv->price : ($prevInv->customer->monthly_price ?? 0);
+            if ($prevPrice == 0) continue; 
+            
+            $unpaid = $prevPrice - $prevInv->paid_amount;
+            $akumulasiKurangBayar += $unpaid;
+        }
+
+        // Pastikan tidak negatif jika ada anomali data
+        if ($akumulasiKurangBayar < 0) $akumulasiKurangBayar = 0;
+
         $data = [
             'invoice' => $invoice,
             'company' => $company,
             'logoBase64' => $logoBase64,
-            'isPdf' => true
+            'isPdf' => true,
+            'akumulasiKurangBayar' => $akumulasiKurangBayar
         ];
 
         $pdf = Pdf::loadView('billing.invoice', $data);

@@ -100,6 +100,12 @@
             border: 1px solid #fecaca;
         }
 
+        .status-paid-incomplete {
+            background-color: #fef08a;
+            color: #854d0e;
+            border: 1px solid #fde047;
+        }
+
         .details-table {
             margin-top: 40px;
         }
@@ -207,6 +213,25 @@
 
 <body>
 
+    @php 
+        $displayPrice = $invoice->price > 0 ? $invoice->price : ($invoice->customer->monthly_price ?? 0);
+        $tunggakanDisplay = isset($akumulasiKurangBayar) ? $akumulasiKurangBayar : ($invoice->outstanding ?? 0);
+        $totalDue = $displayPrice + $tunggakanDisplay; 
+        
+        $remaining = $totalDue - $invoice->paid_amount;
+        
+        if ($invoice->status == 'paid' || ($invoice->status == 'unpaid' && $invoice->paid_amount > 0 && $remaining <= 0)) {
+            $badgeClass = 'status-paid';
+            $badgeText = 'LUNAS';
+        } elseif ($invoice->status == 'unpaid' && $invoice->paid_amount > 0 && $remaining > 0) {
+            $badgeClass = 'status-paid-incomplete';
+            $badgeText = 'LUNAS SEBAGIAN';
+        } else {
+            $badgeClass = 'status-unpaid';
+            $badgeText = 'BELUM BAYAR';
+        }
+    @endphp
+
     <div class="invoice-box">
         <!-- Header -->
         <table class="header-table">
@@ -236,8 +261,8 @@
                 <td class="invoice-title">
                     <h2>Invoice</h2>
                     <p class="invoice-number">#INV-{{ str_pad($invoice->id, 5, '0', STR_PAD_LEFT) }}</p>
-                    <div class="status-badge {{ $invoice->status == 'paid' ? 'status-paid' : 'status-unpaid' }}">
-                        {{ $invoice->status == 'paid' ? 'LUNAS' : 'BELUM BAYAR' }}
+                    <div class="status-badge {{ $badgeClass }}">
+                        {{ $badgeText }}
                     </div>
                 </td>
             </tr>
@@ -288,13 +313,21 @@
                         {{ \Carbon\Carbon::parse($invoice->due_date)->isoFormat('MMMM Y') }}
                     </td>
                     <td style="text-align: right; font-weight: bold; font-size: 14px;">
-                        @php
-                            $displayPrice = $invoice->price > 0 ? $invoice->price : ($invoice->customer->monthly_price ?? 0);
-                        @endphp
                         Rp {{ number_format($displayPrice, 0, ',', '.') }}
                     </td>
                 </tr>
-                @if($invoice->outstanding > 0)
+                @if(isset($akumulasiKurangBayar) && $akumulasiKurangBayar > 0)
+                <tr>
+                    <td>
+                        <p class="item-desc" style="color: #d97706;">Tunggakan Bulan Sebelumnya</p>
+                        <p class="item-subtext">Akumulasi kekurangan pembayaran periode sebelumnya</p>
+                    </td>
+                    <td style="font-size: 14px;">-</td>
+                    <td style="text-align: right; font-weight: bold; font-size: 14px; color: #d97706;">
+                        Rp {{ number_format($akumulasiKurangBayar, 0, ',', '.') }}
+                    </td>
+                </tr>
+                @elseif(!isset($akumulasiKurangBayar) && $invoice->outstanding > 0)
                 <tr>
                     <td>
                         <p class="item-desc" style="color: #d97706;">Tunggakan Bulan Sebelumnya</p>
@@ -310,18 +343,27 @@
         </table>
 
         <!-- Summary -->
-        @php $totalDue = $displayPrice + ($invoice->outstanding ?? 0); @endphp
         <table class="total-row">
             <tr>
                 <td style="width: 70%;" class="total-label">Total Tagihan</td>
                 <td class="total-amount">Rp {{ number_format($totalDue, 0, ',', '.') }}</td>
             </tr>
-            @if($invoice->status == 'unpaid' && $invoice->outstanding > 0)
+            @if($invoice->status == 'unpaid' && $tunggakanDisplay > 0)
             <tr>
                 <td style="width: 70%; padding-top:5px;" class="total-label">
-                    <span style="color:#d97706; font-size:12px;">Termasuk tunggakan: Rp {{ number_format($invoice->outstanding, 0, ',', '.') }}</span>
+                    <span style="color:#d97706; font-size:12px;">Termasuk tunggakan: Rp {{ number_format($tunggakanDisplay, 0, ',', '.') }}</span>
                 </td>
                 <td></td>
+            </tr>
+            @endif
+            @if($invoice->status == 'unpaid' && $invoice->paid_amount > 0)
+            <tr>
+                <td style="width: 70%;" class="total-label">Sudah Dibayar</td>
+                <td class="total-amount" style="color: #15803d;">- Rp {{ number_format($invoice->paid_amount, 0, ',', '.') }}</td>
+            </tr>
+            <tr>
+                <td style="width: 70%;" class="total-label">Sisa Tagihan</td>
+                <td class="total-amount" style="color: #b91c1c;">Rp {{ number_format($remaining > 0 ? $remaining : 0, 0, ',', '.') }}</td>
             </tr>
             @endif
         </table>

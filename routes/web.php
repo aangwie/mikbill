@@ -107,6 +107,7 @@ Route::middleware(['auth'])->group(function () {
     // AJAX Bulk Billing
     Route::get('/billing/generate-list', [BillingController::class, 'getList'])->name('billing.list');
     Route::get('/billing/customer/{id}/history', [BillingController::class, 'customerHistory'])->name('billing.history');
+    Route::get('/billing/{id}/unpaid-months', [BillingController::class, 'getUnpaidMonths'])->name('billing.unpaidMonths');
     Route::post('/billing/generate-process', [BillingController::class, 'processItem'])->name('billing.process');
     Route::get('/billing/{id}/print', [BillingController::class, 'print'])->name('billing.print');
     Route::delete('/billing/bulk-destroy', [BillingController::class, 'bulkDestroy'])->name('billing.bulkDestroy');
