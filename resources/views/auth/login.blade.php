@@ -235,7 +235,7 @@
             </div>
 
             <p class="mt-8 text-center text-xs text-slate-500 dark:text-indigo-200">
-                &copy; {{ date('Y') }} Managed Service Provider. <br>System v1.0
+                &copy; {{ date('Y') }} Managed Service Provider. <br>System v2.1
             </p>
         </div>
     </div>
